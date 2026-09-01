@@ -1,0 +1,6 @@
+{
+  "name": "Quill - AI SOW Authoring Platform",
+  "description": "Enterprise AI-powered Statement of Work (SOW) authoring platform with framework-first generation, human-in-the-loop section review, Microsoft Search RAG integration, and DTMC Word export.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
