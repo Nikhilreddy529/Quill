@@ -7,6 +7,7 @@ import { FrameworkReview } from './components/FrameworkReview';
 import { SourcesPanel } from './components/SourcesPanel';
 import { ExportModal } from './components/ExportModal';
 import { CreateProjectModal } from './components/CreateProjectModal';
+import { ProposalWorkspace } from './components/ProposalWorkspace';
 import { SOWTemplateList } from './components/templates/SOWTemplateList';
 import { SOWTemplateEditor } from './components/templates/SOWTemplateEditor';
 import { SOWTemplatePreview } from './components/templates/SOWTemplatePreview';
@@ -19,7 +20,7 @@ import { templateService } from './services/templateService';
 export default function App() {
   // Navigation States
   const [currentView, setCurrentView] = useState<
-    'sections' | 'dashboard' | 'framework' | 'templates' | 'template-editor' | 'template-preview'
+    'sections' | 'dashboard' | 'framework' | 'proposal' | 'templates' | 'template-editor' | 'template-preview'
   >('sections');
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
 
@@ -189,10 +190,16 @@ export default function App() {
   const handleNavigateStep = (stepNumber: number) => {
     if (stepNumber === 1) setIsCreateModalOpen(true);
     else if (stepNumber === 2) setCurrentView('framework');
-    else if (stepNumber === 3) setCurrentView('sections');
+    else if (stepNumber === 3) setCurrentView('proposal');
     else if (stepNumber === 4) setCurrentView('sections');
     else if (stepNumber === 5) handleOpenExportModal(activeProject);
   };
+
+  React.useEffect(() => {
+    const onOpenProposal = () => setCurrentView('proposal');
+    window.addEventListener('quill:open-proposal', onOpenProposal);
+    return () => window.removeEventListener('quill:open-proposal', onOpenProposal);
+  }, []);
 
   return (
     <div className="flex h-screen bg-[#F8FAFC] text-[#0F172A] overflow-hidden font-sans">
@@ -259,7 +266,16 @@ export default function App() {
             </div>
           )}
 
-          {/* VIEW 4: SOW Templates Directory */}
+          {/* VIEW 4: Proposal Workspace */}
+          {currentView === 'proposal' && (
+            <ProposalWorkspace
+              project={activeProject}
+              onUpdateProject={handleUpdateProject}
+              onOpenSow={() => setCurrentView('sections')}
+            />
+          )}
+
+          {/* VIEW 5: SOW Templates Directory */}
           {currentView === 'templates' && (
             <SOWTemplateList
               onSelectTemplateToEdit={handleSelectTemplateToEdit}

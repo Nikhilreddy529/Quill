@@ -60,6 +60,17 @@ export const TopHeader: React.FC<TopHeaderProps> = ({
             <ChevronRight className="w-3.5 h-3.5 text-[#94A3B8]" />
             <span className="font-bold text-[#0F172A]">Framework Outline</span>
           </>
+        ) : currentView === 'proposal' ? (
+          <>
+            <button 
+              onClick={() => setCurrentView('dashboard')}
+              className="hover:text-[#1D68F2] transition cursor-pointer font-medium text-[#334155]"
+            >
+              {currentProject?.title || "Digital Transformation - Acme Corp"}
+            </button>
+            <ChevronRight className="w-3.5 h-3.5 text-[#94A3B8]" />
+            <span className="font-bold text-[#0F172A]">Proposal Workspace</span>
+          </>
         ) : (
           <>
             <button 
@@ -126,6 +137,18 @@ export const TopHeader: React.FC<TopHeaderProps> = ({
           >
             <FileCode className="w-3 h-3 text-indigo-600" />
             <span>Framework</span>
+          </button>
+
+          <button
+            onClick={() => setCurrentView('proposal')}
+            className={`px-2.5 py-1 rounded-md font-semibold transition cursor-pointer flex items-center space-x-1.5 ${
+              currentView === 'proposal'
+                ? 'bg-white text-[#1D68F2] shadow-sm'
+                : 'text-[#64748B] hover:text-[#0F172A]'
+            }`}
+          >
+            <FileText className="w-3 h-3 text-violet-600" />
+            <span>Proposal</span>
           </button>
 
           <button

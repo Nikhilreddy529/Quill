@@ -140,6 +140,7 @@ export interface SOWProject {
   uploadedDocuments: UploadedProjectDocument[]; // Resources uploaded by PM during SOW creation
   additionalRequirements: string;
   selectedTemplateId: string;
+  proposalTemplateId?: string;
   frameworkApproved: boolean;
   frameworkApprovedBy?: string;
   frameworkApprovedAt?: string;
