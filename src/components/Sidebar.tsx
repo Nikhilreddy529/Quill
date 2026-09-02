@@ -9,9 +9,9 @@ import {
   Settings, 
   History, 
   ChevronLeft,
-  ChevronRight,
-  Sparkles
+  ChevronRight
 } from 'lucide-react';
+import { FeatherLogo } from './FeatherLogo';
 
 interface SidebarProps {
   currentView: string;
@@ -40,11 +40,10 @@ export const Sidebar: React.FC<SidebarProps> = ({
           onClick={() => setCurrentView('sections')} 
           className="flex items-center space-x-2.5 cursor-pointer"
         >
-          <img
-            src="/Asset/Quill.png"
-            alt="Quill logo"
-            className="w-8 h-8 object-contain"
-          />
+          {/* Cyan/Blue Feather Icon */}
+          <div className="w-8 h-8 rounded-lg bg-[#0F224A] border border-[#1E3A8A] flex items-center justify-center text-white shadow-md shadow-blue-500/20">
+            <FeatherLogo className="w-5 h-5 text-blue-300" />
+          </div>
           {!isCollapsed && (
             <div className="flex items-center space-x-1.5">
               <span className="text-lg font-bold text-white tracking-tight">Quill</span>
@@ -60,10 +59,10 @@ export const Sidebar: React.FC<SidebarProps> = ({
           className={`w-full bg-[#1D68F2] hover:bg-[#1557d0] text-white rounded-lg transition-all duration-200 flex items-center justify-center space-x-2 py-2.5 font-semibold text-xs shadow-md shadow-blue-600/30 cursor-pointer ${
             isCollapsed ? 'px-0' : 'px-3'
           }`}
-          title="New SOW / Proposal"
+          title="New SOW"
         >
           <Plus className="w-4 h-4 stroke-[2.5]" />
-          {!isCollapsed && <span>New SOW / Proposal</span>}
+          {!isCollapsed && <span>New SOW </span>}
         </button>
       </div>
 

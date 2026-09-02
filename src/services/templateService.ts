@@ -1,5 +1,6 @@
 import { SOWTemplate, TemplateValidationResult, ValidationItem, GovernanceRoleItem, TemplateSection, TemplateType } from '../types/template';
 import { SOWProject, SOWSection } from '../types/quill';
+import { validateProjectPricingPolicy } from './pricingValidationService';
 
 export const DEFAULT_DTMC_ROLES: GovernanceRoleItem[] = [
   {
@@ -499,12 +500,14 @@ const LOCAL_STORAGE_KEY = 'quill_sow_templates_v1';
 export const templateService = {
   getTemplates(): SOWTemplate[] {
     try {
-      const stored = localStorage.getItem(LOCAL_STORAGE_KEY);
-      if (stored) {
-        return JSON.parse(stored);
+      if (typeof window !== 'undefined' && typeof localStorage !== 'undefined') {
+        const stored = localStorage.getItem(LOCAL_STORAGE_KEY);
+        if (stored) {
+          return JSON.parse(stored);
+        }
       }
     } catch (e) {
-      console.error('Error loading templates from localStorage', e);
+      // In SSR or test environments without window/localStorage, fall back to default templates
     }
     return SAMPLE_ADDITIONAL_TEMPLATES;
   },
@@ -535,9 +538,11 @@ export const templateService = {
     }
 
     try {
-      localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(updatedList));
+      if (typeof window !== 'undefined' && typeof localStorage !== 'undefined') {
+        localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(updatedList));
+      }
     } catch (e) {
-      console.error('Error saving template to localStorage', e);
+      // ignore
     }
 
     return updatedTemplate;
@@ -695,35 +700,25 @@ export const templateService = {
       }
     });
 
-    // 13. Pricing fields contain no monetary values
-    const pricingSection = template.sections.find(s => s.isPricingSection || s.category === 'Pricing' || s.title.toLowerCase().includes('fees'));
-    const monetaryRegex = /\$\s*\d+|\b(USD|EUR|GBP|AUD|CAD)\s*\d+([,\.]\d+)?|\b\d+([,\.]\d+)?\s*(dollars|euros)/i;
-    let foundMonetaryValue = false;
-    let monetarySample = '';
+    // 13. Pricing fields contain no unvetted monetary values
+    const pricingValidation = validateProjectPricingPolicy(template.sections);
 
-    template.sections.forEach(s => {
-      const match = s.content.match(monetaryRegex);
-      if (match) {
-        foundMonetaryValue = true;
-        monetarySample = `Found "${match[0]}" in "${s.title}"`;
-      }
-    });
-
-    if (!foundMonetaryValue) {
+    if (pricingValidation.isValid) {
       items.push({
         id: 'VAL-PRICE-01',
         ruleName: 'Blank Pricing Policy Verification',
         category: 'Blank Pricing Policy',
         severity: 'Passed',
-        message: 'All pricing fields and rate tables contain no monetary values in compliance with DTMC policy.'
+        message: 'All pricing fields and rate tables contain no unapproved monetary values in compliance with DTMC policy.'
       });
     } else {
+      const sampleViolations = pricingValidation.violations.slice(0, 2).map(v => `"${v.match}" in ${v.sectionTitle}`).join(', ');
       items.push({
         id: 'VAL-PRICE-01',
         ruleName: 'Blank Pricing Policy Verification',
         category: 'Blank Pricing Policy',
         severity: 'Failed',
-        message: `Monetary figures detected: ${monetarySample}. Pricing must remain blank placeholders for Commercial Finance sign-off.`
+        message: `Monetary/rate figures detected (${sampleViolations}). Pricing must remain blank placeholders for Commercial Finance sign-off.`
       });
     }
 
@@ -901,14 +896,17 @@ export const templateService = {
   },
 
   // Helper to initialize a new SOW project from an SOWTemplate
-  createSOWProjectFromTemplate(template: SOWTemplate, clientName: string, projectTitle: string, targetStartDate: string, targetEndDate: string): SOWProject {
+  createSOWProjectFromTemplate(template: SOWTemplate, clientName: string, projectTitle: string, targetStartDate: string, targetEndDate: string, clientContact?: string, clientContactEmail?: string): SOWProject {
     const newProjectId = `PRJ-${Date.now().toString().slice(-4)}`;
 
     const sowSections: SOWSection[] = template.sections.map((ts, idx) => {
       // Replace generic placeholders with input values
-      let processedContent = ts.content
+      const processedContent = ts.content
         .replace(/\{\{PROJECT_NAME\}\}/g, projectTitle)
         .replace(/\{\{CLIENT_ORGANIZATION_NAME\}\}/g, clientName)
+        .replace(/\{\{CLIENT_CONTACT_NAME\}\}/g, clientContact || '')
+        .replace(/\{\{CLIENT_CONTACT_EMAIL\}\}/g, clientContactEmail || '')
+        .replace(/\{\{CLIENT_SIGNATORY_NAME\}\}/g, clientContact || '')
         .replace(/\{\{ANTICIPATED_START_DATE\}\}/g, targetStartDate || '2026-10-01')
         .replace(/\{\{ANTICIPATED_COMPLETION_DATE\}\}/g, targetEndDate || '2027-03-31')
         .replace(/\{\{ESTIMATED_DURATION\}\}/g, '6 Months (24 Sprints)')
@@ -922,7 +920,7 @@ export const templateService = {
         projectId: newProjectId,
         order: ts.order,
         title: ts.title,
-        category: (ts.category === 'Overview' ? 'Scope' : ts.category) as any,
+        category: ts.category,
         content: processedContent,
         status: 'Review',
         isMandatory: ts.isMandatory,
@@ -940,6 +938,13 @@ export const templateService = {
       id: newProjectId,
       title: projectTitle || `${clientName} SOW Engagement`,
       clientName: clientName || 'Client Organization',
+      clientContact: clientContact || '',
+      clientContactEmail: clientContactEmail || '',
+      issuerName: 'DTMC Advisory Group',
+      issuerEmail: 'advisory@dtmc.example',
+      issuerPhone: '+1 555 010 2000',
+      sowFormat: template.metadata.templateType,
+      wordTemplateFile: template.metadata.wordTemplateFile,
       clientIndustry: 'Financial Services',
       projectType: template.metadata.templateType,
       targetStartDate: targetStartDate || '2026-10-01',
@@ -957,7 +962,7 @@ export const templateService = {
       discoveryDocNames: [template.metadata.wordTemplateFile],
       uploadedDocuments: [],
       additionalRequirements: 'Adhere to DTMC corporate styling standards and blank pricing placeholders.',
-      selectedTemplateId: template.metadata.wordTemplateFile,
+      selectedTemplateId: template.id,
       frameworkApproved: true,
       sections: sowSections,
       exportHistory: []

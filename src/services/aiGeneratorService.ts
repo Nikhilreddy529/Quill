@@ -1,5 +1,6 @@
 import { SOWSection, SourceDocument } from '../types/quill';
 import { SAMPLE_SOURCE_DOCUMENTS } from '../data/sampleSharePointData';
+import { validatePricingContent, PricingValidationResult } from './pricingValidationService';
 
 export interface GenerationResult {
   content: string;
@@ -9,24 +10,18 @@ export interface GenerationResult {
   validationNotes: string[];
 }
 
-export function validatePricingIsBlank(content: string): { isValid: boolean; detectedViolations: string[] } {
-  // Regex to detect unvetted pricing figures (e.g. $50,000, 150/hr, €20,000, $150.00)
-  const currencyRegex = /(\$|€|£|¥)\s*[0-9]{1,3}(,[0-9]{3})*(\.[0-9]{2})?|\b[0-9]{2,6}\s*(USD|EUR|GBP)\b/gi;
-  const matches = content.match(currencyRegex);
-  
-  // Also check if [TBD or [To be determined is present
-  const hasPlaceholder = /\[(TBD|To be determined|TBA|Insert).*?\]/i.test(content);
-
-  if (matches && matches.length > 0) {
-    return {
-      isValid: false,
-      detectedViolations: matches,
-    };
-  }
-
+export function validatePricingIsBlank(content: string, sectionTitle: string = 'Section'): { 
+  isValid: boolean; 
+  hasPlaceholder: boolean; 
+  detectedViolations: string[];
+  summary: string;
+} {
+  const result = validatePricingContent(content, sectionTitle, undefined, { isPricingSection: true, isStrictBlankPolicy: true });
   return {
-    isValid: true,
-    detectedViolations: [],
+    isValid: result.isValid,
+    hasPlaceholder: result.hasPlaceholder,
+    detectedViolations: result.detectedMatches,
+    summary: result.summary,
   };
 }
 
@@ -37,8 +32,8 @@ export async function generateSectionContent(
   discoveryNotes: string,
   customInstructions?: string
 ): Promise<GenerationResult> {
-  // Simulate network & AI thinking latency (1.2 seconds)
-  await new Promise((resolve) => setTimeout(resolve, 1200));
+  // Demo simulation mode latency
+  await new Promise((resolve) => setTimeout(resolve, 800));
 
   let content = "";
   let groundedSources: SourceDocument[] = [];

@@ -10,6 +10,7 @@ import {
   PlusCircle,
   ExternalLink
 } from 'lucide-react';
+import { FeatherLogo } from './FeatherLogo';
 import { SOWProject } from '../types/quill';
 
 interface NavbarProps {
@@ -38,11 +39,9 @@ export const Navbar: React.FC<NavbarProps> = ({
           
           {/* Logo & Brand */}
           <div className="flex items-center space-x-3">
-            <img
-              src="/Asset/Quill.png"
-              alt="Quill logo"
-              className="w-10 h-10 object-contain flex-shrink-0"
-            />
+            <div className="w-10 h-10 bg-[#0F224A] border border-[#1E3A8A] rounded-lg flex items-center justify-center shadow-lg shadow-blue-500/10 flex-shrink-0">
+              <FeatherLogo className="w-6 h-6 text-blue-300" />
+            </div>
             <div>
               <div className="flex items-center space-x-2">
                 <h1 className="font-serif text-xl tracking-tight text-white font-bold">

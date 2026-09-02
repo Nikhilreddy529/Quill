@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { 
   X, 
   Sparkles, 
@@ -21,14 +21,13 @@ import {
   Trash2,
   Plus,
   Info,
-  Sliders
+  Sliders,
+  Paperclip
 } from 'lucide-react';
 import { SOWProject, SourceDocument, UploadedProjectDocument, UploadedDocCategory } from '../types/quill';
 import { SAMPLE_SOURCE_DOCUMENTS } from '../data/sampleSharePointData';
 import { generateDefaultFramework } from '../services/aiGeneratorService';
 import { templateService } from '../services/templateService';
-import { IntakeSpecificationModal } from './intake/IntakeSpecificationModal';
-import { intakeNormalizationService } from '../services/intakeNormalizationService';
 
 interface CreateProjectModalProps {
   isOpen: boolean;
@@ -43,7 +42,8 @@ export const CreateProjectModal: React.FC<CreateProjectModalProps> = ({
 }) => {
   const [step, setStep] = useState<1 | 2 | 3>(1);
   const [isGenerating, setIsGenerating] = useState(false);
-  const [showIntakeSpecModal, setShowIntakeSpecModal] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [isDragging, setIsDragging] = useState(false);
   const [availableTemplates] = useState(() => templateService.getTemplates());
   const [selectedTemplateId, setSelectedTemplateId] = useState<string>(
     availableTemplates[0]?.id || 'TMPL-DTMC-MASTER-2026'
@@ -51,6 +51,8 @@ export const CreateProjectModal: React.FC<CreateProjectModalProps> = ({
 
   // Form State
   const [clientName, setClientName] = useState('Acme Global Enterprises');
+  const [clientContact, setClientContact] = useState('Riley Chen');
+  const [clientContactEmail, setClientContactEmail] = useState('riley.chen@acme.com');
   const [clientIndustry, setClientIndustry] = useState('Financial Services');
   const [projectType, setProjectType] = useState('Cloud Migration');
   const [projectTitle, setProjectTitle] = useState('Acme Multi-Cloud Migration & Security SOW');
@@ -148,42 +150,179 @@ export const CreateProjectModal: React.FC<CreateProjectModalProps> = ({
     }
   ]);
 
-  // Upload Form UI State
-  const [isAddingCustomFile, setIsAddingCustomFile] = useState(false);
-  const [newFileName, setNewFileName] = useState('');
-  const [newFileCategory, setNewFileCategory] = useState<UploadedDocCategory>('Meeting Transcription');
-  const [newFileSnippet, setNewFileSnippet] = useState('');
+  // Upload Form & Capsule Input State
+  const [resourceInputValue, setResourceInputValue] = useState('');
+  const [isListening, setIsListening] = useState(false);
   const [selectedSources, setSelectedSources] = useState<string[]>(['SRC-CL-001', 'SRC-SOW-089', 'SRC-CL-014']);
 
   if (!isOpen) return null;
 
-  const handleAddUploadedFile = () => {
-    if (!newFileName.trim()) return;
-    const isPdf = newFileName.toLowerCase().endsWith('.pdf');
-    const isDocx = newFileName.toLowerCase().endsWith('.docx') || newFileName.toLowerCase().endsWith('.doc');
-    const fileType = isPdf ? 'pdf' : (isDocx ? 'docx' : 'docx');
+  const handleAddResourceFromCapsule = (textToSubmit?: string) => {
+    const rawText = (textToSubmit !== undefined ? textToSubmit : resourceInputValue).trim();
+    if (!rawText) return;
+
+    const lower = rawText.toLowerCase();
+    let category: UploadedDocCategory = 'Requirement Clarification';
+    let prefix = 'Intake_Note';
+
+    if (lower.includes('transcript') || lower.includes('meeting') || lower.includes('said') || lower.includes('call') || lower.includes('recording')) {
+      category = 'Meeting Transcription';
+      prefix = 'Meeting_Transcription';
+    } else if (lower.includes('srs') || lower.includes('spec') || lower.includes('technical') || lower.includes('api') || lower.includes('architecture')) {
+      category = 'SRS Document';
+      prefix = 'Technical_Spec';
+    } else if (lower.includes('scope') || lower.includes('deliverable') || lower.includes('phase')) {
+      category = 'Client Brief Word Doc';
+      prefix = 'Scope_Baseline';
+    }
+
+    const timestampStr = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    const cleanTitle = rawText.length > 35 ? `${rawText.substring(0, 32)}...` : rawText;
 
     const newDoc: UploadedProjectDocument = {
-      id: `DOC-NEW-${Date.now()}`,
-      fileName: newFileName.trim(),
-      fileType: fileType,
-      fileSizeBytes: 350000,
+      id: `DOC-CAPSULE-${Date.now()}`,
+      fileName: `${prefix}_${Date.now().toString().slice(-4)}.docx`,
+      fileType: 'docx',
+      fileSizeBytes: 145000,
       uploadedAt: new Date().toISOString(),
       uploadedBy: 'Nikhil (PM)',
-      category: newFileCategory,
-      sectionReference: `Section 2 • ${newFileCategory}`,
-      pageOrTimestamp: isPdf ? 'Page 1-5' : 'Min 05:00',
-      snippet: newFileSnippet.trim() || `Uploaded ${newFileCategory} document containing client specifications and requirements.`,
+      category: category,
+      sectionReference: `Direct Input • ${timestampStr}`,
+      pageOrTimestamp: `Recorded at ${timestampStr}`,
+      snippet: rawText,
       keyRequirementsExtracted: [
-        'Extracted requirement from uploaded resource',
-        'Directly grounded in PM intake document'
+        cleanTitle,
+        `Directly ingested via SOW resource bar`
       ]
     };
 
-    setUploadedFiles([newDoc, ...uploadedFiles]);
-    setNewFileName('');
-    setNewFileSnippet('');
-    setIsAddingCustomFile(false);
+    setUploadedFiles(prev => [newDoc, ...prev]);
+    setResourceInputValue('');
+    setIsListening(false);
+  };
+
+  const handleToggleDictation = () => {
+    const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+    if (SpeechRecognition) {
+      try {
+        if (isListening) {
+          setIsListening(false);
+          return;
+        }
+
+        const recognition = new SpeechRecognition();
+        recognition.continuous = false;
+        recognition.interimResults = false;
+        recognition.lang = 'en-US';
+
+        recognition.onstart = () => {
+          setIsListening(true);
+        };
+
+        recognition.onresult = (event: any) => {
+          const transcript = event.results[0][0].transcript;
+          if (transcript) {
+            setResourceInputValue(prev => prev ? `${prev} ${transcript}` : transcript);
+          }
+          setIsListening(false);
+        };
+
+        recognition.onerror = () => {
+          setIsListening(false);
+        };
+
+        recognition.onend = () => {
+          setIsListening(false);
+        };
+
+        recognition.start();
+        return;
+      } catch (err) {
+        console.warn('Speech recognition init error', err);
+      }
+    }
+
+    // Fallback simulation if speech recognition is unavailable or blocked in iframe
+    if (!isListening) {
+      setIsListening(true);
+      const sampleTranscripts = [
+        "Client VP Engineering: Architecture must enforce ISO 27001 compliance and 99.99% availability.",
+        "Clarification with PM: 30-day post go-live hypercare support is included within Phase 3.",
+        "Discovery meeting note: SSO authentication via Azure AD with conditional MFA required.",
+      ];
+      const randomTranscript = sampleTranscripts[Math.floor(Math.random() * sampleTranscripts.length)];
+      setTimeout(() => {
+        setResourceInputValue(randomTranscript);
+        setIsListening(false);
+      }, 1500);
+    } else {
+      setIsListening(false);
+    }
+  };
+
+  const processSelectedFiles = (files: FileList | File[]) => {
+    const newDocs: UploadedProjectDocument[] = [];
+    
+    Array.from(files).forEach((file, index) => {
+      const fileName = file.name;
+      const isPdf = fileName.toLowerCase().endsWith('.pdf');
+      const isDocx = fileName.toLowerCase().endsWith('.docx') || fileName.toLowerCase().endsWith('.doc');
+      const isSpreadsheet = fileName.toLowerCase().endsWith('.xlsx') || fileName.toLowerCase().endsWith('.csv');
+      const isTxt = fileName.toLowerCase().endsWith('.txt') || fileName.toLowerCase().endsWith('.md');
+      const fileType = isPdf ? 'pdf' : (isDocx ? 'docx' : 'docx');
+      
+      let category: UploadedDocCategory = 'Meeting Transcription';
+      const lower = fileName.toLowerCase();
+      if (lower.includes('srs') || lower.includes('spec') || lower.includes('technical')) {
+        category = 'SRS Document';
+      } else if (lower.includes('clarif') || lower.includes('qa') || lower.includes('q&a') || lower.includes('notes') || lower.includes('requirement')) {
+        category = 'Requirement Clarification';
+      } else if (lower.includes('arch') || lower.includes('assess') || isPdf) {
+        category = 'Architecture & Scope PDF';
+      } else if (lower.includes('brief') || lower.includes('charter') || isDocx) {
+        category = 'Client Brief Word Doc';
+      }
+
+      const formattedSize = file.size > 1048576 
+        ? `${(file.size / 1048576).toFixed(1)} MB` 
+        : `${Math.round(file.size / 1024)} KB`;
+
+      newDocs.push({
+        id: `DOC-UPLOAD-${Date.now()}-${index}`,
+        fileName: fileName,
+        fileType: fileType,
+        fileSizeBytes: file.size || 280000,
+        uploadedAt: new Date().toISOString(),
+        uploadedBy: 'Nikhil (PM)',
+        category: category,
+        sectionReference: `Device Upload • ${category}`,
+        pageOrTimestamp: isPdf ? 'Multi-page document' : 'Full intake file',
+        snippet: `Locally attached file from user device (${formattedSize}). Content will be ingested for SOW section generation.`,
+        keyRequirementsExtracted: [
+          `Uploaded from computer: ${fileName}`,
+          `Integrated into SOW contextual evidence`
+        ]
+      });
+    });
+
+    if (newDocs.length > 0) {
+      setUploadedFiles(prev => [...newDocs, ...prev]);
+    }
+  };
+
+  const handleNativeFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files.length > 0) {
+      processSelectedFiles(e.target.files);
+      e.target.value = '';
+    }
+  };
+
+  const handleFileDrop = (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    setIsDragging(false);
+    if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+      processSelectedFiles(e.dataTransfer.files);
+    }
   };
 
   const handleRemoveUploadedFile = (id: string) => {
@@ -210,6 +349,9 @@ export const CreateProjectModal: React.FC<CreateProjectModalProps> = ({
         let synthesizedContent = sec.content
           .split('{{PROJECT_NAME}}').join(projectTitle || `${clientName} SOW`)
           .split('{{CLIENT_ORGANIZATION_NAME}}').join(clientName)
+          .split('{{CLIENT_CONTACT_NAME}}').join(clientContact || 'Riley Chen')
+          .split('{{CLIENT_CONTACT_EMAIL}}').join(clientContactEmail || 'riley.chen@acme.com')
+          .split('{{CLIENT_SIGNATORY_NAME}}').join(clientContact || 'Riley Chen')
           .split('{{ANTICIPATED_START_DATE}}').join(targetStartDate)
           .split('{{ANTICIPATED_COMPLETION_DATE}}').join(targetEndDate)
           .split('{{CURRENCY}}').join(currency);
@@ -282,6 +424,8 @@ export const CreateProjectModal: React.FC<CreateProjectModalProps> = ({
       id: newId,
       title: projectTitle || `${clientName} SOW Engagement`,
       clientName,
+      clientContact,
+      clientContactEmail,
       clientIndustry,
       projectType,
       targetStartDate,
@@ -299,7 +443,12 @@ export const CreateProjectModal: React.FC<CreateProjectModalProps> = ({
       discoveryDocNames: uploadedFiles.map(f => f.fileName),
       uploadedDocuments: uploadedFiles,
       additionalRequirements: "Adhere to DTMC corporate styling standards and blank pricing placeholders.",
-      selectedTemplateId: "DTMC_Master_SOW_Template_2025.dotx",
+      selectedTemplateId: selectedTemplateId || "TMPL-DTMC-2025-01",
+      wordTemplateFile: "DTMC_Master_SOW_Template_2025.dotx",
+      sowFormat: projectType,
+      issuerName: "DTMC Advisory Group",
+      issuerEmail: "advisory@dtmc.example",
+      issuerPhone: "+1 555 010 2000",
       frameworkApproved: false,
       sections: fullSections,
       exportHistory: []
@@ -411,26 +560,29 @@ export const CreateProjectModal: React.FC<CreateProjectModalProps> = ({
                 </div>
               </div>
 
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-xs font-semibold text-[#334155] uppercase tracking-wider mb-1.5">
-                    Target Start Date
+                    Client Contact
                   </label>
                   <input
-                    type="date"
-                    value={targetStartDate}
-                    onChange={(e) => setTargetStartDate(e.target.value)}
+                    type="text"
+                    value={clientContact}
+                    onChange={(e) => setClientContact(e.target.value)}
+                    placeholder="e.g. Riley Chen"
                     className="w-full bg-white border border-[#CBD5E1] rounded-lg px-3.5 py-2.5 text-sm text-[#0F172A] focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-[#1D68F2]"
                   />
                 </div>
+
                 <div>
                   <label className="block text-xs font-semibold text-[#334155] uppercase tracking-wider mb-1.5">
-                    Target Completion Date
+                    Client Email
                   </label>
                   <input
-                    type="date"
-                    value={targetEndDate}
-                    onChange={(e) => setTargetEndDate(e.target.value)}
+                    type="email"
+                    value={clientContactEmail}
+                    onChange={(e) => setClientContactEmail(e.target.value)}
+                    placeholder="e.g. riley.chen@acme.com"
                     className="w-full bg-white border border-[#CBD5E1] rounded-lg px-3.5 py-2.5 text-sm text-[#0F172A] focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-[#1D68F2]"
                   />
                 </div>
@@ -438,103 +590,75 @@ export const CreateProjectModal: React.FC<CreateProjectModalProps> = ({
             </div>
           )}
 
-          {/* STEP 2: UPLOAD PM INTAKE RESOURCES (Meeting Transcriptions, Requirement Clarifications, SRS, PDF/Word) */}
+          {/* STEP 2: UPLOAD PM INTAKE RESOURCES */}
           {step === 2 && (
             <div className="space-y-4">
+              <input
+                type="file"
+                ref={fileInputRef}
+                onChange={handleNativeFileUpload}
+                multiple
+                accept=".pdf,.docx,.doc,.txt,.md,.json,.xlsx,.csv,.pptx"
+                className="hidden"
+              />
+
               <div className="flex items-center justify-between">
                 <div>
-                  <h3 className="text-sm font-bold text-[#0F172A]">Uploaded Project Resources for SOW Grounding</h3>
-                  <p className="text-xs text-[#64748B]">
-                    Attach discovery meeting transcriptions, requirement clarification notes, SRS specifications, PDF assessments, and Word briefs. 
-                    <strong className="text-[#0F172A] ml-1">Only these uploaded documents will appear in your SOW's "Sources Used" grounding.</strong>
-                  </p>
-                </div>
-                <div className="flex items-center space-x-2">
-                  <button
-                    type="button"
-                    onClick={() => setShowIntakeSpecModal(true)}
-                    className="flex items-center space-x-1.5 text-xs font-semibold bg-white text-purple-700 hover:bg-purple-50 px-3 py-1.5 rounded-lg border border-purple-200 transition cursor-pointer"
-                    title="View file type rules, max sizes, and transcript format constraints (QTK-001)"
-                  >
-                    <Sliders className="w-3.5 h-3.5" />
-                    <span>Intake Spec Rules (QTK-001)</span>
-                  </button>
-
-                  <button
-                    type="button"
-                    onClick={() => setIsAddingCustomFile(true)}
-                    className="flex items-center space-x-1.5 text-xs font-bold bg-[#EFF6FF] text-[#1D68F2] hover:bg-[#DBEAFE] px-3 py-1.5 rounded-lg border border-[#BFDBFE] transition cursor-pointer"
-                  >
-                    <Plus className="w-3.5 h-3.5" />
-                    <span>Attach Document</span>
-                  </button>
+                  <h3 className="text-sm font-bold text-[#0F172A]">Upload Document</h3>
+                  <p className="text-xs text-[#64748B]">Attach documents or enter live meeting notes & clarifications</p>
                 </div>
               </div>
 
-              {/* Add Custom File Inline Panel */}
-              {isAddingCustomFile && (
-                <div className="p-4 bg-[#F8FAFC] border border-[#BFDBFE] rounded-xl space-y-3 animate-fade-in">
-                  <div className="flex items-center justify-between">
-                    <span className="text-xs font-bold text-[#1D68F2]">Upload New Project Resource</span>
-                    <button 
-                      onClick={() => setIsAddingCustomFile(false)} 
-                      className="text-xs text-[#64748B] hover:text-[#0F172A]"
-                    >
-                      Cancel
-                    </button>
-                  </div>
+              {/* Resource Capsule Input Bar */}
+              <div className="relative flex items-center w-full bg-[#FFFFFF] hover:bg-[#F0F0F0] border border-[#33353A] focus-within:border-[#525660] focus-within:ring-1 focus-within:ring-[#525660] rounded-full px-4 py-2.5 shadow-sm transition">
+                <button
+                  type="button"
+                  onClick={() => fileInputRef.current?.click()}
+                  title="Attach file or document"
+                  className="text-[#94A3B8] hover:text-white transition p-1 -ml-1 rounded-full hover:bg-slate-700/50 cursor-pointer shrink-0"
+                >
+                  <Plus className="w-5 h-5" />
+                </button>
 
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                    <div>
-                      <label className="block text-[11px] font-semibold text-[#475569] mb-1">File Name (.docx, .pdf, .txt)</label>
-                      <input
-                        type="text"
-                        value={newFileName}
-                        onChange={(e) => setNewFileName(e.target.value)}
-                        placeholder="e.g. Client_Q&A_Requirement_Clarifications.docx"
-                        className="w-full bg-white border border-[#CBD5E1] rounded-lg px-3 py-1.5 text-xs text-[#0F172A] focus:outline-none focus:ring-1 focus:ring-blue-500"
-                      />
-                    </div>
+                <input
+                  type="text"
+                  value={resourceInputValue}
+                  onChange={(e) => setResourceInputValue(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' && !e.shiftKey) {
+                      e.preventDefault();
+                      handleAddResourceFromCapsule();
+                    }
+                  }}
+                  placeholder="Add resource to create SOW"
+                  className="flex-1 bg-transparent border-none text-xs sm:text-sm text-black placeholder-[#18191C] focus:outline-none px-3 py-0.5"
+                />
 
-                    <div>
-                      <label className="block text-[11px] font-semibold text-[#475569] mb-1">Resource Category</label>
-                      <select
-                        value={newFileCategory}
-                        onChange={(e) => setNewFileCategory(e.target.value as UploadedDocCategory)}
-                        className="w-full bg-white border border-[#CBD5E1] rounded-lg px-3 py-1.5 text-xs text-[#0F172A] focus:outline-none focus:ring-1 focus:ring-blue-500 cursor-pointer"
-                      >
-                        <option value="Meeting Transcription">Meeting Transcription (.docx / .txt)</option>
-                        <option value="Requirement Clarification">Requirement Clarification (.docx / .pdf)</option>
-                        <option value="SRS Document">SRS Document (.pdf / .docx)</option>
-                        <option value="Architecture & Scope PDF">Architecture & Scope PDF</option>
-                        <option value="Client Brief Word Doc">Client Brief Word Doc</option>
-                      </select>
-                    </div>
-                  </div>
-
-                  <div>
-                    <label className="block text-[11px] font-semibold text-[#475569] mb-1">Key Excerpt / Meeting Transcript Notes</label>
-                    <textarea
-                      rows={2}
-                      value={newFileSnippet}
-                      onChange={(e) => setNewFileSnippet(e.target.value)}
-                      placeholder="Paste key requirements or quotes from the meeting transcript or specification..."
-                      className="w-full bg-white border border-[#CBD5E1] rounded-lg p-2 text-xs text-[#0F172A] focus:outline-none focus:ring-1 focus:ring-blue-500"
-                    />
-                  </div>
-
-                  <div className="flex justify-end">
+                <div className="flex items-center space-x-1.5 shrink-0">
+                  {resourceInputValue.trim() && (
                     <button
                       type="button"
-                      onClick={handleAddUploadedFile}
-                      disabled={!newFileName.trim()}
-                      className="text-xs font-bold bg-[#1D68F2] hover:bg-[#1554c0] text-white px-4 py-1.5 rounded-lg transition disabled:opacity-50 cursor-pointer"
+                      onClick={() => handleAddResourceFromCapsule()}
+                      className="text-[11px] font-bold bg-[#18191C] hover:bg-[#1554c0] text-white px-3 py-1 rounded-full transition cursor-pointer"
                     >
-                      Add to SOW Sources
+                      Add
                     </button>
-                  </div>
+                  )}
+
+                  <button
+                    type="button"
+                    onClick={handleToggleDictation}
+                    title={isListening ? "Listening... click to stop" : "Voice dictation / speech transcript"}
+                    className={`p-1.5 rounded-full transition cursor-pointer ${
+                      isListening 
+                        ? 'text-rose-400 bg-rose-500/20 animate-pulse' 
+                        : 'text-[#94A3B8] hover:text-white hover:bg-slate-700/50'
+                    }`}
+                  >
+                    <Mic className="w-4 h-4" />
+                  </button>
                 </div>
-              )}
+              </div>
 
               {/* Uploaded Documents List */}
               <div className="space-y-2.5 max-h-[340px] overflow-y-auto pr-1">
@@ -619,13 +743,6 @@ export const CreateProjectModal: React.FC<CreateProjectModalProps> = ({
                   className="w-full bg-white border border-[#CBD5E1] rounded-lg p-2.5 text-xs text-[#0F172A] focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-[#1D68F2] leading-relaxed"
                   placeholder="Paste discovery notes here..."
                 />
-              </div>
-
-              <div className="p-3.5 bg-amber-50 border border-amber-200 rounded-xl flex items-start space-x-2.5">
-                <ShieldCheck className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
-                <div className="text-xs text-amber-800 leading-relaxed">
-                  <span className="font-bold text-amber-900">Mandatory Blank Pricing Policy:</span> In compliance with enterprise business rules, all generated pricing sections and rate schedules will remain intentionally blank placeholders for commercial finance sign-off.
-                </div>
               </div>
             </div>
           )}
@@ -739,12 +856,6 @@ export const CreateProjectModal: React.FC<CreateProjectModalProps> = ({
         </div>
 
       </div>
-
-      {/* Intake Specification Modal (QTK-001) */}
-      <IntakeSpecificationModal
-        isOpen={showIntakeSpecModal}
-        onClose={() => setShowIntakeSpecModal(false)}
-      />
     </div>
   );
 };

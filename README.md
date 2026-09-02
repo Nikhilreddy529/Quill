@@ -6,7 +6,7 @@
 
 ---
 
-## 📋 Table of Contents
+## Table of Contents
 
 - [Overview](#overview)
 - [Key Features](#key-features)
@@ -22,7 +22,7 @@
 
 ---
 
-## 📌 Overview
+## Overview
 
 **Quill** is an AI-powered enterprise platform designed to streamline the creation and management of Statements of Work (SOWs). It combines modern web technologies with AI capabilities to provide an intelligent, user-friendly interface for collaborative SOW authoring, framework governance, template management, and document export.
 
@@ -30,7 +30,7 @@ The platform supports integration with Microsoft Search for retrieval-augmented 
 
 ---
 
-## ⭐ Key Features
+## Key Features
 
 ### 1. **Framework-First SOW Generation**
 - Define SOW frameworks with hierarchical sections and requirements
@@ -74,7 +74,7 @@ The platform supports integration with Microsoft Search for retrieval-augmented 
 
 ---
 
-## 🔧 Prerequisites
+## Prerequisites
 
 Before you begin, ensure you have the following installed:
 
@@ -86,11 +86,11 @@ Before you begin, ensure you have the following installed:
 
 ---
 
-## 📦 Installation
+## Installation
 
 ### 1. Clone the Repository
 ```bash
-git clone <repository-url>
+git clone --single-branch --branch development https://github.com/Nikhilreddy529/Quill.git
 cd Quill
 ```
 
@@ -179,48 +179,6 @@ Quill/
 
 ---
 
-## 🏗️ Architecture
-
-### High-Level Architecture Diagram
-
-```
-┌─────────────────────────────────────────────────────────────┐
-│                    Quill Frontend (React)                    │
-│                                                               │
-│  ┌──────────────────────────────────────────────────────┐   │
-│  │           UI Layer (Components)                       │   │
-│  │  ┌─────────────┐ ┌──────────────┐ ┌──────────────┐   │   │
-│  │  │  Dashboard  │ │   Authoring  │ │  Templates   │   │   │
-│  │  │             │ │  Workspace   │ │  Management  │   │   │
-│  │  └─────────────┘ └──────────────┘ └──────────────┘   │   │
-│  └──────────────────────────────────────────────────────┘   │
-│                         ▼                                    │
-│  ┌──────────────────────────────────────────────────────┐   │
-│  │        Business Logic Layer (Services)               │   │
-│  │  ┌──────────────┐  ┌──────────────┐  ┌────────────┐  │   │
-│  │  │     AI       │  │  Framework   │  │  Template  │  │   │
-│  │  │  Generator   │  │ Governance   │  │  Service   │  │   │
-│  │  └──────────────┘  └──────────────┘  └────────────┘  │   │
-│  │  ┌──────────────┐  ┌──────────────┐  ┌────────────┐  │   │
-│  │  │ Concurrency  │  │   Section    │  │   DOCX     │  │   │
-│  │  │    Audit     │  │  Drafting    │  │   Export   │  │   │
-│  │  └──────────────┘  └──────────────┘  └────────────┘  │   │
-│  └──────────────────────────────────────────────────────┘   │
-│                         ▼                                    │
-│  ┌──────────────────────────────────────────────────────┐   │
-│  │        Data Layer (Types & State)                     │   │
-│  │  - SOWProject, SOWSection, SOWTemplate                │   │
-│  │  - AuditLogEntry, FrameworkApproval                   │   │
-│  └──────────────────────────────────────────────────────┘   │
-└─────────────────────────────────────────────────────────────┘
-           ▼              ▼              ▼
-    ┌──────────────┐ ┌─────
-    ┌──────────────┐ ┌──────────────┐
-    │  Microsoft   │ │   DOCX       │
-    │   Search     │ │   Export     │
-    │   RAG        │ │   Library    │
-   
-
 ### Key Architectural Components
 
 #### 1. **Component Layer (UI)**
@@ -274,7 +232,7 @@ Component Re-render
 
 ---
 
-## 🚀 Getting Started
+## Getting Started
 
 ### 1. Start Development Server
 ```bash
@@ -298,19 +256,7 @@ The application will be available at `http://localhost:3000`
 
 ---
 
-## 📜 Available Scripts
-
-| Script | Description |
-|--------|-------------|
-| `npm run dev` | Start development server on port 3000 |
-| `npm run build` | Build production bundle |
-| `npm run preview` | Preview production build locally |
-| `npm run lint` | Run TypeScript type checking |
-| `npm run clean` | Remove dist and build artifacts |
-
----
-
-## 🛠️ Technology Stack
+## Technology Stack
 
 ### Frontend Framework
 - **React** 19.0.1 - UI library
@@ -338,7 +284,7 @@ The application will be available at `http://localhost:3000`
 
 ---
 
-## 📋 Project Features in Detail
+## Project Features in Detail
 
 ### SOW Projects
 - **Multi-section documents**: Break down SOW into logical sections
