@@ -155,33 +155,46 @@ export const SOWTemplateEditor: React.FC<SOWTemplateEditorProps> = ({
     showToast(`Removed "${target.title}"`);
   };
 
-  // Governance Roles Handler
-  const handleUpdateRole = (roleId: string, updatedField: Partial<GovernanceRoleItem>) => {
+  // Governance Roles Handlers
+  const applyGovernanceRolesUpdate = (updatedRoles: GovernanceRoleItem[]) => {
     if (!currentSection) return;
-    const currentRoles = currentSection.governanceRoles || [];
-    const updatedRoles = currentRoles.map(r => r.id === roleId ? { ...r, ...updatedField } : r);
     
-    // Also regenerate markdown table in content
+    // Regenerate markdown table in content
     const tableHeader = '| Role Title | Organization | Core Responsibilities |\n|---|---|---|\n';
     const tableRows = updatedRoles.map(r => 
       `| ${r.role} | ${r.role.startsWith('DTMC') ? 'DTMC Advisory' : '{{CLIENT_ORGANIZATION_NAME}}'} | ${r.responsibility} |`
     ).join('\n');
 
-    const updatedContent = currentSection.content.replace(
-      /\| Role Title \| Organization \| Core Responsibilities \|[\s\S]*?(?=\n\n|\n###|$)/,
-      tableHeader + tableRows
-    );
+    const tableBlock = tableHeader + tableRows;
+    const hasExistingTable = /\| Role Title \| Organization \| Core Responsibilities \|[\s\S]*?(?=\n\n|\n###|$)/.test(currentSection.content);
+
+    let updatedContent = currentSection.content;
+    if (hasExistingTable) {
+      updatedContent = currentSection.content.replace(
+        /\| Role Title \| Organization \| Core Responsibilities \|[\s\S]*?(?=\n\n|\n###|$)/,
+        tableBlock
+      );
+    } else {
+      updatedContent = `${currentSection.content.trim()}\n\n### Governance & Staffing Matrix\n\n${tableBlock}`;
+    }
 
     const updatedSections = template.sections.map(s => 
       s.id === currentSection.id ? { 
         ...s, 
         governanceRoles: updatedRoles,
-        content: updatedContent.includes('| Role Title |') ? updatedContent : `${currentSection.content}\n\n${tableHeader}${tableRows}`
+        content: updatedContent,
       } : s
     );
 
     setTemplate({ ...template, sections: updatedSections });
     setIsDirty(true);
+  };
+
+  const handleUpdateRole = (roleId: string, updatedField: Partial<GovernanceRoleItem>) => {
+    if (!currentSection) return;
+    const currentRoles = currentSection.governanceRoles || [];
+    const updatedRoles = currentRoles.map(r => r.id === roleId ? { ...r, ...updatedField } : r);
+    applyGovernanceRolesUpdate(updatedRoles);
   };
 
   const handleAddRole = () => {
@@ -196,8 +209,8 @@ export const SOWTemplateEditor: React.FC<SOWTemplateEditorProps> = ({
     };
 
     const updatedRoles = [...currentRoles, newRole];
-    handleUpdateRole(newRole.id, newRole);
-    showToast('Added governance role');
+    applyGovernanceRolesUpdate(updatedRoles);
+    showToast('Added governance role to matrix and markdown');
   };
 
   const handleRemoveRole = (roleId: string) => {
@@ -210,12 +223,8 @@ export const SOWTemplateEditor: React.FC<SOWTemplateEditorProps> = ({
     }
 
     const filtered = currentRoles.filter(r => r.id !== roleId);
-    const updatedSections = template.sections.map(s => 
-      s.id === currentSection.id ? { ...s, governanceRoles: filtered } : s
-    );
-    setTemplate({ ...template, sections: updatedSections });
-    setIsDirty(true);
-    showToast('Role removed from governance matrix');
+    applyGovernanceRolesUpdate(filtered);
+    showToast('Role removed from governance matrix and markdown');
   };
 
   // Helper to insert placeholder into editor
