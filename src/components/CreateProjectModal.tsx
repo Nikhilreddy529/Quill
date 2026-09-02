@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { 
   X, 
   Sparkles, 
@@ -21,14 +21,13 @@ import {
   Trash2,
   Plus,
   Info,
-  Sliders
+  Sliders,
+  Paperclip
 } from 'lucide-react';
 import { SOWProject, SourceDocument, UploadedProjectDocument, UploadedDocCategory } from '../types/quill';
 import { SAMPLE_SOURCE_DOCUMENTS } from '../data/sampleSharePointData';
 import { generateDefaultFramework } from '../services/aiGeneratorService';
 import { templateService } from '../services/templateService';
-import { IntakeSpecificationModal } from './intake/IntakeSpecificationModal';
-import { intakeNormalizationService } from '../services/intakeNormalizationService';
 
 interface CreateProjectModalProps {
   isOpen: boolean;
@@ -43,7 +42,8 @@ export const CreateProjectModal: React.FC<CreateProjectModalProps> = ({
 }) => {
   const [step, setStep] = useState<1 | 2 | 3>(1);
   const [isGenerating, setIsGenerating] = useState(false);
-  const [showIntakeSpecModal, setShowIntakeSpecModal] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [isDragging, setIsDragging] = useState(false);
   const [availableTemplates] = useState(() => templateService.getTemplates());
   const [selectedTemplateId, setSelectedTemplateId] = useState<string>(
     availableTemplates[0]?.id || 'TMPL-DTMC-MASTER-2026'
@@ -51,6 +51,8 @@ export const CreateProjectModal: React.FC<CreateProjectModalProps> = ({
 
   // Form State
   const [clientName, setClientName] = useState('Acme Global Enterprises');
+  const [clientContact, setClientContact] = useState('Riley Chen');
+  const [clientContactEmail, setClientContactEmail] = useState('riley.chen@acme.com');
   const [clientIndustry, setClientIndustry] = useState('Financial Services');
   const [projectType, setProjectType] = useState('Cloud Migration');
   const [projectTitle, setProjectTitle] = useState('Acme Multi-Cloud Migration & Security SOW');
@@ -157,6 +159,71 @@ export const CreateProjectModal: React.FC<CreateProjectModalProps> = ({
 
   if (!isOpen) return null;
 
+  const processSelectedFiles = (files: FileList | File[]) => {
+    const newDocs: UploadedProjectDocument[] = [];
+    
+    Array.from(files).forEach((file, index) => {
+      const fileName = file.name;
+      const isPdf = fileName.toLowerCase().endsWith('.pdf');
+      const isDocx = fileName.toLowerCase().endsWith('.docx') || fileName.toLowerCase().endsWith('.doc');
+      const isSpreadsheet = fileName.toLowerCase().endsWith('.xlsx') || fileName.toLowerCase().endsWith('.csv');
+      const isTxt = fileName.toLowerCase().endsWith('.txt') || fileName.toLowerCase().endsWith('.md');
+      const fileType = isPdf ? 'pdf' : (isDocx ? 'docx' : 'docx');
+      
+      let category: UploadedDocCategory = 'Meeting Transcription';
+      const lower = fileName.toLowerCase();
+      if (lower.includes('srs') || lower.includes('spec') || lower.includes('technical')) {
+        category = 'SRS Document';
+      } else if (lower.includes('clarif') || lower.includes('qa') || lower.includes('q&a') || lower.includes('notes') || lower.includes('requirement')) {
+        category = 'Requirement Clarification';
+      } else if (lower.includes('arch') || lower.includes('assess') || isPdf) {
+        category = 'Architecture & Scope PDF';
+      } else if (lower.includes('brief') || lower.includes('charter') || isDocx) {
+        category = 'Client Brief Word Doc';
+      }
+
+      const formattedSize = file.size > 1048576 
+        ? `${(file.size / 1048576).toFixed(1)} MB` 
+        : `${Math.round(file.size / 1024)} KB`;
+
+      newDocs.push({
+        id: `DOC-UPLOAD-${Date.now()}-${index}`,
+        fileName: fileName,
+        fileType: fileType,
+        fileSizeBytes: file.size || 280000,
+        uploadedAt: new Date().toISOString(),
+        uploadedBy: 'Nikhil (PM)',
+        category: category,
+        sectionReference: `Device Upload • ${category}`,
+        pageOrTimestamp: isPdf ? 'Multi-page document' : 'Full intake file',
+        snippet: `Locally attached file from user device (${formattedSize}). Content will be ingested for SOW section generation.`,
+        keyRequirementsExtracted: [
+          `Uploaded from computer: ${fileName}`,
+          `Integrated into SOW contextual evidence`
+        ]
+      });
+    });
+
+    if (newDocs.length > 0) {
+      setUploadedFiles(prev => [...newDocs, ...prev]);
+    }
+  };
+
+  const handleNativeFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files.length > 0) {
+      processSelectedFiles(e.target.files);
+      e.target.value = '';
+    }
+  };
+
+  const handleFileDrop = (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    setIsDragging(false);
+    if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+      processSelectedFiles(e.dataTransfer.files);
+    }
+  };
+
   const handleAddUploadedFile = () => {
     if (!newFileName.trim()) return;
     const isPdf = newFileName.toLowerCase().endsWith('.pdf');
@@ -210,6 +277,9 @@ export const CreateProjectModal: React.FC<CreateProjectModalProps> = ({
         let synthesizedContent = sec.content
           .split('{{PROJECT_NAME}}').join(projectTitle || `${clientName} SOW`)
           .split('{{CLIENT_ORGANIZATION_NAME}}').join(clientName)
+          .split('{{CLIENT_CONTACT_NAME}}').join(clientContact || 'Riley Chen')
+          .split('{{CLIENT_CONTACT_EMAIL}}').join(clientContactEmail || 'riley.chen@acme.com')
+          .split('{{CLIENT_SIGNATORY_NAME}}').join(clientContact || 'Riley Chen')
           .split('{{ANTICIPATED_START_DATE}}').join(targetStartDate)
           .split('{{ANTICIPATED_COMPLETION_DATE}}').join(targetEndDate)
           .split('{{CURRENCY}}').join(currency);
@@ -282,6 +352,8 @@ export const CreateProjectModal: React.FC<CreateProjectModalProps> = ({
       id: newId,
       title: projectTitle || `${clientName} SOW Engagement`,
       clientName,
+      clientContact,
+      clientContactEmail,
       clientIndustry,
       projectType,
       targetStartDate,
@@ -411,26 +483,29 @@ export const CreateProjectModal: React.FC<CreateProjectModalProps> = ({
                 </div>
               </div>
 
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-xs font-semibold text-[#334155] uppercase tracking-wider mb-1.5">
-                    Target Start Date
+                    Client Contact
                   </label>
                   <input
-                    type="date"
-                    value={targetStartDate}
-                    onChange={(e) => setTargetStartDate(e.target.value)}
+                    type="text"
+                    value={clientContact}
+                    onChange={(e) => setClientContact(e.target.value)}
+                    placeholder="e.g. Riley Chen"
                     className="w-full bg-white border border-[#CBD5E1] rounded-lg px-3.5 py-2.5 text-sm text-[#0F172A] focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-[#1D68F2]"
                   />
                 </div>
+
                 <div>
                   <label className="block text-xs font-semibold text-[#334155] uppercase tracking-wider mb-1.5">
-                    Target Completion Date
+                    Client Email
                   </label>
                   <input
-                    type="date"
-                    value={targetEndDate}
-                    onChange={(e) => setTargetEndDate(e.target.value)}
+                    type="email"
+                    value={clientContactEmail}
+                    onChange={(e) => setClientContactEmail(e.target.value)}
+                    placeholder="e.g. riley.chen@acme.com"
                     className="w-full bg-white border border-[#CBD5E1] rounded-lg px-3.5 py-2.5 text-sm text-[#0F172A] focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-[#1D68F2]"
                   />
                 </div>
@@ -438,36 +513,66 @@ export const CreateProjectModal: React.FC<CreateProjectModalProps> = ({
             </div>
           )}
 
-          {/* STEP 2: UPLOAD PM INTAKE RESOURCES (Meeting Transcriptions, Requirement Clarifications, SRS, PDF/Word) */}
+          {/* STEP 2: UPLOAD PM INTAKE RESOURCES */}
           {step === 2 && (
             <div className="space-y-4">
+              <input
+                type="file"
+                ref={fileInputRef}
+                onChange={handleNativeFileUpload}
+                multiple
+                accept=".pdf,.docx,.doc,.txt,.md,.json,.xlsx,.csv,.pptx"
+                className="hidden"
+              />
+
               <div className="flex items-center justify-between">
                 <div>
-                  <h3 className="text-sm font-bold text-[#0F172A]">Uploaded Project Resources for SOW Grounding</h3>
-                  <p className="text-xs text-[#64748B]">
-                    Attach discovery meeting transcriptions, requirement clarification notes, SRS specifications, PDF assessments, and Word briefs. 
-                    <strong className="text-[#0F172A] ml-1">Only these uploaded documents will appear in your SOW's "Sources Used" grounding.</strong>
-                  </p>
+                  <h3 className="text-sm font-bold text-[#0F172A]">Upload Document</h3>
                 </div>
                 <div className="flex items-center space-x-2">
                   <button
                     type="button"
-                    onClick={() => setShowIntakeSpecModal(true)}
-                    className="flex items-center space-x-1.5 text-xs font-semibold bg-white text-purple-700 hover:bg-purple-50 px-3 py-1.5 rounded-lg border border-purple-200 transition cursor-pointer"
-                    title="View file type rules, max sizes, and transcript format constraints (QTK-001)"
+                    onClick={() => fileInputRef.current?.click()}
+                    className="flex items-center space-x-1.5 text-xs font-bold bg-[#1D68F2] hover:bg-[#1554c0] text-white px-3.5 py-1.5 rounded-lg transition cursor-pointer shadow-xs"
                   >
-                    <Sliders className="w-3.5 h-3.5" />
-                    <span>Intake Spec Rules (QTK-001)</span>
+                    <UploadCloud className="w-3.5 h-3.5" />
+                    <span>Attach Document</span>
                   </button>
 
                   <button
                     type="button"
-                    onClick={() => setIsAddingCustomFile(true)}
-                    className="flex items-center space-x-1.5 text-xs font-bold bg-[#EFF6FF] text-[#1D68F2] hover:bg-[#DBEAFE] px-3 py-1.5 rounded-lg border border-[#BFDBFE] transition cursor-pointer"
+                    onClick={() => setIsAddingCustomFile(prev => !prev)}
+                    className="flex items-center space-x-1 text-xs font-semibold bg-[#F1F5F9] text-[#475569] hover:bg-[#E2E8F0] px-3 py-1.5 rounded-lg transition cursor-pointer"
+                    title="Manual document text entry"
                   >
                     <Plus className="w-3.5 h-3.5" />
-                    <span>Attach Document</span>
+                    <span>Manual Entry</span>
                   </button>
+                </div>
+              </div>
+
+              {/* Drag & Drop Local Device Upload Zone */}
+              <div
+                onDragOver={(e) => { e.preventDefault(); setIsDragging(true); }}
+                onDragLeave={() => setIsDragging(false)}
+                onDrop={handleFileDrop}
+                onClick={() => fileInputRef.current?.click()}
+                className={`p-4 border-2 border-dashed rounded-xl flex items-center justify-center space-x-3 cursor-pointer transition ${
+                  isDragging
+                    ? 'border-[#1D68F2] bg-blue-50/70'
+                    : 'border-[#CBD5E1] bg-[#F8FAFC] hover:bg-[#F1F5F9] hover:border-[#94A3B8]'
+                }`}
+              >
+                <div className="w-8 h-8 rounded-lg bg-blue-50 border border-blue-200 flex items-center justify-center text-[#1D68F2] shrink-0">
+                  <UploadCloud className="w-4 h-4" />
+                </div>
+                <div className="text-left">
+                  <div className="text-xs font-semibold text-[#0F172A]">
+                    Click to select or drag and drop files from your device
+                  </div>
+                  <div className="text-[11px] text-[#64748B]">
+                    Accepts Word (.docx), PDF (.pdf), Text (.txt, .md), and Spreadsheets (.xlsx)
+                  </div>
                 </div>
               </div>
 
@@ -671,14 +776,6 @@ export const CreateProjectModal: React.FC<CreateProjectModalProps> = ({
                 </div>
               </div>
 
-              {/* Master SOW Standard */}
-              <div className="p-4 bg-emerald-50 border border-emerald-200 rounded-xl flex items-start space-x-3">
-                <FileCheck2 className="w-5 h-5 text-emerald-600 shrink-0 mt-0.5" />
-                <div className="text-xs text-emerald-900 leading-relaxed">
-                  <div className="font-bold text-emerald-950">DTMC Corporate Master SOW Standard:</div>
-                  The AI authoring pipeline will synthesize your uploaded meeting transcriptions, requirement clarifications, and SRS specifications directly into the 10-section standardized framework.
-                </div>
-              </div>
             </div>
           )}
 
@@ -739,12 +836,6 @@ export const CreateProjectModal: React.FC<CreateProjectModalProps> = ({
         </div>
 
       </div>
-
-      {/* Intake Specification Modal (QTK-001) */}
-      <IntakeSpecificationModal
-        isOpen={showIntakeSpecModal}
-        onClose={() => setShowIntakeSpecModal(false)}
-      />
     </div>
   );
 };
