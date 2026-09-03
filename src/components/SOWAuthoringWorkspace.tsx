@@ -38,7 +38,7 @@ import {
   Trash2
 } from 'lucide-react';
 import { SOWProject, SOWSection, SourceDocument, DetailedSourceCitation, SectionComment, UploadedProjectDocument } from '../types/quill';
-import { generateSectionContent, validatePricingIsBlank } from '../services/aiGeneratorService';
+import { generateSectionContent, validatePricingIsBlank } from '../services/n8nServices';
 
 interface SOWAuthoringWorkspaceProps {
   project: SOWProject;
@@ -133,36 +133,58 @@ export const SOWAuthoringWorkspace: React.FC<SOWAuthoringWorkspaceProps> = ({
   };
 
   const handleRunAiAction = async (instruction: string) => {
-    setIsRegenerating(true);
-    setAiStatusMsg(`Applying AI action: "${instruction}"...`);
-    try {
-      const result = await generateSectionContent(
-        currentSection.title,
-        currentSection.category,
-        project.clientName,
-        project.meetingNotes,
-        instruction + "\nExisting Content:\n" + editorText
-      );
+     setIsRegenerating(true);
+  setAiStatusMsg(`Applying AI action: "${instruction}"...`);
 
-      const updated: SOWSection = {
-        ...currentSection,
-        content: result.content,
-        confidenceScore: result.confidenceScore,
-        groundedSources: result.groundedSources,
-        version: Number((currentSection.version + 0.1).toFixed(1)),
-        regenerationPrompt: instruction,
-      };
+  try {
+    const result = await sendToN8n({
+      clientName: project.clientName,
+      engagementName: project.engagementName,
+      meetingTranscript: project.meetingNotes,
+      uploadedDocuments: project.uploadedDocuments?.map((doc) => ({
+        name: doc.fileName,
+        content: doc.snippet,
+      })),
+      sectionTitle: currentSection.title,
+      category: currentSection.category,
+      customInstructions:
+        instruction + "\nExisting Content:\n" + editorText,
+    });
 
-      setEditorText(result.content);
-      onUpdateSection(updated);
-      setAiStatusMsg(`Updated section successfully based on reference documents.`);
-      setAiPrompt('');
-      showToast(`AI content updated (v${updated.version})`);
-    } catch (e) {
-      setAiStatusMsg('Failed to run AI assistance.');
-    } finally {
-      setIsRegenerating(false);
-    }
+    const generatedSection = result.sections?.find(
+      (section) => section.sectionName === currentSection.title
+    );
+
+    const generatedContent =
+      generatedSection?.content ||
+      result.sections?.[0]?.content ||
+      editorText;
+
+    const updated: SOWSection = {
+      ...currentSection,
+      content: generatedContent,
+      confidenceScore: result.confidenceScore ?? currentSection.confidenceScore,
+      version: Number((currentSection.version + 0.1).toFixed(1)),
+      regenerationPrompt: instruction,
+    };
+
+    setEditorText(generatedContent);
+    onUpdateSection(updated);
+
+    setAiStatusMsg(
+      result.itemsForReview?.length
+        ? "Updated section with items flagged for human review."
+        : "Updated section successfully based on the provided sources."
+    );
+
+    setAiPrompt('');
+    showToast(`AI content updated (v${updated.version})`);
+  } catch (e) {
+    console.error('n8n AI assistance failed:', e);
+    setAiStatusMsg('Failed to run AI assistance.');
+  } finally {
+    setIsRegenerating(false);
+  }
   };
 
   const handleAddNewSection = () => {
