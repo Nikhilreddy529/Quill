@@ -5,6 +5,7 @@ import { PROPOSAL_TEMPLATES, getProposalTemplate } from '../services/proposalTem
 import { generateProposalContent } from '../services/proposalGenerationService';
 import { exportProposalDeck } from '../services/proposalExportService';
 import { GeneratedProposalSlide } from '../types/proposal';
+import { sendToN8n } from '../services/n8nServices';
 
 interface ProposalWorkspaceProps {
   project: SOWProject;
@@ -40,18 +41,48 @@ export const ProposalWorkspace: React.FC<ProposalWorkspaceProps> = ({ project, o
   }, [project, selectedTemplate]);
 
   const handleGenerate = async () => {
-    setIsGenerating(true);
-    setGenerationError('');
-    try {
-      const slides = await generateProposalContent(project, selectedTemplate);
-      setGeneratedSlides(slides);
-      setGeneratedAt(new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }));
-    } catch {
-      setGenerationError('Proposal generation failed. Check the intake data and try again.');
-    } finally {
-      setIsGenerating(false);
-    }
-  };
+  setIsGenerating(true);
+  setGenerationError('');
+
+  try {
+    const n8nResult = await sendToN8n({
+      clientName: project.clientName,
+      engagementName: project.title,
+      documentType: 'Proposal',
+      meetingTranscript: project.meetingNotes || '',
+      uploadedDocuments: project.uploadedDocuments?.map(file => ({
+        name: file.fileName,
+        content: file.snippet,
+      })),
+      selectedTemplate: project.proposalTemplateId || PROPOSAL_TEMPLATES[0].id,
+    });
+
+    const slides: GeneratedProposalSlide[] = (n8nResult.sections || []).map(
+      (section, index) => ({
+        id: `section-${index + 1}`,
+        title: section.sectionName,
+        content: section.content,
+      })
+    );
+
+    setGeneratedSlides(slides);
+    setGeneratedAt(
+      new Date().toLocaleTimeString([], {
+        hour: '2-digit',
+        minute: '2-digit',
+      })
+    );
+  } catch {
+    setGenerationError(
+      'Proposal generation failed. Check the intake data and try again.'
+    );
+  } finally {
+    setIsGenerating(false);
+  }
+};
+
+
+  
   const uploadedDocs = project.uploadedDocuments.length > 0
     ? project.uploadedDocuments.map(doc => doc.fileName).slice(0, 4).join(', ')
     : 'Client discovery notes, meeting transcripts, requirement clarifications, and architecture inputs';

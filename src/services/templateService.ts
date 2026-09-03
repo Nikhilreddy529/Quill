@@ -61,8 +61,8 @@ export const STANDARD_DTMC_MASTER_TEMPLATE: SOWTemplate = {
     modifiedBy: 'Enterprise Architecture Board',
     modifiedDate: '2026-08-18T14:30:00Z',
     approvedForUse: true,
-    wordTemplateFile: 'DTMC_Master_SOW_Template_2026.dotx',
-    sharePointTemplateUrl: 'https://dtmc.sharepoint.com/sites/advisory/templates/DTMC_Master_SOW_Template_2026.dotx',
+    wordTemplateFile: 'DTMC_Sample_SOW_01_SharePoint_Advisory (1).docx',
+    sharePointTemplateUrl: '',
   },
   coverPage: {
     companyBrand: 'DTMC',
@@ -431,70 +431,78 @@ Either party may request changes to the project scope, deliverables, or schedule
 };
 
 export const SAMPLE_ADDITIONAL_TEMPLATES: SOWTemplate[] = [
-  STANDARD_DTMC_MASTER_TEMPLATE,
   {
-    id: 'TMPL-AZURE-CLOUD-2026',
+    ...STANDARD_DTMC_MASTER_TEMPLATE,
+    id: 'TMPL-SHAREPOINT-ADVISORY-2026',
     metadata: {
-      id: 'TMPL-AZURE-CLOUD-2026',
-      name: 'Azure Cloud Migration & Modernization SOW Template',
-      description: 'Tailored specifically for enterprise Azure infrastructure migrations, zero-trust Entra ID governance, and microservices architecture.',
-      templateType: 'Cloud Migration & Security',
-      version: '1.8',
+      ...STANDARD_DTMC_MASTER_TEMPLATE.metadata,
+      id: 'TMPL-SHAREPOINT-ADVISORY-2026',
+      name: 'SharePoint Advisory SOW Template',
+      description: 'SOW template for SharePoint advisory and modernization engagements.',
+      templateType: 'Master SOW',
+      version: '1.0',
       status: 'Ready for Use',
-      createdBy: 'Cloud Practice Center of Excellence',
-      createdDate: '2026-02-10T10:00:00Z',
-      modifiedBy: 'Nikhil',
-      modifiedDate: '2026-08-20T11:15:00Z',
-      approvedForUse: true,
-      wordTemplateFile: 'DTMC_Azure_Cloud_Migration_2026.dotx',
-      sharePointTemplateUrl: 'https://dtmc.sharepoint.com/sites/advisory/templates/DTMC_Azure_Cloud_Migration_2026.dotx',
+      wordTemplateFile: 'DTMC_Sample_SOW_01_SharePoint_Advisory (1).docx',
+      sharePointTemplateUrl: '',
     },
-    coverPage: {
-      ...STANDARD_DTMC_MASTER_TEMPLATE.coverPage,
-      documentTitle: 'STATEMENT OF WORK — CLOUD MIGRATION',
-    },
-    usageCount: 28,
-    tags: ['Azure', 'Cloud Migration', 'Infrastructure', 'Zero-Trust'],
-    sections: STANDARD_DTMC_MASTER_TEMPLATE.sections.map(s => {
-      if (s.id === 'SEC-T-03') {
-        return {
-          ...s,
-          content: `### 3. Scope and Delivery Approach (Cloud Migration)
-
-DTMC will deliver full-lifecycle Azure Cloud Landing Zone setup, security posture hardening, workload migration, and cutover testing for target applications.`
-        };
-      }
-      return s;
-    })
+    tags: ['SOW', 'SharePoint', 'Advisory'],
+    sections: STANDARD_DTMC_MASTER_TEMPLATE.sections.map(s => ({ ...s })),
   },
   {
-    id: 'TMPL-FIXED-PRICE-MOD-2026',
+    ...STANDARD_DTMC_MASTER_TEMPLATE,
+    id: 'TMPL-VOLUNTEER-MANAGEMENT-2026',
     metadata: {
-      id: 'TMPL-FIXED-PRICE-MOD-2026',
-      name: 'Fixed-Price Modernization SOW Template (Milestone-Gated)',
-      description: 'Structured for milestone-governed fixed fee projects with rigorous deliverable acceptance gates and change control.',
-      templateType: 'Fixed-Price Modernization',
-      version: '1.3',
-      status: 'Draft',
-      createdBy: 'Commercial Advisory Team',
-      createdDate: '2026-03-01T14:00:00Z',
-      modifiedBy: 'Enterprise Architecture Board',
-      modifiedDate: '2026-08-22T16:00:00Z',
-      approvedForUse: false,
-      wordTemplateFile: 'DTMC_Fixed_Price_Milestone_2026.dotx',
-      sharePointTemplateUrl: 'https://dtmc.sharepoint.com/sites/advisory/templates/DTMC_Fixed_Price_Milestone_2026.dotx',
+      ...STANDARD_DTMC_MASTER_TEMPLATE.metadata,
+      id: 'TMPL-VOLUNTEER-MANAGEMENT-2026',
+      name: 'Volunteer Management SOW Template',
+      description: 'SOW template for volunteer management engagements.',
+      templateType: 'Volunteer Management',
+      version: '1.0',
+      status: 'Ready for Use',
+      wordTemplateFile: 'DTMC_Sample_SOW_02_Volunteer_Management.docx',
+      sharePointTemplateUrl: '',
     },
-    coverPage: {
-      ...STANDARD_DTMC_MASTER_TEMPLATE.coverPage,
-      documentTitle: 'STATEMENT OF WORK — FIXED PRICE MILESTONES',
+    tags: ['SOW', 'Volunteer Management'],
+    sections: STANDARD_DTMC_MASTER_TEMPLATE.sections.map(s => ({ ...s })),
+  },
+  {
+    ...STANDARD_DTMC_MASTER_TEMPLATE,
+    id: 'TMPL-BUSINESS-CENTRAL-2026',
+    metadata: {
+      ...STANDARD_DTMC_MASTER_TEMPLATE.metadata,
+      id: 'TMPL-BUSINESS-CENTRAL-2026',
+      name: 'Business Central SOW Template',
+      description: 'SOW template for Microsoft Business Central engagements.',
+      templateType: 'Business Central',
+      version: '1.0',
+      status: 'Ready for Use',
+      wordTemplateFile: 'DTMC_Sample_SOW_03_Business_Central.docx',
+      sharePointTemplateUrl: '',
     },
-    usageCount: 12,
-    tags: ['Fixed-Price', 'Milestone', 'Governance'],
-    sections: STANDARD_DTMC_MASTER_TEMPLATE.sections
-  }
+    tags: ['SOW', 'Business Central', 'ERP'],
+    sections: STANDARD_DTMC_MASTER_TEMPLATE.sections.map(s => ({ ...s })),
+  },
+  {
+    ...STANDARD_DTMC_MASTER_TEMPLATE,
+    id: 'TMPL-NETSUITE-READINESS-2026',
+    metadata: {
+      ...STANDARD_DTMC_MASTER_TEMPLATE.metadata,
+      id: 'TMPL-NETSUITE-READINESS-2026',
+      name: 'NetSuite Readiness SOW Template',
+      description: 'SOW template for NetSuite readiness and modernization assessments.',
+      templateType: 'NetSuite Readiness',
+      version: '1.0',
+      status: 'Ready for Use',
+      wordTemplateFile: 'DTMC_Sample_SOW_04_NetSuite_Readiness.docx',
+      sharePointTemplateUrl: '',
+    },
+    tags: ['SOW', 'NetSuite', 'Readiness'],
+    sections: STANDARD_DTMC_MASTER_TEMPLATE.sections.map(s => ({ ...s })),
+  },
 ];
 
-const LOCAL_STORAGE_KEY = 'quill_sow_templates_v1';
+
+const LOCAL_STORAGE_KEY = 'quill_sow_templates_v2';
 
 // Template Service Methods
 export const templateService = {
@@ -880,8 +888,8 @@ export const templateService = {
         modifiedBy: 'Nikhil',
         modifiedDate: new Date().toISOString(),
         approvedForUse: false,
-        wordTemplateFile: 'DTMC_Master_SOW_Template_2026.dotx',
-        sharePointTemplateUrl: 'https://dtmc.sharepoint.com/sites/advisory/templates/DTMC_Master_SOW_Template_2026.dotx'
+        wordTemplateFile: 'DTMC_Sample_SOW_01_SharePoint_Advisory (1).docx',
+        sharePointTemplateUrl: ''
       },
       coverPage: { ...STANDARD_DTMC_MASTER_TEMPLATE.coverPage },
       usageCount: 0,
