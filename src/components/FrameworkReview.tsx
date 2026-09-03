@@ -6,7 +6,6 @@ import {
   ArrowDown, 
   Plus, 
   Trash2, 
-  Sparkles, 
   Lock, 
   AlertCircle, 
   ShieldCheck,
@@ -169,7 +168,6 @@ export const FrameworkReview: React.FC<FrameworkReviewProps> = ({
                 onClick={onProceedToSectionReview}
                 className="flex items-center space-x-2 bg-[#1D68F2] hover:bg-[#1554c0] text-white text-xs font-bold px-5 py-2.5 rounded-lg shadow-sm shadow-blue-500/20 transition active:scale-95 cursor-pointer"
               >
-                <Sparkles className="w-4 h-4" />
                 <span>Proceed to Section Review</span>
               </button>
             )}

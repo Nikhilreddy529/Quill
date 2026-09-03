@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { 
   Plus, 
   Home, 
@@ -9,7 +9,8 @@ import {
   Settings, 
   History, 
   ChevronLeft,
-  ChevronRight
+  ChevronRight,
+  Presentation
 } from 'lucide-react';
 import { FeatherLogo } from './FeatherLogo';
 
@@ -17,6 +18,7 @@ interface SidebarProps {
   currentView: string;
   setCurrentView: (view: any) => void;
   onOpenCreateProject: () => void;
+  onOpenProposal: () => void;
   isCollapsed: boolean;
   setIsCollapsed: (collapsed: boolean) => void;
 }
@@ -25,9 +27,40 @@ export const Sidebar: React.FC<SidebarProps> = ({
   currentView,
   setCurrentView,
   onOpenCreateProject,
+  onOpenProposal,
   isCollapsed,
   setIsCollapsed
 }) => {
+  const [isCreateMenuOpen, setIsCreateMenuOpen] = useState(false);
+  const createMenuRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!isCreateMenuOpen) return;
+
+    const handlePointerDown = (event: PointerEvent) => {
+      if (!createMenuRef.current?.contains(event.target as Node)) setIsCreateMenuOpen(false);
+    };
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') setIsCreateMenuOpen(false);
+    };
+    document.addEventListener('pointerdown', handlePointerDown);
+    document.addEventListener('keydown', handleKeyDown);
+    return () => {
+      document.removeEventListener('pointerdown', handlePointerDown);
+      document.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [isCreateMenuOpen]);
+
+  const handleCreateSow = () => {
+    setIsCreateMenuOpen(false);
+    onOpenCreateProject();
+  };
+
+  const handleCreateProposal = () => {
+    setIsCreateMenuOpen(false);
+    onOpenProposal();
+  };
+
   return (
     <aside 
       className={`${
@@ -53,17 +86,37 @@ export const Sidebar: React.FC<SidebarProps> = ({
       </div>
 
       {/* Primary Action Button */}
-      <div className="p-3.5">
+      <div className="relative p-3.5" ref={createMenuRef}>
         <button
-          onClick={onOpenCreateProject}
+          onClick={() => setIsCreateMenuOpen(open => !open)}
+          aria-expanded={isCreateMenuOpen}
+          aria-haspopup="menu"
           className={`w-full bg-[#1D68F2] hover:bg-[#1557d0] text-white rounded-lg transition-all duration-200 flex items-center justify-center space-x-2 py-2.5 font-semibold text-xs shadow-md shadow-blue-600/30 cursor-pointer ${
             isCollapsed ? 'px-0' : 'px-3'
           }`}
-          title="New SOW"
+          title="Create new document"
         >
           <Plus className="w-4 h-4 stroke-[2.5]" />
-          {!isCollapsed && <span>New SOW </span>}
+          {!isCollapsed && <span>New</span>}
         </button>
+
+        {isCreateMenuOpen && (
+          <div
+            role="menu"
+            aria-label="Create new document"
+            className={`absolute top-[calc(100%-0.5rem)] z-50 w-56 rounded-xl border border-[#D8E2F0] bg-white p-1.5 shadow-xl shadow-slate-950/15 ${isCollapsed ? 'left-[calc(100%+0.5rem)]' : 'left-3.5 right-3.5'}`}
+          >
+            <div className="px-2.5 py-2 text-[10px] font-bold uppercase tracking-[0.14em] text-[#64748B]">Start something new</div>
+            <button role="menuitem" onClick={handleCreateSow} className="flex w-full items-center gap-3 rounded-lg px-2.5 py-2.5 text-left transition hover:bg-blue-50 cursor-pointer">
+              <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-blue-50 text-[#1D68F2]"><FileText className="h-4 w-4" /></span>
+              <span><span className="block text-xs font-bold text-[#0F172A]">New SOW</span><span className="mt-0.5 block text-[11px] text-[#64748B]">Start with client intake</span></span>
+            </button>
+            <button role="menuitem" onClick={handleCreateProposal} className="flex w-full items-center gap-3 rounded-lg px-2.5 py-2.5 text-left transition hover:bg-violet-50 cursor-pointer">
+              <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-violet-50 text-violet-600"><Presentation className="h-4 w-4" /></span>
+              <span><span className="block text-xs font-bold text-[#0F172A]">New Proposal</span><span className="mt-0.5 block text-[11px] text-[#64748B]">Build an executive deck</span></span>
+            </button>
+          </div>
+        )}
       </div>
 
       {/* Navigation Sections */}

@@ -16,6 +16,7 @@ interface DashboardProps {
   auditLogs: AuditLogEntry[];
   onSelectProject: (projectId: string) => void;
   onOpenCreateModal: () => void;
+  onOpenProposalModal: () => void;
   onOpenExportModal: (project: SOWProject) => void;
 }
 
@@ -24,6 +25,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
   auditLogs,
   onSelectProject,
   onOpenCreateModal,
+  onOpenProposalModal,
   onOpenExportModal,
 }) => {
   const totalProjects = projects.length;
@@ -59,7 +61,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
               <span>Generate New SOW</span>
             </button>
             <button
-              onClick={() => window.dispatchEvent(new CustomEvent('quill:open-proposal'))}
+              onClick={onOpenProposalModal}
               className="flex items-center space-x-2 border border-[#CBD5E1] bg-white hover:bg-slate-50 text-[#0F172A] font-semibold px-5 py-2.5 rounded-lg transition active:scale-95 cursor-pointer text-sm"
             >
               <FileText className="w-4 h-4 text-[#1D68F2]" />
