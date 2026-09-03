@@ -145,7 +145,7 @@ export const INITIAL_SAMPLE_PROJECTS: SOWProject[] = [
         version: 2,
         lastEditedBy: "Nikhil",
         lastEditedAt: "2026-08-28T10:30:00Z",
-        approvedBy: "Arjun Rao",
+        approvedBy: "Nikhil",
         approvedAt: "2026-08-28T10:45:00Z",
         confidenceScore: 98,
         validationNotes: ["Grounded in Master Template 2025"]
@@ -174,7 +174,7 @@ export const INITIAL_SAMPLE_PROJECTS: SOWProject[] = [
         version: 3.2,
         lastEditedBy: "Nikhil",
         lastEditedAt: "2026-08-28T11:30:00Z",
-        approvedBy: "Arjun Rao",
+        approvedBy: "Nikhil",
         approvedAt: "2026-08-28T11:32:00Z",
         confidenceScore: 96
       },
@@ -201,7 +201,7 @@ export const INITIAL_SAMPLE_PROJECTS: SOWProject[] = [
         version: 2,
         lastEditedBy: "Nikhil",
         lastEditedAt: "2026-08-28T09:10:00Z",
-        approvedBy: "Arjun Rao",
+        approvedBy: "Nikhil",
         approvedAt: "2026-08-28T09:15:00Z",
         confidenceScore: 94
       },
@@ -228,7 +228,7 @@ export const INITIAL_SAMPLE_PROJECTS: SOWProject[] = [
         version: 1,
         lastEditedBy: "Nikhil",
         lastEditedAt: "2026-08-28T08:00:00Z",
-        approvedBy: "Arjun Rao",
+        approvedBy: "Nikhil",
         approvedAt: "2026-08-28T08:30:00Z",
         confidenceScore: 95
       },
@@ -250,7 +250,7 @@ export const INITIAL_SAMPLE_PROJECTS: SOWProject[] = [
         version: 1,
         lastEditedBy: "Nikhil",
         lastEditedAt: "2026-08-27T16:00:00Z",
-        approvedBy: "Arjun Rao",
+        approvedBy: "Nikhil",
         approvedAt: "2026-08-27T16:30:00Z",
         confidenceScore: 91
       },
@@ -274,7 +274,7 @@ export const INITIAL_SAMPLE_PROJECTS: SOWProject[] = [
         version: 1,
         lastEditedBy: "Nikhil",
         lastEditedAt: "2026-08-27T17:00:00Z",
-        approvedBy: "Arjun Rao",
+        approvedBy: "Nikhil",
         approvedAt: "2026-08-27T17:15:00Z",
         confidenceScore: 96
       },
@@ -343,9 +343,9 @@ export const INITIAL_SAMPLE_PROJECTS: SOWProject[] = [
         ],
         uploadedDocumentIds: ["DOC-ACME-002"],
         version: 1,
-        lastEditedBy: "Legal Counsel",
+        lastEditedBy: "Nikhil",
         lastEditedAt: "2026-08-26T10:00:00Z",
-        approvedBy: "Legal Counsel",
+        approvedBy: "Nikhil",
         approvedAt: "2026-08-26T10:30:00Z",
         confidenceScore: 100
       }
@@ -449,8 +449,8 @@ export const INITIAL_SAMPLE_PROJECTS: SOWProject[] = [
           { id: "DS-CON-1", fileName: "Contoso_Architecture_Discovery_Transcript.docx", fileType: "docx", category: "Meeting Transcription", section: "Section 1", page: 1, snippet: "Core banking Azure migration objectives." }
         ],
         uploadedDocumentIds: ["DOC-CON-001", "DOC-CON-002"],
-        version: 2,
-        lastEditedBy: "David Miller",
+          version: 2,
+          lastEditedBy: "Nikhil",
         lastEditedAt: "2026-08-28T08:45:00Z",
         confidenceScore: 97
       }
