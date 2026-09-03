@@ -18,17 +18,6 @@ import {
   Plus,
   ExternalLink,
   MessageSquare,
-  Bold,
-  Italic,
-  Underline,
-  List,
-  ListOrdered,
-  AlignLeft,
-  AlignCenter,
-  AlignRight,
-  Link2,
-  CornerUpLeft,
-  CornerUpRight,
   FileCode,
   FileSpreadsheet,
   ChevronDown,
@@ -66,7 +55,6 @@ export const SOWAuthoringWorkspace: React.FC<SOWAuthoringWorkspaceProps> = ({
 
   // Editor states
   const [activeTab, setActiveTab] = useState<'editor' | 'history'>('editor');
-  const [isEditingMode, setIsEditingMode] = useState(false);
   const [editorText, setEditorText] = useState(currentSection?.content || '');
   const [isRegenerating, setIsRegenerating] = useState(false);
   
@@ -86,7 +74,6 @@ export const SOWAuthoringWorkspace: React.FC<SOWAuthoringWorkspaceProps> = ({
   React.useEffect(() => {
     if (currentSection) {
       setEditorText(currentSection.content);
-      setIsEditingMode(false);
       setAiPrompt('');
       setAiStatusMsg(null);
     }
@@ -116,20 +103,30 @@ export const SOWAuthoringWorkspace: React.FC<SOWAuthoringWorkspaceProps> = ({
       version: Number((currentSection.version + 0.1).toFixed(1)),
     };
     onUpdateSection(updated);
-    setIsEditingMode(false);
     showToast(`Saved version ${updated.version}`);
   };
 
-  const handleApproveCurrentSection = () => {
-    const isAlreadyApproved = currentSection.status === 'Approved';
+  const currentIndex = sections.findIndex(s => s.id === currentSection.id);
+
+  const handleApproveAndMoveNext = () => {
     const updated: SOWSection = {
       ...currentSection,
-      status: isAlreadyApproved ? 'Review' : 'Approved',
-      approvedBy: isAlreadyApproved ? undefined : 'Arjun Rao',
-      approvedAt: isAlreadyApproved ? undefined : new Date().toISOString(),
+      content: editorText,
+      status: 'Approved',
+      approvedBy: 'Arjun Rao',
+      approvedAt: new Date().toISOString(),
+      requiresReapproval: false,
     };
     onUpdateSection(updated);
-    showToast(isAlreadyApproved ? 'Section status moved to Review' : 'Section Approved by Arjun Rao');
+
+    const hasNext = currentIndex >= 0 && currentIndex < sections.length - 1;
+    if (hasNext) {
+      const nextSection = sections[currentIndex + 1];
+      setActiveSectionId(nextSection.id);
+      showToast(`Approved "${currentSection.title}" & moved to next section`);
+    } else {
+      showToast(`Approved "${currentSection.title}" (All sections reviewed)`);
+    }
   };
 
   const handleRunAiAction = async (instruction: string) => {
@@ -288,33 +285,25 @@ export const SOWAuthoringWorkspace: React.FC<SOWAuthoringWorkspaceProps> = ({
           </button>
 
           <button
-            onClick={() => {
-              if (isEditingMode) {
-                handleSaveText();
-              } else {
-                setIsEditingMode(true);
-              }
-            }}
-            className={`flex items-center space-x-1.5 border px-3.5 py-1.5 rounded-lg text-xs font-semibold transition cursor-pointer ${
-              isEditingMode 
-                ? 'bg-blue-50 border-blue-300 text-blue-700'
-                : 'bg-white hover:bg-slate-50 text-[#2563EB] border-[#CBD5E1]'
-            }`}
+            onClick={handleSaveText}
+            className="flex items-center space-x-1.5 border border-[#CBD5E1] bg-white hover:bg-slate-50 text-[#1D68F2] px-3.5 py-1.5 rounded-lg text-xs font-semibold transition cursor-pointer shadow-xs"
+            title="Save draft edits for this section"
           >
-            <Edit3 className="w-3.5 h-3.5 text-[#2563EB]" />
-            <span>{isEditingMode ? 'Save Text' : 'Edit'}</span>
+            <Edit3 className="w-3.5 h-3.5 text-[#1D68F2]" />
+            <span>Save Section</span>
           </button>
 
           <button
-            onClick={handleApproveCurrentSection}
-            className={`flex items-center space-x-1.5 px-4 py-1.5 rounded-lg text-xs font-semibold transition cursor-pointer shadow-sm ${
+            onClick={handleApproveAndMoveNext}
+            className={`flex items-center space-x-1.5 px-4 py-1.5 rounded-lg text-xs font-semibold transition cursor-pointer shadow-sm active:scale-95 ${
               currentSection.status === 'Approved'
                 ? 'bg-[#15803D] hover:bg-[#166534] text-white'
                 : 'bg-[#1D68F2] hover:bg-[#1557d0] text-white'
             }`}
+            title="Approve section and advance to the next section"
           >
             <Check className="w-4 h-4 stroke-[2.5]" />
-            <span>{currentSection.status === 'Approved' ? 'Approved' : 'Approve'}</span>
+            <span>Approve & Move Next</span>
           </button>
         </div>
       </div>
@@ -474,63 +463,8 @@ export const SOWAuthoringWorkspace: React.FC<SOWAuthoringWorkspaceProps> = ({
             </button>
           </div>
 
-          {/* Formatting Toolbar */}
-          <div className="px-4 py-2 bg-[#F8FAFC] border-b border-[#E2E8F0] flex items-center justify-between flex-wrap gap-1 text-[#475569]">
-            <div className="flex items-center space-x-1">
-              <button className="flex items-center space-x-1 px-2 py-1 hover:bg-slate-200/70 rounded text-xs font-semibold text-[#334155]">
-                <span>Paragraph</span>
-                <ChevronDown className="w-3 h-3 text-[#64748B]" />
-              </button>
-
-              <div className="h-4 w-px bg-[#CBD5E1] mx-1" />
-
-              <button className="p-1.5 hover:bg-slate-200/70 rounded text-[#334155]" title="Bold">
-                <Bold className="w-3.5 h-3.5" />
-              </button>
-              <button className="p-1.5 hover:bg-slate-200/70 rounded text-[#334155]" title="Italic">
-                <Italic className="w-3.5 h-3.5" />
-              </button>
-              <button className="p-1.5 hover:bg-slate-200/70 rounded text-[#334155]" title="Underline">
-                <Underline className="w-3.5 h-3.5" />
-              </button>
-
-              <div className="h-4 w-px bg-[#CBD5E1] mx-1" />
-
-              <button className="p-1.5 hover:bg-slate-200/70 rounded text-[#334155]" title="Bullet List">
-                <List className="w-3.5 h-3.5" />
-              </button>
-              <button className="p-1.5 hover:bg-slate-200/70 rounded text-[#334155]" title="Numbered List">
-                <ListOrdered className="w-3.5 h-3.5" />
-              </button>
-
-              <div className="h-4 w-px bg-[#CBD5E1] mx-1" />
-
-              <button className="p-1.5 hover:bg-slate-200/70 rounded text-[#334155]" title="Align Left">
-                <AlignLeft className="w-3.5 h-3.5" />
-              </button>
-              <button className="p-1.5 hover:bg-slate-200/70 rounded text-[#334155]" title="Align Center">
-                <AlignCenter className="w-3.5 h-3.5" />
-              </button>
-
-              <div className="h-4 w-px bg-[#CBD5E1] mx-1" />
-
-              <button className="p-1.5 hover:bg-slate-200/70 rounded text-[#334155]" title="Insert Link">
-                <Link2 className="w-3.5 h-3.5" />
-              </button>
-            </div>
-
-            <div className="flex items-center space-x-1">
-              <button className="p-1.5 hover:bg-slate-200/70 rounded text-[#64748B]" title="Undo">
-                <CornerUpLeft className="w-3.5 h-3.5" />
-              </button>
-              <button className="p-1.5 hover:bg-slate-200/70 rounded text-[#64748B]" title="Redo">
-                <CornerUpRight className="w-3.5 h-3.5" />
-              </button>
-            </div>
-          </div>
-
           {/* Document Content Canvas */}
-          <div className="flex-1 p-8 overflow-y-auto space-y-5">
+          <div className="flex-1 p-8 overflow-y-auto flex flex-col">
             {activeTab === 'history' ? (
               <div className="space-y-4">
                 <h4 className="text-xs font-bold text-[#0F172A] uppercase tracking-wider">Revision History for {currentSection.title}</h4>
@@ -556,65 +490,29 @@ export const SOWAuthoringWorkspace: React.FC<SOWAuthoringWorkspaceProps> = ({
                   </div>
                 </div>
               </div>
-            ) : isEditingMode ? (
-              <textarea
-                rows={18}
-                value={editorText}
-                onChange={(e) => setEditorText(e.target.value)}
-                className="w-full h-full p-4 text-sm font-sans text-[#0F172A] border border-[#CBD5E1] rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-[#1D68F2] leading-relaxed"
-                placeholder="Type or format section prose..."
-              />
             ) : (
-              <div className="space-y-5 text-[#334155] text-sm leading-relaxed">
-                
+              <div className="flex-1 flex flex-col space-y-4">
                 {/* Section Title */}
                 <h2 className="text-lg font-bold text-[#0F172A]">
                   {currentSection.title}
                 </h2>
 
-                {/* Render Content Blocks */}
-                {editorText.split('\n\n').map((block, bIdx) => {
-                  if (block.startsWith('### 2.1 ') || block.startsWith('2.1 ') || block.startsWith('### In-Scope') || block.startsWith('### 2.1 In-Scope')) {
-                    return (
-                      <h3 key={bIdx} className="text-base font-bold text-[#0F172A] pt-2">
-                        {block.replace(/###\s*/, '')}
-                      </h3>
-                    );
-                  }
-
-                  if (block.startsWith('### 2.2 ') || block.startsWith('2.2 ') || block.startsWith('### Out of Scope') || block.startsWith('### 2.2 Out of Scope')) {
-                    return (
-                      <h3 key={bIdx} className="text-base font-bold text-[#0F172A] pt-2">
-                        {block.replace(/###\s*/, '')}
-                      </h3>
-                    );
-                  }
-
-                  if (block.startsWith('### ')) {
-                    return (
-                      <h3 key={bIdx} className="text-base font-bold text-[#0F172A] pt-2">
-                        {block.replace('### ', '')}
-                      </h3>
-                    );
-                  }
-
-                  if (block.startsWith('* ') || block.startsWith('- ')) {
-                    const items = block.split('\n').map(i => i.replace(/^[\*\-]\s*/, ''));
-                    return (
-                      <ul key={bIdx} className="space-y-1.5 pl-5 list-disc text-[#334155]">
-                        {items.map((item, iIdx) => (
-                          <li key={iIdx}>{item}</li>
-                        ))}
-                      </ul>
-                    );
-                  }
-
-                  return (
-                    <p key={bIdx} className="text-[#334155] leading-relaxed">
-                      {block}
-                    </p>
-                  );
-                })}
+                {/* Direct Writing Document Area */}
+                <textarea
+                  value={editorText}
+                  onChange={(e) => {
+                    const newText = e.target.value;
+                    setEditorText(newText);
+                    onUpdateSection({
+                      ...currentSection,
+                      content: newText,
+                      lastEditedAt: new Date().toISOString(),
+                      lastEditedBy: project.ownerName,
+                    });
+                  }}
+                  placeholder="Type anything here... Add or edit deliverables, scope details, specifications, notes, or section prose."
+                  className="w-full flex-1 min-h-[380px] p-0 text-sm font-sans text-[#334155] bg-transparent border-none focus:outline-none leading-relaxed resize-y placeholder:text-slate-400 focus:ring-0"
+                />
               </div>
             )}
           </div>
