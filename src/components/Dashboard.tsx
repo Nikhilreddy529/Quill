@@ -41,7 +41,6 @@ export const Dashboard: React.FC<DashboardProps> = ({
         <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
           <div className="space-y-2 max-w-2xl">
             <div className="inline-flex items-center space-x-2 px-3 py-1 rounded-full bg-blue-50 border border-blue-200 text-[#1D68F2] text-xs font-semibold">
-              <Sparkles className="w-3.5 h-3.5" />
               <span className="tracking-wide">AI SOW Drafting & Grounding Active</span>
             </div>
             <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-[#0F172A]">
@@ -57,7 +56,6 @@ export const Dashboard: React.FC<DashboardProps> = ({
               onClick={onOpenCreateModal}
               className="flex items-center space-x-2 bg-[#1D68F2] hover:bg-[#1554c0] text-white font-bold px-5 py-2.5 rounded-lg shadow-sm shadow-blue-500/20 transition active:scale-95 cursor-pointer text-sm"
             >
-              <Sparkles className="w-4 h-4" />
               <span>Generate New SOW</span>
             </button>
             <button
@@ -134,7 +132,6 @@ export const Dashboard: React.FC<DashboardProps> = ({
               onClick={onOpenCreateModal}
               className="text-xs bg-white hover:bg-slate-50 text-[#0F172A] border border-[#CBD5E1] font-semibold px-3 py-1.5 rounded-lg transition flex items-center space-x-1.5 cursor-pointer shadow-2xs"
             >
-              <Sparkles className="w-3.5 h-3.5 text-[#1D68F2]" />
               <span>+ Quick Intake</span>
             </button>
           </div>
@@ -252,10 +249,10 @@ export const Dashboard: React.FC<DashboardProps> = ({
           <div className="flex items-center space-x-2">
             <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
             <h3 className="text-xs font-bold text-[#0F172A] uppercase tracking-widest">
-              Live Governance & Activity Audit Trail
+              Activity Audit Trail
             </h3>
           </div>
-          <span className="text-xs text-[#64748B] font-medium">Immutable Enterprise Compliance Log</span>
+          <span className="text-xs text-[#64748B] font-medium"> Enterprise Compliance Log</span>
         </div>
 
         <div className="space-y-2.5">

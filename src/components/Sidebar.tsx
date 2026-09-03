@@ -106,14 +106,13 @@ export const Sidebar: React.FC<SidebarProps> = ({
             aria-label="Create new document"
             className={`absolute top-[calc(100%-0.5rem)] z-50 w-56 rounded-xl border border-[#D8E2F0] bg-white p-1.5 shadow-xl shadow-slate-950/15 ${isCollapsed ? 'left-[calc(100%+0.5rem)]' : 'left-3.5 right-3.5'}`}
           >
-            <div className="px-2.5 py-2 text-[10px] font-bold uppercase tracking-[0.14em] text-[#64748B]">Start something new</div>
             <button role="menuitem" onClick={handleCreateSow} className="flex w-full items-center gap-3 rounded-lg px-2.5 py-2.5 text-left transition hover:bg-blue-50 cursor-pointer">
               <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-blue-50 text-[#1D68F2]"><FileText className="h-4 w-4" /></span>
-              <span><span className="block text-xs font-bold text-[#0F172A]">New SOW</span><span className="mt-0.5 block text-[11px] text-[#64748B]">Start with client intake</span></span>
+              <span><span className="block text-xs font-bold text-[#0F172A]">New SOW</span></span>
             </button>
             <button role="menuitem" onClick={handleCreateProposal} className="flex w-full items-center gap-3 rounded-lg px-2.5 py-2.5 text-left transition hover:bg-violet-50 cursor-pointer">
               <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-violet-50 text-violet-600"><Presentation className="h-4 w-4" /></span>
-              <span><span className="block text-xs font-bold text-[#0F172A]">New Proposal</span><span className="mt-0.5 block text-[11px] text-[#64748B]">Build an executive deck</span></span>
+              <span><span className="block text-xs font-bold text-[#0F172A]">New Proposal</span></span>
             </button>
           </div>
         )}

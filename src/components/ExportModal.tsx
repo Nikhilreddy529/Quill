@@ -239,9 +239,6 @@ export const ExportModal: React.FC<ExportModalProps> = ({
             <div className="p-3 bg-[#F8FAFC] rounded-xl border border-[#E2E8F0] space-y-1">
               <div className="text-[#64748B]">Accepted SOW Version:</div>
               <div className="font-bold text-[#1D68F2] text-sm">Version 1.0 (Master Contract)</div>
-              <div className="text-[11px] text-[#475569] pt-0.5">
-                Target Dates: <span className="font-semibold text-[#0F172A]">{project.targetStartDate} to {project.targetEndDate}</span>
-              </div>
             </div>
           </div>
 
