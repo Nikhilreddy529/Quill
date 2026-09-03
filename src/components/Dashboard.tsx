@@ -58,6 +58,13 @@ export const Dashboard: React.FC<DashboardProps> = ({
               <Sparkles className="w-4 h-4" />
               <span>Generate New SOW</span>
             </button>
+            <button
+              onClick={() => window.dispatchEvent(new CustomEvent('quill:open-proposal'))}
+              className="flex items-center space-x-2 border border-[#CBD5E1] bg-white hover:bg-slate-50 text-[#0F172A] font-semibold px-5 py-2.5 rounded-lg transition active:scale-95 cursor-pointer text-sm"
+            >
+              <FileText className="w-4 h-4 text-[#1D68F2]" />
+              <span>Generate Proposal</span>
+            </button>
           </div>
         </div>
       </div>

@@ -120,6 +120,19 @@ export const Sidebar: React.FC<SidebarProps> = ({
           </button>
 
           <button
+            onClick={() => setCurrentView('proposal')}
+            className={`w-full flex items-center space-x-3 px-3 py-2 rounded-lg font-medium transition cursor-pointer ${
+              currentView === 'proposal'
+                ? 'bg-[#162a4d] text-white font-semibold shadow-inner'
+                : 'text-slate-300 hover:text-white hover:bg-[#0c1e3d]'
+            }`}
+            title="Proposal Workspace"
+          >
+            <FileText className="w-4 h-4 shrink-0 text-violet-400" />
+            {!isCollapsed && <span>Proposal Workspace</span>}
+          </button>
+
+          <button
             onClick={() => setCurrentView('templates')}
             className={`w-full flex items-center space-x-3 px-3 py-2 rounded-lg font-medium transition cursor-pointer ${
               currentView === 'templates' || currentView === 'template-editor' || currentView === 'template-preview'
