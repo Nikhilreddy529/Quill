@@ -28,6 +28,7 @@ import { SOWProject, SourceDocument, UploadedProjectDocument, UploadedDocCategor
 import { SAMPLE_SOURCE_DOCUMENTS } from '../data/sampleSharePointData';
 import { generateDefaultFramework } from '../services/aiGeneratorService';
 import { templateService } from '../services/templateService';
+import { sendToN8n } from '../services/n8nServices';
 
 interface CreateProjectModalProps {
   isOpen: boolean;
@@ -328,102 +329,83 @@ export const CreateProjectModal: React.FC<CreateProjectModalProps> = ({
   const handleRemoveUploadedFile = (id: string) => {
     setUploadedFiles(uploadedFiles.filter(f => f.id !== id));
   };
-
+  
   const handleCreateAndDraft = async () => {
-    setIsGenerating(true);
-    
-    // Simulate n8n Workflow 1 execution (Graph Search + Azure OpenAI Framework Gen)
-    await new Promise((resolve) => setTimeout(resolve, 1500));
-
-    const newId = `PRJ-2026-00${Math.floor(Math.random() * 900) + 100}`;
-    const selectedTemplate = availableTemplates.find(t => t.id === selectedTemplateId) || availableTemplates[0];
-    
-    // Generate sections based on selected template if available
-    let fullSections: any[] = [];
-    if (selectedTemplate) {
-      fullSections = selectedTemplate.sections.map((sec, idx) => {
-        const sectionUploadedFiles = uploadedFiles.filter((_, fIdx) => (fIdx % selectedTemplate.sections.length) === (idx % uploadedFiles.length || 0));
-        const activeFilesForSec = sectionUploadedFiles.length > 0 ? sectionUploadedFiles : uploadedFiles.slice(0, 2);
-
-        // Replace template placeholders for this project
-        let synthesizedContent = sec.content
-          .split('{{PROJECT_NAME}}').join(projectTitle || `${clientName} SOW`)
-          .split('{{CLIENT_ORGANIZATION_NAME}}').join(clientName)
-          .split('{{CLIENT_CONTACT_NAME}}').join(clientContact || 'Riley Chen')
-          .split('{{CLIENT_CONTACT_EMAIL}}').join(clientContactEmail || 'riley.chen@acme.com')
-          .split('{{CLIENT_SIGNATORY_NAME}}').join(clientContact || 'Riley Chen')
-          .split('{{ANTICIPATED_START_DATE}}').join(targetStartDate)
-          .split('{{ANTICIPATED_COMPLETION_DATE}}').join(targetEndDate)
-          .split('{{CURRENCY}}').join(currency);
-
-        return {
-          id: `SEC-${Math.floor(Math.random() * 9000) + 1000}`,
-          projectId: newId,
-          order: sec.order || idx + 1,
-          title: sec.title || `Section ${idx + 1}`,
-          category: sec.category || 'Scope',
-          content: synthesizedContent,
-          status: 'Pending' as const,
-          isMandatory: sec.isMandatory,
-          isPricingSection: sec.isPricingSection,
-          groundedSources: SAMPLE_SOURCE_DOCUMENTS.filter(s => selectedSources.includes(s.id)),
-          detailedSources: activeFilesForSec.map((f, dIdx) => ({
-            id: `DS-${idx}-${dIdx}`,
-            documentId: f.id,
-            fileName: f.fileName,
-            fileType: f.fileType,
-            category: f.category,
-            section: sec.title.split(' ')[0] || `Section ${idx + 1}`,
-            page: f.fileType === 'pdf' ? (dIdx + 1) * 2 : `Min ${(dIdx + 1) * 10}:00`,
-            snippet: f.snippet
-          })),
-          uploadedDocumentIds: activeFilesForSec.map(f => f.id),
-          version: 1,
-          lastEditedBy: "Nikhil",
-          lastEditedAt: new Date().toISOString(),
-          confidenceScore: 94
-        };
-      });
-    } else {
-      const defaultSections = generateDefaultFramework(projectType, clientName);
-      fullSections = defaultSections.map((sec, idx) => {
-        const sectionUploadedFiles = uploadedFiles.filter((_, fIdx) => (fIdx % defaultSections.length) === (idx % uploadedFiles.length || 0));
-        const activeFilesForSec = sectionUploadedFiles.length > 0 ? sectionUploadedFiles : uploadedFiles.slice(0, 2);
-
-        return {
-          id: `SEC-${Math.floor(Math.random() * 9000) + 1000}`,
-          projectId: newId,
-          order: sec.order || idx + 1,
-          title: sec.title || `Section ${idx + 1}`,
-          category: sec.category || 'Scope',
-          content: `### ${sec.title}\n\nThis section has been synthesized using the uploaded project intake resources (**${uploadedFiles.map(f => f.fileName).slice(0, 2).join('**, **')}**).\n\n*Pending final approval and DTMC formatting.*`,
-          status: 'Pending' as const,
-          isMandatory: sec.isMandatory ?? true,
-          isPricingSection: sec.isPricingSection ?? false,
-          groundedSources: SAMPLE_SOURCE_DOCUMENTS.filter(s => selectedSources.includes(s.id)),
-          detailedSources: activeFilesForSec.map((f, dIdx) => ({
-            id: `DS-${idx}-${dIdx}`,
-            documentId: f.id,
-            fileName: f.fileName,
-            fileType: f.fileType,
-            category: f.category,
-            section: sec.title.split(' ')[0] || `Section ${idx + 1}`,
-            page: f.fileType === 'pdf' ? (dIdx + 1) * 2 : `Min ${(dIdx + 1) * 10}:00`,
-            snippet: f.snippet
-          })),
-          uploadedDocumentIds: activeFilesForSec.map(f => f.id),
-          version: 1,
-          lastEditedBy: "Nikhil",
-          lastEditedAt: new Date().toISOString(),
-          confidenceScore: 94
-        };
-      });
+  setIsGenerating(true);
+  try {
+    const selectedTemplate =
+      availableTemplates.find((t) => t.id === selectedTemplateId) ||
+      availableTemplates[0];
+    if (!selectedTemplate) {
+      throw new Error("No SOW template selected.");
     }
-
+    const n8nResult = await sendToN8n({
+      clientName,
+      engagementName: projectTitle,
+      documentType: "SOW",
+      meetingTranscript: discoveryNotes,
+      uploadedDocuments: uploadedFiles.map((file) => ({
+        name: file.fileName,
+        content: file.snippet,
+      })),
+      selectedTemplate: selectedTemplate.id,
+      templateFileName: selectedTemplate.metadata.wordTemplateFile || "",
+      templateSections: selectedTemplate.sections.map((section) => ({
+        title: section.title,
+        category: section.category,
+        content: section.content,
+        order: section.order,
+        isMandatory: section.isMandatory,
+      })),
+    });
+    console.log("n8n SOW result:", n8nResult);
+    if (!n8nResult.sections || n8nResult.sections.length === 0) {
+      throw new Error("n8n returned no SOW sections.");
+    }
+    const newId =
+      n8nResult.project?.projectId || `PRJ-${Date.now().toString().slice(-6)}`;
+    const fullSections = n8nResult.sections.map((section, index) => {
+      const templateSection = selectedTemplate.sections.find(
+        (s) => s.title === section.sectionName,
+      );
+      return {
+        id: `SEC-${newId}-${index + 1}`,
+        projectId: newId,
+        order: templateSection?.order || index + 1,
+        title: section.sectionName,
+        category: templateSection?.category || "Scope",
+        content: section.content,
+        status: "Pending" as const,
+        isMandatory: templateSection?.isMandatory ?? true,
+        isPricingSection: templateSection?.isPricingSection ?? false,
+        groundedSources: SAMPLE_SOURCE_DOCUMENTS.filter((s) =>
+          selectedSources.includes(s.id),
+        ),
+        detailedSources: uploadedFiles.map((file, dIdx) => ({
+          id: `DS-${index}-${dIdx}`,
+          documentId: file.id,
+          fileName: file.fileName,
+          fileType: file.fileType,
+          category: file.category,
+          section: section.sectionName,
+          page:
+            file.fileType === "pdf" ? dIdx + 1 : `Min ${(dIdx + 1) * 10}:00`,
+          snippet: file.snippet,
+        })),
+        uploadedDocumentIds: uploadedFiles.map((f) => f.id),
+        version: 1,
+        lastEditedBy: "Nikhil",
+        lastEditedAt: new Date().toISOString(),
+        confidenceScore: 94,
+      };
+    });
     const newProject: SOWProject = {
       id: newId,
-      title: projectTitle || `${clientName} SOW Engagement`,
-      clientName,
+      title:
+        n8nResult.project?.engagementName ||
+        projectTitle ||
+        `${clientName} SOW Engagement`,
+      clientName: n8nResult.project?.clientName || clientName,
       clientContact,
       clientContactEmail,
       clientIndustry,
@@ -431,33 +413,38 @@ export const CreateProjectModal: React.FC<CreateProjectModalProps> = ({
       targetStartDate,
       targetEndDate,
       currency,
-      estimatedBudgetPlaceholder: "[To be determined upon finalized staffing schedule]",
+      estimatedBudgetPlaceholder:
+        "[To be determined upon finalized staffing schedule]",
       status: "Generated",
-      currentStep: 3, // Framework review step
+      currentStep: 3,
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
       ownerName: "Nikhil",
       ownerEmail: "nikhil@acme-transform.com",
-      description: `SOW for ${clientName} adhering to DTMC Master Services Agreement and SOW standards.`,
+      description: `SOW generated from selected template "${selectedTemplate.metadata.name}".`,
       meetingNotes: discoveryNotes,
-      discoveryDocNames: uploadedFiles.map(f => f.fileName),
+      discoveryDocNames: uploadedFiles.map((f) => f.fileName),
       uploadedDocuments: uploadedFiles,
-      additionalRequirements: "Adhere to DTMC corporate styling standards and blank pricing placeholders.",
-      selectedTemplateId: selectedTemplateId || "TMPL-DTMC-2025-01",
-      wordTemplateFile: "DTMC_Master_SOW_Template_2025.dotx",
-      sowFormat: projectType,
+      additionalRequirements:
+        "Adhere to DTMC corporate styling standards and blank pricing placeholders.",
+      selectedTemplateId: selectedTemplate.id,
+      wordTemplateFile: selectedTemplate.metadata.wordTemplateFile,
+      sowFormat: selectedTemplate.metadata.templateType,
       issuerName: "DTMC Advisory Group",
       issuerEmail: "advisory@dtmc.example",
       issuerPhone: "+1 555 010 2000",
       frameworkApproved: false,
       sections: fullSections,
-      exportHistory: []
+      exportHistory: [],
     };
-
     setIsGenerating(false);
     onCreateProject(newProject);
     onClose();
-  };
+  } catch (error) {
+    console.error("n8n SOW generation failed:", error);
+    setIsGenerating(false);
+  }
+};
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs animate-fade-in">
