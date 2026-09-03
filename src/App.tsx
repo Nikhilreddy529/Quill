@@ -7,6 +7,7 @@ import { FrameworkReview } from './components/FrameworkReview';
 import { SourcesPanel } from './components/SourcesPanel';
 import { ExportModal } from './components/ExportModal';
 import { CreateProjectModal } from './components/CreateProjectModal';
+import { CreateProposalModal } from './components/CreateProposalModal';
 import { ProposalWorkspace } from './components/ProposalWorkspace';
 import { SOWTemplateList } from './components/templates/SOWTemplateList';
 import { SOWTemplateEditor } from './components/templates/SOWTemplateEditor';
@@ -35,6 +36,7 @@ export default function App() {
 
   // Modals & Drawers
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+  const [isProposalCreateModalOpen, setIsProposalCreateModalOpen] = useState(false);
   const [isExportModalOpen, setIsExportModalOpen] = useState(false);
   const [exportTargetProject, setExportTargetProject] = useState<SOWProject>(INITIAL_SAMPLE_PROJECTS[0]);
   const [sourcesDrawerOpen, setSourcesDrawerOpen] = useState(false);
@@ -76,6 +78,26 @@ export default function App() {
       executionTimeMs: 320,
     };
     setAuditLogs([newLog, ...auditLogs]);
+  };
+
+  const handleCreateProposal = (newProposal: SOWProject) => {
+    setProjects(prev => [newProposal, ...prev]);
+    setActiveProjectId(newProposal.id);
+    setActiveSectionId('');
+    setCurrentView('proposal');
+    const newLog: AuditLogEntry = {
+      id: `LOG-${Math.floor(Math.random() * 9000) + 1000}`,
+      timestamp: new Date().toISOString(),
+      projectId: newProposal.id,
+      projectTitle: newProposal.title,
+      user: newProposal.ownerName,
+      userEmail: newProposal.ownerEmail,
+      action: 'PROJECT_CREATED',
+      details: `Created new proposal for ${newProposal.clientName} using the ${newProposal.proposalTemplateId} blueprint.`,
+      status: 'SUCCESS',
+      executionTimeMs: 320,
+    };
+    setAuditLogs(prev => [newLog, ...prev]);
   };
 
   // Template handlers
@@ -195,12 +217,6 @@ export default function App() {
     else if (stepNumber === 5) handleOpenExportModal(activeProject);
   };
 
-  React.useEffect(() => {
-    const onOpenProposal = () => setCurrentView('proposal');
-    window.addEventListener('quill:open-proposal', onOpenProposal);
-    return () => window.removeEventListener('quill:open-proposal', onOpenProposal);
-  }, []);
-
   return (
     <div className="flex h-screen bg-[#F8FAFC] text-[#0F172A] overflow-hidden font-sans">
       
@@ -209,6 +225,7 @@ export default function App() {
         currentView={currentView}
         setCurrentView={setCurrentView}
         onOpenCreateProject={() => setIsCreateModalOpen(true)}
+        onOpenProposal={() => setIsProposalCreateModalOpen(true)}
         isCollapsed={isSidebarCollapsed}
         setIsCollapsed={setIsSidebarCollapsed}
       />
@@ -249,6 +266,7 @@ export default function App() {
                 auditLogs={auditLogs}
                 onSelectProject={handleSelectProject}
                 onOpenCreateModal={() => setIsCreateModalOpen(true)}
+                onOpenProposalModal={() => setIsProposalCreateModalOpen(true)}
                 onOpenExportModal={handleOpenExportModal}
               />
             </div>
@@ -315,6 +333,14 @@ export default function App() {
           isOpen={isCreateModalOpen}
           onClose={() => setIsCreateModalOpen(false)}
           onCreateProject={handleCreateProject}
+        />
+      )}
+
+      {isProposalCreateModalOpen && (
+        <CreateProposalModal
+          isOpen={isProposalCreateModalOpen}
+          onClose={() => setIsProposalCreateModalOpen(false)}
+          onCreateProposal={handleCreateProposal}
         />
       )}
 

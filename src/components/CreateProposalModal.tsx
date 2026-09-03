@@ -1,0 +1,164 @@
+import React, { useRef, useState } from 'react';
+import {
+  ArrowLeft,
+  ArrowRight,
+  Check,
+  FileText,
+  FileUp,
+  Trash2,
+  UploadCloud,
+  X,
+} from 'lucide-react';
+import { PROPOSAL_TEMPLATES } from '../services/proposalTemplateService';
+import { SOWProject, UploadedDocCategory, UploadedProjectDocument } from '../types/quill';
+
+interface CreateProposalModalProps {
+  isOpen: boolean;
+  onClose: () => void;
+  onCreateProposal: (proposal: SOWProject) => void;
+}
+
+const inputClass = 'w-full rounded-lg border border-[#CBD5E1] bg-white px-3.5 py-2.5 text-sm text-[#0F172A] focus:border-[#1D68F2] focus:outline-none focus:ring-2 focus:ring-blue-500/20';
+const defaultTemplateId = PROPOSAL_TEMPLATES[0]?.id || '';
+
+export const CreateProposalModal: React.FC<CreateProposalModalProps> = ({ isOpen, onClose, onCreateProposal }) => {
+  const [step, setStep] = useState<1 | 2 | 3 | 4>(1);
+  const [isCreating, setIsCreating] = useState(false);
+  const [title, setTitle] = useState('Acme Enterprise Transformation Proposal');
+  const [clientName, setClientName] = useState('Acme Global Enterprises');
+  const [industry, setIndustry] = useState('Financial Services');
+  const [opportunityType, setOpportunityType] = useState('Digital Transformation');
+  const [description, setDescription] = useState('Executive proposal grounded in discovery, requirements, and the client\'s current transformation priorities.');
+  const [notes, setNotes] = useState('Discovery notes, meeting transcript themes, and requirement clarifications will be used as proposal context.');
+  const [selectedTemplateId, setSelectedTemplateId] = useState('');
+  const [files, setFiles] = useState<UploadedProjectDocument[]>([]);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  if (!isOpen) return null;
+
+  const processFiles = (fileList: FileList | File[]) => {
+    const newFiles = Array.from(fileList).map((file, index): UploadedProjectDocument => {
+      const lowerName = file.name.toLowerCase();
+      const isPdf = lowerName.endsWith('.pdf');
+      let category: UploadedDocCategory = 'Discovery Notes';
+      if (lowerName.includes('transcript') || lowerName.includes('meeting')) category = 'Meeting Transcription';
+      else if (lowerName.includes('requirement') || lowerName.includes('clarif')) category = 'Requirement Clarification';
+      else if (lowerName.includes('srs') || lowerName.includes('spec')) category = 'SRS Document';
+      else if (lowerName.includes('arch')) category = 'Architecture & Scope PDF';
+      else if (lowerName.includes('brief')) category = 'Client Brief Word Doc';
+
+      return {
+        id: `PROP-DOC-${Date.now()}-${index}`,
+        fileName: file.name,
+        fileType: isPdf ? 'pdf' : lowerName.endsWith('.xlsx') ? 'xlsx' : lowerName.endsWith('.txt') ? 'txt' : 'docx',
+        fileSizeBytes: file.size,
+        uploadedAt: new Date().toISOString(),
+        uploadedBy: 'Nikhil (PM)',
+        category,
+        sectionReference: `Proposal Intake • ${category}`,
+        pageOrTimestamp: isPdf ? 'Multi-page document' : 'Full intake file',
+        snippet: `Uploaded proposal resource (${Math.max(1, Math.round(file.size / 1024))} KB).`,
+        keyRequirementsExtracted: [`Available as proposal grounding evidence: ${file.name}`],
+      };
+    });
+    setFiles(previous => [...newFiles, ...previous]);
+  };
+
+  const handleCreate = async () => {
+    if (!selectedTemplateId) return;
+    setIsCreating(true);
+    await new Promise(resolve => setTimeout(resolve, 500));
+    const now = new Date().toISOString();
+    const proposal: SOWProject = {
+      id: `PROP-2026-${Math.floor(Math.random() * 900) + 100}`,
+      title: title || `${clientName} Proposal`,
+      clientName: clientName || 'Client Organization',
+      clientIndustry: industry || 'Enterprise',
+      projectType: opportunityType || 'Transformation',
+      description,
+      meetingNotes: notes,
+      uploadedDocuments: files,
+      discoveryDocNames: files.map(file => file.fileName),
+      proposalTemplateId: selectedTemplateId,
+      clientContact: '',
+      clientContactEmail: '',
+      targetStartDate: '',
+      targetEndDate: '',
+      currency: 'USD',
+      estimatedBudgetPlaceholder: '[To be determined during commercial review]',
+      status: 'Draft',
+      currentStep: 4,
+      createdAt: now,
+      updatedAt: now,
+      ownerName: 'Nikhil',
+      ownerEmail: 'nikhil@acme-transform.com',
+      additionalRequirements: 'Use only grounded intake evidence and preserve blank commercial placeholders.',
+      selectedTemplateId: '',
+      frameworkApproved: true,
+      sections: [],
+      exportHistory: [],
+    };
+    setIsCreating(false);
+    onCreateProposal(proposal);
+    onClose();
+  };
+
+  const canContinue = step === 1 ? Boolean(title.trim() && clientName.trim() && opportunityType.trim()) : step === 3 ? Boolean(selectedTemplateId) : true;
+  const selectedTemplate = PROPOSAL_TEMPLATES.find(template => template.id === selectedTemplateId);
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 p-4 backdrop-blur-xs animate-fade-in">
+      <div className="flex max-h-[90vh] w-full max-w-3xl flex-col overflow-hidden rounded-xl border border-[#E2E8F0] bg-white shadow-2xl">
+        <div className="flex items-center justify-between border-b border-[#E2E8F0] bg-[#F8FAFC] p-5">
+          <div className="flex items-center gap-3">
+            <div>
+              <h2 className="text-base font-bold text-[#0F172A]">Create New Proposal</h2>
+              <p className="text-xs text-[#64748B]">Step {step} of 4 • Prepare grounded proposal inputs</p>
+            </div>
+          </div>
+          <button onClick={onClose} aria-label="Close" className="cursor-pointer rounded-lg p-1.5 text-[#64748B] transition hover:bg-[#F1F5F9] hover:text-[#0F172A]"><X className="h-5 w-5" /></button>
+        </div>
+
+        <div className="grid grid-cols-4 border-b border-[#E2E8F0] bg-[#F8FAFC] text-xs font-semibold">
+          {['Proposal Information', 'Upload PM Resources', 'Select Template', 'Review & Generate'].map((label, index) => {
+            const itemStep = (index + 1) as 1 | 2 | 3 | 4;
+            return <button key={label} onClick={() => itemStep <= step && setStep(itemStep)} className={`border-b-2 px-2 py-3 text-center transition ${itemStep <= step ? 'cursor-pointer' : 'cursor-default'} ${step === itemStep ? 'border-[#1D68F2] bg-blue-50/50 text-[#1D68F2]' : 'border-transparent text-[#64748B]'}`}>{index + 1}. {label}</button>;
+          })}
+        </div>
+
+        <div className="flex-1 space-y-5 overflow-y-auto bg-white p-6">
+          {step === 1 && <div className="space-y-4">
+            <div><label className="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-[#334155]">Proposal Title</label><input className={inputClass} value={title} onChange={event => setTitle(event.target.value)} placeholder="e.g. Enterprise Cloud Transformation Proposal" /></div>
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+              <div><label className="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-[#334155]">Client Name</label><input className={inputClass} value={clientName} onChange={event => setClientName(event.target.value)} /></div>
+              <div><label className="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-[#334155]">Client Industry</label><input className={inputClass} value={industry} onChange={event => setIndustry(event.target.value)} /></div>
+            </div>
+            <div><label className="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-[#334155]">Opportunity Type</label><input className={inputClass} value={opportunityType} onChange={event => setOpportunityType(event.target.value)} placeholder="e.g. Modernization, advisory, implementation" /></div>
+            <div><label className="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-[#334155]">Proposal Description</label><textarea rows={5} className={`${inputClass} leading-relaxed`} value={description} onChange={event => setDescription(event.target.value)} placeholder="Describe the opportunity and intended business outcome." /></div>
+          </div>}
+
+          {step === 2 && <div className="space-y-4">
+            <div><h3 className="text-sm font-bold text-[#0F172A]">Upload PM Resources</h3><p className="mt-1 text-xs text-[#64748B]">Attach transcripts, discovery notes, requirements, SRS, architecture documents, or client briefs.</p></div>
+            <input ref={fileInputRef} type="file" multiple accept=".pdf,.docx,.doc,.txt,.md,.xlsx,.csv,.pptx" className="hidden" onChange={event => { if (event.target.files) processFiles(event.target.files); event.target.value = ''; }} />
+            <button onClick={() => fileInputRef.current?.click()} className="flex w-full cursor-pointer flex-col items-center justify-center rounded-xl border border-dashed border-[#93C5FD] bg-blue-50/40 px-6 py-8 text-center transition hover:bg-blue-50"><UploadCloud className="mb-2 h-7 w-7 text-[#1D68F2]" /><span className="text-sm font-bold text-[#0F172A]">Add intake resources</span><span className="mt-1 text-xs text-[#64748B]">Choose one or more files from your device</span></button>
+            {files.length === 0 ? <div className="rounded-xl border border-[#E2E8F0] bg-[#F8FAFC] p-4 text-center text-xs text-[#64748B]">No files attached yet. You can continue with notes and add resources later.</div> : <div className="space-y-2">{files.map(file => <div key={file.id} className="flex items-center gap-3 rounded-lg border border-[#E2E8F0] p-3"><FileUp className="h-4 w-4 shrink-0 text-[#1D68F2]" /><div className="min-w-0 flex-1"><div className="truncate text-xs font-bold text-[#0F172A]">{file.fileName}</div><div className="text-[11px] text-[#64748B]">{file.category}</div></div><button onClick={() => setFiles(previous => previous.filter(item => item.id !== file.id))} title="Remove resource" className="cursor-pointer rounded-md p-1.5 text-[#94A3B8] transition hover:bg-rose-50 hover:text-rose-500"><Trash2 className="h-4 w-4" /></button></div>)}</div>}
+            <div><label className="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-[#334155]">Discovery Notes & Meeting Context</label><textarea rows={4} className={`${inputClass} leading-relaxed`} value={notes} onChange={event => setNotes(event.target.value)} placeholder="Paste discovery notes or meeting transcript context here." /></div>
+          </div>}
+
+          {step === 3 && <div className="space-y-4">
+            <div><h3 className="text-sm font-bold text-[#0F172A]">Select Proposal Template</h3><p className="mt-1 text-xs text-[#64748B]">Choose the approved PowerPoint blueprint. The AI will use this structure after you confirm.</p></div>
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">{PROPOSAL_TEMPLATES.map(template => <button key={template.id} onClick={() => setSelectedTemplateId(template.id)} className={`cursor-pointer rounded-xl border p-4 text-left transition ${selectedTemplateId === template.id ? 'border-[#1D68F2] bg-blue-50/60 ring-2 ring-blue-100' : 'border-[#E2E8F0] hover:border-blue-300 hover:bg-slate-50'}`}><div className="flex items-start justify-between gap-3"><span className="text-sm font-bold text-[#0F172A]">{template.name}</span>{selectedTemplateId === template.id && <Check className="h-4 w-4 shrink-0 text-[#1D68F2]" />}</div><p className="mt-2 text-xs leading-5 text-[#64748B]">{template.description}</p><div className="mt-3 text-[11px] font-semibold text-[#475569]">{template.slideCount} slides • {template.audience}</div></button>)}</div>
+            {!selectedTemplateId && <div className="rounded-lg border border-amber-200 bg-amber-50 p-3 text-xs font-semibold text-amber-800">Choose a proposal template before continuing.</div>}
+          </div>}
+
+          {step === 4 && <div className="space-y-4">
+            <div className="flex items-center gap-3 rounded-xl border border-emerald-200 bg-emerald-50 p-4"><div><div className="text-sm font-bold text-emerald-950">Ready to generate proposal</div><div className="mt-1 text-xs text-emerald-800">Your selected intake evidence and template will be passed to Proposal Workspace.</div></div></div>
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2"><div className="rounded-xl border border-[#E2E8F0] bg-[#F8FAFC] p-4"><div className="text-[10px] font-bold uppercase tracking-wider text-[#64748B]">Proposal</div><div className="mt-2 text-sm font-bold text-[#0F172A]">{title}</div><div className="mt-1 text-xs text-[#475569]">{clientName} • {industry}</div><p className="mt-3 text-xs leading-5 text-[#64748B]">{description || 'No additional description provided.'}</p></div><div className="rounded-xl border border-[#E2E8F0] bg-[#F8FAFC] p-4"><div className="text-[10px] font-bold uppercase tracking-wider text-[#64748B]">Grounding & template</div><div className="mt-2 text-sm font-bold text-[#0F172A]">{selectedTemplate?.name}</div><div className="mt-1 text-xs text-[#475569]">{files.length} uploaded resource{files.length === 1 ? '' : 's'}</div><div className="mt-3 text-xs leading-5 text-[#64748B]">{notes || 'No meeting context provided.'}</div></div></div>
+          </div>}
+        </div>
+
+        <div className="flex items-center justify-between border-t border-[#E2E8F0] bg-[#F8FAFC] p-4"><button onClick={() => step === 1 ? onClose() : setStep((step - 1) as 1 | 2 | 3 | 4)} className="inline-flex cursor-pointer items-center gap-2 rounded-lg border border-[#CBD5E1] bg-white px-4 py-2 text-xs font-semibold text-[#475569] transition hover:bg-slate-50">{step === 1 ? 'Cancel' : <><ArrowLeft className="h-3.5 w-3.5" /> Back</>}</button>{step < 4 ? <button disabled={!canContinue} onClick={() => setStep((step + 1) as 1 | 2 | 3 | 4)} className="inline-flex cursor-pointer items-center gap-2 rounded-lg bg-[#1D68F2] px-5 py-2.5 text-xs font-bold text-white shadow-sm transition hover:bg-[#1554c0] disabled:cursor-not-allowed disabled:opacity-50">Next <ArrowRight className="h-3.5 w-3.5" /></button> : <button disabled={isCreating || !selectedTemplateId} onClick={handleCreate} className="inline-flex cursor-pointer items-center gap-2 rounded-lg bg-[#1D68F2] px-5 py-2.5 text-xs font-bold text-white shadow-sm transition hover:bg-[#1554c0] disabled:cursor-wait disabled:opacity-60">{isCreating ? 'Preparing Proposal...' : 'Generate Proposal'}</button>}</div>
+      </div>
+    </div>
+  );
+};
