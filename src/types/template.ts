@@ -1,3 +1,5 @@
+import { SOWSectionCategory } from './quill';
+
 export type TemplateStatus = 'Draft' | 'Under Review' | 'Ready for Use' | 'Archived';
 
 export type TemplateType = 
@@ -21,7 +23,7 @@ export interface TemplateSection {
   id: string;
   order: number;
   title: string;
-  category: 'Overview' | 'Scope' | 'Governance' | 'Schedule' | 'Assumptions' | 'Pricing' | 'Authorization' | 'Appendix';
+  category: SOWSectionCategory;
   content: string;
   isMandatory: boolean;
   isOptional: boolean;

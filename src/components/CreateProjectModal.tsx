@@ -150,14 +150,115 @@ export const CreateProjectModal: React.FC<CreateProjectModalProps> = ({
     }
   ]);
 
-  // Upload Form UI State
-  const [isAddingCustomFile, setIsAddingCustomFile] = useState(false);
-  const [newFileName, setNewFileName] = useState('');
-  const [newFileCategory, setNewFileCategory] = useState<UploadedDocCategory>('Meeting Transcription');
-  const [newFileSnippet, setNewFileSnippet] = useState('');
+  // Upload Form & Capsule Input State
+  const [resourceInputValue, setResourceInputValue] = useState('');
+  const [isListening, setIsListening] = useState(false);
   const [selectedSources, setSelectedSources] = useState<string[]>(['SRC-CL-001', 'SRC-SOW-089', 'SRC-CL-014']);
 
   if (!isOpen) return null;
+
+  const handleAddResourceFromCapsule = (textToSubmit?: string) => {
+    const rawText = (textToSubmit !== undefined ? textToSubmit : resourceInputValue).trim();
+    if (!rawText) return;
+
+    const lower = rawText.toLowerCase();
+    let category: UploadedDocCategory = 'Requirement Clarification';
+    let prefix = 'Intake_Note';
+
+    if (lower.includes('transcript') || lower.includes('meeting') || lower.includes('said') || lower.includes('call') || lower.includes('recording')) {
+      category = 'Meeting Transcription';
+      prefix = 'Meeting_Transcription';
+    } else if (lower.includes('srs') || lower.includes('spec') || lower.includes('technical') || lower.includes('api') || lower.includes('architecture')) {
+      category = 'SRS Document';
+      prefix = 'Technical_Spec';
+    } else if (lower.includes('scope') || lower.includes('deliverable') || lower.includes('phase')) {
+      category = 'Client Brief Word Doc';
+      prefix = 'Scope_Baseline';
+    }
+
+    const timestampStr = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    const cleanTitle = rawText.length > 35 ? `${rawText.substring(0, 32)}...` : rawText;
+
+    const newDoc: UploadedProjectDocument = {
+      id: `DOC-CAPSULE-${Date.now()}`,
+      fileName: `${prefix}_${Date.now().toString().slice(-4)}.docx`,
+      fileType: 'docx',
+      fileSizeBytes: 145000,
+      uploadedAt: new Date().toISOString(),
+      uploadedBy: 'Nikhil (PM)',
+      category: category,
+      sectionReference: `Direct Input • ${timestampStr}`,
+      pageOrTimestamp: `Recorded at ${timestampStr}`,
+      snippet: rawText,
+      keyRequirementsExtracted: [
+        cleanTitle,
+        `Directly ingested via SOW resource bar`
+      ]
+    };
+
+    setUploadedFiles(prev => [newDoc, ...prev]);
+    setResourceInputValue('');
+    setIsListening(false);
+  };
+
+  const handleToggleDictation = () => {
+    const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+    if (SpeechRecognition) {
+      try {
+        if (isListening) {
+          setIsListening(false);
+          return;
+        }
+
+        const recognition = new SpeechRecognition();
+        recognition.continuous = false;
+        recognition.interimResults = false;
+        recognition.lang = 'en-US';
+
+        recognition.onstart = () => {
+          setIsListening(true);
+        };
+
+        recognition.onresult = (event: any) => {
+          const transcript = event.results[0][0].transcript;
+          if (transcript) {
+            setResourceInputValue(prev => prev ? `${prev} ${transcript}` : transcript);
+          }
+          setIsListening(false);
+        };
+
+        recognition.onerror = () => {
+          setIsListening(false);
+        };
+
+        recognition.onend = () => {
+          setIsListening(false);
+        };
+
+        recognition.start();
+        return;
+      } catch (err) {
+        console.warn('Speech recognition init error', err);
+      }
+    }
+
+    // Fallback simulation if speech recognition is unavailable or blocked in iframe
+    if (!isListening) {
+      setIsListening(true);
+      const sampleTranscripts = [
+        "Client VP Engineering: Architecture must enforce ISO 27001 compliance and 99.99% availability.",
+        "Clarification with PM: 30-day post go-live hypercare support is included within Phase 3.",
+        "Discovery meeting note: SSO authentication via Azure AD with conditional MFA required.",
+      ];
+      const randomTranscript = sampleTranscripts[Math.floor(Math.random() * sampleTranscripts.length)];
+      setTimeout(() => {
+        setResourceInputValue(randomTranscript);
+        setIsListening(false);
+      }, 1500);
+    } else {
+      setIsListening(false);
+    }
+  };
 
   const processSelectedFiles = (files: FileList | File[]) => {
     const newDocs: UploadedProjectDocument[] = [];
@@ -222,35 +323,6 @@ export const CreateProjectModal: React.FC<CreateProjectModalProps> = ({
     if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
       processSelectedFiles(e.dataTransfer.files);
     }
-  };
-
-  const handleAddUploadedFile = () => {
-    if (!newFileName.trim()) return;
-    const isPdf = newFileName.toLowerCase().endsWith('.pdf');
-    const isDocx = newFileName.toLowerCase().endsWith('.docx') || newFileName.toLowerCase().endsWith('.doc');
-    const fileType = isPdf ? 'pdf' : (isDocx ? 'docx' : 'docx');
-
-    const newDoc: UploadedProjectDocument = {
-      id: `DOC-NEW-${Date.now()}`,
-      fileName: newFileName.trim(),
-      fileType: fileType,
-      fileSizeBytes: 350000,
-      uploadedAt: new Date().toISOString(),
-      uploadedBy: 'Nikhil (PM)',
-      category: newFileCategory,
-      sectionReference: `Section 2 • ${newFileCategory}`,
-      pageOrTimestamp: isPdf ? 'Page 1-5' : 'Min 05:00',
-      snippet: newFileSnippet.trim() || `Uploaded ${newFileCategory} document containing client specifications and requirements.`,
-      keyRequirementsExtracted: [
-        'Extracted requirement from uploaded resource',
-        'Directly grounded in PM intake document'
-      ]
-    };
-
-    setUploadedFiles([newDoc, ...uploadedFiles]);
-    setNewFileName('');
-    setNewFileSnippet('');
-    setIsAddingCustomFile(false);
   };
 
   const handleRemoveUploadedFile = (id: string) => {
@@ -371,7 +443,12 @@ export const CreateProjectModal: React.FC<CreateProjectModalProps> = ({
       discoveryDocNames: uploadedFiles.map(f => f.fileName),
       uploadedDocuments: uploadedFiles,
       additionalRequirements: "Adhere to DTMC corporate styling standards and blank pricing placeholders.",
-      selectedTemplateId: "DTMC_Master_SOW_Template_2025.dotx",
+      selectedTemplateId: selectedTemplateId || "TMPL-DTMC-2025-01",
+      wordTemplateFile: "DTMC_Master_SOW_Template_2025.dotx",
+      sowFormat: projectType,
+      issuerName: "DTMC Advisory Group",
+      issuerEmail: "advisory@dtmc.example",
+      issuerPhone: "+1 555 010 2000",
       frameworkApproved: false,
       sections: fullSections,
       exportHistory: []
@@ -528,118 +605,60 @@ export const CreateProjectModal: React.FC<CreateProjectModalProps> = ({
               <div className="flex items-center justify-between">
                 <div>
                   <h3 className="text-sm font-bold text-[#0F172A]">Upload Document</h3>
-                </div>
-                <div className="flex items-center space-x-2">
-                  <button
-                    type="button"
-                    onClick={() => fileInputRef.current?.click()}
-                    className="flex items-center space-x-1.5 text-xs font-bold bg-[#1D68F2] hover:bg-[#1554c0] text-white px-3.5 py-1.5 rounded-lg transition cursor-pointer shadow-xs"
-                  >
-                    <UploadCloud className="w-3.5 h-3.5" />
-                    <span>Attach Document</span>
-                  </button>
-
-                  <button
-                    type="button"
-                    onClick={() => setIsAddingCustomFile(prev => !prev)}
-                    className="flex items-center space-x-1 text-xs font-semibold bg-[#F1F5F9] text-[#475569] hover:bg-[#E2E8F0] px-3 py-1.5 rounded-lg transition cursor-pointer"
-                    title="Manual document text entry"
-                  >
-                    <Plus className="w-3.5 h-3.5" />
-                    <span>Manual Entry</span>
-                  </button>
+                  <p className="text-xs text-[#64748B]">Attach documents or enter live meeting notes & clarifications</p>
                 </div>
               </div>
 
-              {/* Drag & Drop Local Device Upload Zone */}
-              <div
-                onDragOver={(e) => { e.preventDefault(); setIsDragging(true); }}
-                onDragLeave={() => setIsDragging(false)}
-                onDrop={handleFileDrop}
-                onClick={() => fileInputRef.current?.click()}
-                className={`p-4 border-2 border-dashed rounded-xl flex items-center justify-center space-x-3 cursor-pointer transition ${
-                  isDragging
-                    ? 'border-[#1D68F2] bg-blue-50/70'
-                    : 'border-[#CBD5E1] bg-[#F8FAFC] hover:bg-[#F1F5F9] hover:border-[#94A3B8]'
-                }`}
-              >
-                <div className="w-8 h-8 rounded-lg bg-blue-50 border border-blue-200 flex items-center justify-center text-[#1D68F2] shrink-0">
-                  <UploadCloud className="w-4 h-4" />
-                </div>
-                <div className="text-left">
-                  <div className="text-xs font-semibold text-[#0F172A]">
-                    Click to select or drag and drop files from your device
-                  </div>
-                  <div className="text-[11px] text-[#64748B]">
-                    Accepts Word (.docx), PDF (.pdf), Text (.txt, .md), and Spreadsheets (.xlsx)
-                  </div>
-                </div>
-              </div>
+              {/* Resource Capsule Input Bar */}
+              <div className="relative flex items-center w-full bg-[#FFFFFF] hover:bg-[#F0F0F0] border border-[#33353A] focus-within:border-[#525660] focus-within:ring-1 focus-within:ring-[#525660] rounded-full px-4 py-2.5 shadow-sm transition">
+                <button
+                  type="button"
+                  onClick={() => fileInputRef.current?.click()}
+                  title="Attach file or document"
+                  className="text-[#94A3B8] hover:text-white transition p-1 -ml-1 rounded-full hover:bg-slate-700/50 cursor-pointer shrink-0"
+                >
+                  <Plus className="w-5 h-5" />
+                </button>
 
-              {/* Add Custom File Inline Panel */}
-              {isAddingCustomFile && (
-                <div className="p-4 bg-[#F8FAFC] border border-[#BFDBFE] rounded-xl space-y-3 animate-fade-in">
-                  <div className="flex items-center justify-between">
-                    <span className="text-xs font-bold text-[#1D68F2]">Upload New Project Resource</span>
-                    <button 
-                      onClick={() => setIsAddingCustomFile(false)} 
-                      className="text-xs text-[#64748B] hover:text-[#0F172A]"
-                    >
-                      Cancel
-                    </button>
-                  </div>
+                <input
+                  type="text"
+                  value={resourceInputValue}
+                  onChange={(e) => setResourceInputValue(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' && !e.shiftKey) {
+                      e.preventDefault();
+                      handleAddResourceFromCapsule();
+                    }
+                  }}
+                  placeholder="Add resource to create SOW"
+                  className="flex-1 bg-transparent border-none text-xs sm:text-sm text-black placeholder-[#18191C] focus:outline-none px-3 py-0.5"
+                />
 
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                    <div>
-                      <label className="block text-[11px] font-semibold text-[#475569] mb-1">File Name (.docx, .pdf, .txt)</label>
-                      <input
-                        type="text"
-                        value={newFileName}
-                        onChange={(e) => setNewFileName(e.target.value)}
-                        placeholder="e.g. Client_Q&A_Requirement_Clarifications.docx"
-                        className="w-full bg-white border border-[#CBD5E1] rounded-lg px-3 py-1.5 text-xs text-[#0F172A] focus:outline-none focus:ring-1 focus:ring-blue-500"
-                      />
-                    </div>
-
-                    <div>
-                      <label className="block text-[11px] font-semibold text-[#475569] mb-1">Resource Category</label>
-                      <select
-                        value={newFileCategory}
-                        onChange={(e) => setNewFileCategory(e.target.value as UploadedDocCategory)}
-                        className="w-full bg-white border border-[#CBD5E1] rounded-lg px-3 py-1.5 text-xs text-[#0F172A] focus:outline-none focus:ring-1 focus:ring-blue-500 cursor-pointer"
-                      >
-                        <option value="Meeting Transcription">Meeting Transcription (.docx / .txt)</option>
-                        <option value="Requirement Clarification">Requirement Clarification (.docx / .pdf)</option>
-                        <option value="SRS Document">SRS Document (.pdf / .docx)</option>
-                        <option value="Architecture & Scope PDF">Architecture & Scope PDF</option>
-                        <option value="Client Brief Word Doc">Client Brief Word Doc</option>
-                      </select>
-                    </div>
-                  </div>
-
-                  <div>
-                    <label className="block text-[11px] font-semibold text-[#475569] mb-1">Key Excerpt / Meeting Transcript Notes</label>
-                    <textarea
-                      rows={2}
-                      value={newFileSnippet}
-                      onChange={(e) => setNewFileSnippet(e.target.value)}
-                      placeholder="Paste key requirements or quotes from the meeting transcript or specification..."
-                      className="w-full bg-white border border-[#CBD5E1] rounded-lg p-2 text-xs text-[#0F172A] focus:outline-none focus:ring-1 focus:ring-blue-500"
-                    />
-                  </div>
-
-                  <div className="flex justify-end">
+                <div className="flex items-center space-x-1.5 shrink-0">
+                  {resourceInputValue.trim() && (
                     <button
                       type="button"
-                      onClick={handleAddUploadedFile}
-                      disabled={!newFileName.trim()}
-                      className="text-xs font-bold bg-[#1D68F2] hover:bg-[#1554c0] text-white px-4 py-1.5 rounded-lg transition disabled:opacity-50 cursor-pointer"
+                      onClick={() => handleAddResourceFromCapsule()}
+                      className="text-[11px] font-bold bg-[#18191C] hover:bg-[#1554c0] text-white px-3 py-1 rounded-full transition cursor-pointer"
                     >
-                      Add to SOW Sources
+                      Add
                     </button>
-                  </div>
+                  )}
+
+                  <button
+                    type="button"
+                    onClick={handleToggleDictation}
+                    title={isListening ? "Listening... click to stop" : "Voice dictation / speech transcript"}
+                    className={`p-1.5 rounded-full transition cursor-pointer ${
+                      isListening 
+                        ? 'text-rose-400 bg-rose-500/20 animate-pulse' 
+                        : 'text-[#94A3B8] hover:text-white hover:bg-slate-700/50'
+                    }`}
+                  >
+                    <Mic className="w-4 h-4" />
+                  </button>
                 </div>
-              )}
+              </div>
 
               {/* Uploaded Documents List */}
               <div className="space-y-2.5 max-h-[340px] overflow-y-auto pr-1">
@@ -725,13 +744,6 @@ export const CreateProjectModal: React.FC<CreateProjectModalProps> = ({
                   placeholder="Paste discovery notes here..."
                 />
               </div>
-
-              <div className="p-3.5 bg-amber-50 border border-amber-200 rounded-xl flex items-start space-x-2.5">
-                <ShieldCheck className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
-                <div className="text-xs text-amber-800 leading-relaxed">
-                  <span className="font-bold text-amber-900">Mandatory Blank Pricing Policy:</span> In compliance with enterprise business rules, all generated pricing sections and rate schedules will remain intentionally blank placeholders for commercial finance sign-off.
-                </div>
-              </div>
             </div>
           )}
 
@@ -776,6 +788,14 @@ export const CreateProjectModal: React.FC<CreateProjectModalProps> = ({
                 </div>
               </div>
 
+              {/* Master SOW Standard */}
+              <div className="p-4 bg-emerald-50 border border-emerald-200 rounded-xl flex items-start space-x-3">
+                <FileCheck2 className="w-5 h-5 text-emerald-600 shrink-0 mt-0.5" />
+                <div className="text-xs text-emerald-900 leading-relaxed">
+                  <div className="font-bold text-emerald-950">DTMC Corporate Master SOW Standard:</div>
+                  The AI authoring pipeline will synthesize your uploaded meeting transcriptions, requirement clarifications, and SRS specifications directly into the 10-section standardized framework.
+                </div>
+              </div>
             </div>
           )}
 

@@ -83,12 +83,27 @@ export interface TokenBudgetInfo {
   modelName: string;
 }
 
+export type SOWSectionCategory = 
+  | 'Overview'
+  | 'Scope' 
+  | 'Deliverables' 
+  | 'Governance' 
+  | 'Schedule' 
+  | 'Assumptions' 
+  | 'Acceptance' 
+  | 'Pricing' 
+  | 'Timeline' 
+  | 'Staffing' 
+  | 'Terms' 
+  | 'Authorization' 
+  | 'Appendix';
+
 export interface SOWSection {
   id: string;
   projectId: string;
   order: number;
   title: string;
-  category: 'Scope' | 'Deliverables' | 'Assumptions' | 'Governance' | 'Acceptance' | 'Pricing' | 'Timeline' | 'Staffing' | 'Terms';
+  category: SOWSectionCategory;
   content: string;
   status: SectionStatus;
   isMandatory: boolean;
@@ -122,6 +137,13 @@ export interface SOWProject {
   id: string;
   title: string;
   clientName: string;
+  clientContact?: string;
+  clientContactEmail?: string;
+  issuerName?: string;
+  issuerEmail?: string;
+  issuerPhone?: string;
+  sowFormat?: string;
+  wordTemplateFile?: string;
   clientIndustry: string;
   projectType: string;
   targetStartDate: string;

@@ -44,7 +44,7 @@ export const SectionReview: React.FC<SectionReviewProps> = ({
   onOpenSourcesDrawer,
   onOpenExportModal,
 }) => {
-  const sections = project.sections.sort((a, b) => a.order - b.order);
+  const sections = [...project.sections].sort((a, b) => a.order - b.order);
   const currentSection = sections.find(s => s.id === activeSectionId) || sections[0];
   const currentIndex = sections.findIndex(s => s.id === currentSection.id);
 
@@ -80,15 +80,17 @@ export const SectionReview: React.FC<SectionReviewProps> = ({
   // QTK-021: Build token budget
   const tokenBudget = currentSection.tokenBudget || sectionDraftingService.buildTokenBudget(currentSection, project);
 
-  const handleSaveEdit = () => {
+  const handleSaveEdit = (contentToSave?: string) => {
+    const textToSave = contentToSave !== undefined ? contentToSave : editedContent;
     // QTK-029: Invalidate approval and create new version when approved content is edited
     const result = concurrencyAndAuditService.handleSectionEdit(
       currentSection,
-      editedContent,
+      textToSave,
       project.ownerName
     );
 
     onUpdateSection(result.updatedSection);
+    setEditedContent(textToSave);
     setIsEditing(false);
   };
 
@@ -563,8 +565,7 @@ export const SectionReview: React.FC<SectionReviewProps> = ({
         onClose={() => setShowDiffModal(false)}
         section={currentSection}
         onRestoreSnapshot={(content) => {
-          setEditedContent(content);
-          handleSaveEdit();
+          handleSaveEdit(content);
         }}
       />
 
