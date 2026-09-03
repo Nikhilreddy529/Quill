@@ -1,10 +1,117 @@
 import { Document, Packer, Paragraph, TextRun, HeadingLevel, Table, TableRow, TableCell, BorderStyle, WidthType, AlignmentType, ShadingType, PageBreak } from 'docx';
 import { saveAs } from 'file-saver';
 import { SOWProject } from '../types/quill';
+import { validateProjectPricingPolicy, PricingViolation } from './pricingValidationService';
 
-export async function generateAndDownloadDTMCWordDoc(project: SOWProject): Promise<{ fileName: string; sizeBytes: number }> {
-  // Validate that pricing is strictly blank
-  const sections = project.sections.sort((a, b) => a.order - b.order);
+export interface ExportPreflightResult {
+  canExport: boolean;
+  approvedCount: number;
+  totalSections: number;
+  unapprovedSections: { id: string; title: string; status: string }[];
+  pricingCompliant: boolean;
+  pricingViolations: PricingViolation[];
+  errors: string[];
+  warnings: string[];
+}
+
+/**
+ * Validates whether an SOWProject is ready for formal Word DOCX export.
+ * Checks framework approval, section approval status, pricing policy compliance, and required metadata.
+ */
+export function validateSOWForExport(project: SOWProject): ExportPreflightResult {
+  const errors: string[] = [];
+  const warnings: string[] = [];
+
+  const totalSections = project.sections ? project.sections.length : 0;
+  if (totalSections === 0) {
+    errors.push("The SOW does not contain any sections. Cannot export an empty document.");
+  }
+
+  // Check framework approval
+  if (!project.frameworkApproved) {
+    errors.push("The SOW framework structure has not been approved by the Project Manager.");
+  }
+
+  // Check section approval status
+  const unapprovedSections: { id: string; title: string; status: string }[] = [];
+  let approvedCount = 0;
+
+  if (project.sections) {
+    for (const section of project.sections) {
+      if (section.status === 'Approved' && !section.requiresReapproval) {
+        approvedCount++;
+      } else {
+        unapprovedSections.push({
+          id: section.id,
+          title: section.title,
+          status: section.requiresReapproval ? 'Requires Re-approval' : section.status,
+        });
+      }
+    }
+  }
+
+  if (unapprovedSections.length > 0) {
+    const sectionNames = unapprovedSections.slice(0, 3).map(s => `"${s.title}" (${s.status})`).join(', ');
+    const remaining = unapprovedSections.length > 3 ? ` and ${unapprovedSections.length - 3} more` : '';
+    errors.push(`${unapprovedSections.length} of ${totalSections} sections are not approved: ${sectionNames}${remaining}. All sections must be approved prior to formal export.`);
+  }
+
+  // Pricing policy validation
+  const pricingCheck = validateProjectPricingPolicy(project.sections || []);
+  const pricingCompliant = pricingCheck.isValid;
+
+  if (!pricingCompliant) {
+    const violationSummary = pricingCheck.violations.slice(0, 2).map(v => `"${v.match}" in ${v.sectionTitle}`).join(', ');
+    errors.push(`DTMC Blank Pricing Policy violation: Unvetted monetary figures detected (${violationSummary}). Commercial Finance sign-off requires blank placeholders.`);
+  }
+
+  // Required Metadata checks
+  if (!project.clientName || project.clientName.trim().length === 0) {
+    errors.push("Client Name is missing from the project metadata.");
+  }
+
+  if (!project.title || project.title.trim().length === 0) {
+    warnings.push("Project Title is blank; default title will be used in export.");
+  }
+
+  if (!project.clientContact) {
+    warnings.push("Client Contact representative is not specified on the cover page.");
+  }
+
+  const canExport = errors.length === 0;
+
+  return {
+    canExport,
+    approvedCount,
+    totalSections,
+    unapprovedSections,
+    pricingCompliant,
+    pricingViolations: pricingCheck.violations,
+    errors,
+    warnings,
+  };
+}
+
+export async function generateAndDownloadDTMCWordDoc(
+  project: SOWProject,
+  options?: { allowUnapprovedForPreview?: boolean }
+): Promise<{ fileName: string; sizeBytes: number }> {
+  // Run export preflight check
+  const preflight = validateSOWForExport(project);
+  if (!preflight.canExport && !options?.allowUnapprovedForPreview) {
+    throw new Error(`Export Preflight Failed:\n${preflight.errors.join('\n')}`);
+  }
+
+  // Clone sections before sorting to avoid mutating state
+  const sections = [...project.sections].sort((a, b) => a.order - b.order);
+
+  const cleanClientDomain = project.clientName ? project.clientName.toLowerCase().replace(/[^a-z0-9]/g, '') : 'client';
+  const clientContactName = project.clientContact?.trim() || "Primary Client Representative";
+  const clientContactEmail = project.clientContactEmail?.trim() || `contact@${cleanClientDomain}.example`;
+  const sowFormatLabel = project.sowFormat || project.projectType || "Phase-gated implementation SOW";
+  const issuerOrganization = project.issuerName || "DTMC Advisory Group";
+  const issuerEmail = project.issuerEmail || project.ownerEmail || "advisory@dtmc.example";
+  const issuerPhone = project.issuerPhone || "+1 555 010 2000";
   
   const doc = new Document({
     styles: {
@@ -150,7 +257,7 @@ export async function generateAndDownloadDTMCWordDoc(project: SOWProject): Promi
                     children: [new Paragraph({ children: [new TextRun({ text: "Client contact", bold: true, color: "0F172A", font: "Aptos", size: 18 })] })],
                   }),
                   new TableCell({
-                    children: [new Paragraph({ children: [new TextRun({ text: "Riley Chen", font: "Aptos", size: 18 })] })],
+                    children: [new Paragraph({ children: [new TextRun({ text: clientContactName, font: "Aptos", size: 18 })] })],
                   }),
                 ],
               }),
@@ -161,7 +268,7 @@ export async function generateAndDownloadDTMCWordDoc(project: SOWProject): Promi
                     children: [new Paragraph({ children: [new TextRun({ text: "Contact email", bold: true, color: "0F172A", font: "Aptos", size: 18 })] })],
                   }),
                   new TableCell({
-                    children: [new Paragraph({ children: [new TextRun({ text: "riley.chen@greenpath.example", font: "Aptos", size: 18 })] })],
+                    children: [new Paragraph({ children: [new TextRun({ text: clientContactEmail, font: "Aptos", size: 18 })] })],
                   }),
                 ],
               }),
@@ -169,10 +276,10 @@ export async function generateAndDownloadDTMCWordDoc(project: SOWProject): Promi
                 children: [
                   new TableCell({
                     shading: { type: ShadingType.CLEAR, fill: "E6F4F5" },
-                    children: [new Paragraph({ children: [new TextRun({ text: "Sample format", bold: true, color: "0F172A", font: "Aptos", size: 18 })] })],
+                    children: [new Paragraph({ children: [new TextRun({ text: "SOW format", bold: true, color: "0F172A", font: "Aptos", size: 18 })] })],
                   }),
                   new TableCell({
-                    children: [new Paragraph({ children: [new TextRun({ text: "Phase-gated implementation SOW", font: "Aptos", size: 18 })] })],
+                    children: [new Paragraph({ children: [new TextRun({ text: sowFormatLabel, font: "Aptos", size: 18 })] })],
                   }),
                 ],
               }),
@@ -182,7 +289,7 @@ export async function generateAndDownloadDTMCWordDoc(project: SOWProject): Promi
           // Issued by info
           new Paragraph({
             children: [
-              new TextRun({ text: "Issued by DTMC Advisory Group | contact@dtmc.example | +1 555 010 2000", size: 16, color: "64748B", font: "Aptos" }),
+              new TextRun({ text: `Issued by ${issuerOrganization} | ${issuerEmail} | ${issuerPhone}`, size: 16, color: "64748B", font: "Aptos" }),
             ],
             alignment: AlignmentType.CENTER,
             spacing: { before: 300, after: 600 },
@@ -273,7 +380,7 @@ export async function generateAndDownloadDTMCWordDoc(project: SOWProject): Promi
                 elements.push(new Paragraph({ text: trimmed.replace('### ', ''), style: "DTMCHeading2" }));
               } else if (trimmed.startsWith('#### ')) {
                 elements.push(new Paragraph({ text: trimmed.replace('#### ', ''), style: "DTMCHeading2" }));
-              } else if (trimmed.startsWith('* ') || trimmed.startsWith('- ') || trimmed.startsWith(' ')) {
+              } else if (trimmed.startsWith('* ') || trimmed.startsWith('- ') || trimmed.startsWith('• ') || trimmed.startsWith(' ')) {
                 elements.push(
                   new Paragraph({
                     children: [
@@ -320,7 +427,7 @@ export async function generateAndDownloadDTMCWordDoc(project: SOWProject): Promi
   });
 
   const blob = await Packer.toBlob(doc);
-  const cleanClient = project.clientName.replace(/[^a-zA-Z0-9]/g, '');
+  const cleanClient = project.clientName.replace(/[^a-zA-Z0-9]/g, '') || 'Client';
   const fileName = `SOW-DTMC-${cleanClient}-${project.id}.docx`;
   saveAs(blob, fileName);
 

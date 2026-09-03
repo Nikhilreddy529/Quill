@@ -578,7 +578,7 @@ export const SOWTemplatePreview: React.FC<SOWTemplatePreviewProps> = ({
                   <tbody className="divide-y divide-[#CBD5E1] bg-white">
                     <tr className="divide-x divide-[#CBD5E1]">
                       <td className="py-2.5 px-3 font-medium align-top">Time and materials</td>
-                      <td className="py-2.5 px-3 text-[#0F172A] align-top font-semibold">$88,000 to $116,000</td>
+                      <td className="py-2.5 px-3 text-[#0F172A] align-top font-semibold">  </td>
                       <td className="py-2.5 px-3 text-[#0F172A] align-top">Initial deposit plus monthly actuals</td>
                     </tr>
                   </tbody>

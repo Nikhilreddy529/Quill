@@ -61,7 +61,7 @@ export const SOWAuthoringWorkspace: React.FC<SOWAuthoringWorkspaceProps> = ({
   onOpenExportModal,
   onNavigateStep,
 }) => {
-  const sections = project.sections.sort((a, b) => a.order - b.order);
+  const sections = [...project.sections].sort((a, b) => a.order - b.order);
   const currentSection = sections.find(s => s.id === activeSectionId) || sections[1] || sections[0];
 
   // Editor states
