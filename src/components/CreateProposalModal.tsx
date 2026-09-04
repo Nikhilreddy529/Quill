@@ -12,6 +12,7 @@ import {
 } from 'lucide-react';
 import { PROPOSAL_TEMPLATES } from '../services/proposalTemplateService';
 import { SOWProject, UploadedDocCategory, UploadedProjectDocument } from '../types/quill';
+import { GeneratedProposalSlide } from '../types/proposal';
 
 interface CreateProposalModalProps {
   isOpen: boolean;
@@ -33,6 +34,7 @@ export const CreateProposalModal: React.FC<CreateProposalModalProps> = ({ isOpen
   const [notes, setNotes] = useState('Discovery notes, meeting transcript themes, and requirement clarifications will be used as proposal context.');
   const [selectedTemplateId, setSelectedTemplateId] = useState('');
   const [files, setFiles] = useState<UploadedProjectDocument[]>([]);
+  const [generationError, setGenerationError] = useState('');
   const fileInputRef = useRef<HTMLInputElement>(null);
   const requestInProgress = useRef(false);
 
@@ -70,6 +72,7 @@ const handleCreate = async () => {
 
   requestInProgress.current = true;
   setIsCreating(true);
+  setGenerationError('');
 
   try {
     const n8nResult = await sendToN8n({
@@ -113,11 +116,12 @@ const handleCreate = async () => {
         'Use only grounded intake evidence and preserve blank commercial placeholders.',
       selectedTemplateId: '',
       frameworkApproved: true,
-      sections: (n8nResult.sections || []).map((section, index) => ({
-        id: `PROP-SEC-${index + 1}`,
+      sections: [],
+      proposalSlides: (n8nResult.sections || []).map((section, index): GeneratedProposalSlide => ({
+        ...PROPOSAL_TEMPLATES.find(template => template.id === selectedTemplateId)!.slides[index],
+        id: `proposal-slide-${index + 1}`,
         title: section.sectionName,
         content: section.content,
-        order: index + 1,
       })),
 
       exportHistory: [],
@@ -184,7 +188,7 @@ const handleCreate = async () => {
           </div>}
 
           {step === 4 && <div className="space-y-4">
-            <div className="flex items-center gap-3 rounded-xl border border-emerald-200 bg-emerald-50 p-4"><div><div className="text-sm font-bold text-emerald-950">Ready to generate proposal</div><div className="mt-1 text-xs text-emerald-800">Your selected intake evidence and template will be passed to Proposal Workspace.</div></div></div>
+            <div className={`flex items-center gap-3 rounded-xl border p-4 ${generationError ? 'border-red-200 bg-red-50' : 'border-emerald-200 bg-emerald-50'}`}><div><div className={`text-sm font-bold ${generationError ? 'text-red-950' : 'text-emerald-950'}`}>{generationError ? 'Proposal generation failed' : 'Ready to generate proposal'}</div><div className={`mt-1 text-xs ${generationError ? 'text-red-800' : 'text-emerald-800'}`}>{generationError || 'Your selected intake evidence and template will be passed to Proposal Workspace.'}</div></div></div>
             <div className="grid grid-cols-1 gap-3 sm:grid-cols-2"><div className="rounded-xl border border-[#E2E8F0] bg-[#F8FAFC] p-4"><div className="text-[10px] font-bold uppercase tracking-wider text-[#64748B]">Proposal</div><div className="mt-2 text-sm font-bold text-[#0F172A]">{title}</div><div className="mt-1 text-xs text-[#475569]">{clientName} • {industry}</div><p className="mt-3 text-xs leading-5 text-[#64748B]">{description || 'No additional description provided.'}</p></div><div className="rounded-xl border border-[#E2E8F0] bg-[#F8FAFC] p-4"><div className="text-[10px] font-bold uppercase tracking-wider text-[#64748B]">Grounding & template</div><div className="mt-2 text-sm font-bold text-[#0F172A]">{selectedTemplate?.name}</div><div className="mt-1 text-xs text-[#475569]">{files.length} uploaded resource{files.length === 1 ? '' : 's'}</div><div className="mt-3 text-xs leading-5 text-[#64748B]">{notes || 'No meeting context provided.'}</div></div></div>
           </div>}
         </div>
