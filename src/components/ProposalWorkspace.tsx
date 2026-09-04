@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { ArrowRight, CheckCircle2, FileText, Sparkles, ShieldCheck, Presentation, Check, LayoutTemplate } from 'lucide-react';
 import { SOWProject } from '../types/quill';
 import { PROPOSAL_TEMPLATES, getProposalTemplate } from '../services/proposalTemplateService';
-import { generateProposalContent } from '../services/proposalGenerationService';
+//import { generateProposalContent } from '../services/proposalGenerationService';
 import { exportProposalDeck } from '../services/proposalExportService';
 import { GeneratedProposalSlide } from '../types/proposal';
 import { sendToN8n } from '../services/n8nServices';
@@ -21,24 +21,17 @@ export const ProposalWorkspace: React.FC<ProposalWorkspaceProps> = ({ project, o
   const [generatedAt, setGeneratedAt] = useState('');
 
   useEffect(() => {
-    let isCurrent = true;
-    setIsGenerating(true);
-    setGeneratedSlides([]);
-    setGenerationError('');
-    generateProposalContent(project, selectedTemplate).then(slides => {
-      if (isCurrent) {
-        setGeneratedSlides(slides);
-        setGeneratedAt(new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }));
-        setIsGenerating(false);
-      }
-    }).catch(() => {
-      if (isCurrent) {
-        setGenerationError('Proposal generation failed. Check the intake data and try again.');
-        setIsGenerating(false);
-      }
-    });
-    return () => { isCurrent = false; };
-  }, [project, selectedTemplate]);
+  const existingSlides: GeneratedProposalSlide[] = (project.sections || []).map(
+    (section, index) => ({
+      id: section.id || `section-${index + 1}`,
+      title: section.title,
+      content: section.content,
+    })
+  );
+
+  setGeneratedSlides(existingSlides);
+  setGenerationError('');
+}, [project, selectedTemplate]);
 
   const handleGenerate = async () => {
   setIsGenerating(true);

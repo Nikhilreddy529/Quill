@@ -1,4 +1,5 @@
 import React, { useRef, useState } from 'react';
+import { sendToN8n } from '../services/n8nServices';
 import {
   ArrowLeft,
   ArrowRight,
@@ -33,6 +34,7 @@ export const CreateProposalModal: React.FC<CreateProposalModalProps> = ({ isOpen
   const [selectedTemplateId, setSelectedTemplateId] = useState('');
   const [files, setFiles] = useState<UploadedProjectDocument[]>([]);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const requestInProgress = useRef(false);
 
   if (!isOpen) return null;
 
@@ -63,11 +65,24 @@ export const CreateProposalModal: React.FC<CreateProposalModalProps> = ({ isOpen
     });
     setFiles(previous => [...newFiles, ...previous]);
   };
+const handleCreate = async () => {
+  if (!selectedTemplateId || requestInProgress.current) return;
 
-  const handleCreate = async () => {
-    if (!selectedTemplateId) return;
-    setIsCreating(true);
-    await new Promise(resolve => setTimeout(resolve, 500));
+  requestInProgress.current = true;
+  setIsCreating(true);
+
+  try {
+    const n8nResult = await sendToN8n({
+      clientName,
+      engagementName: title,
+      documentType: 'Proposal',
+      meetingTranscript: notes,
+      uploadedDocuments: files.map(file => ({
+        name: file.fileName,
+        content: file.snippet,
+      })),
+      selectedTemplate: selectedTemplateId,
+    });
     const now = new Date().toISOString();
     const proposal: SOWProject = {
       id: `PROP-2026-${Math.floor(Math.random() * 900) + 100}`,
@@ -85,24 +100,41 @@ export const CreateProposalModal: React.FC<CreateProposalModalProps> = ({ isOpen
       targetStartDate: '',
       targetEndDate: '',
       currency: 'USD',
-      estimatedBudgetPlaceholder: '[To be determined during commercial review]',
+      estimatedBudgetPlaceholder:
+        '[To be determined during commercial review]',
       status: 'Draft',
       currentStep: 4,
       createdAt: now,
       updatedAt: now,
+
       ownerName: 'Nikhil',
       ownerEmail: 'nikhil@acme-transform.com',
-      additionalRequirements: 'Use only grounded intake evidence and preserve blank commercial placeholders.',
+      additionalRequirements:
+        'Use only grounded intake evidence and preserve blank commercial placeholders.',
       selectedTemplateId: '',
       frameworkApproved: true,
-      sections: [],
+      sections: (n8nResult.sections || []).map((section, index) => ({
+        id: `PROP-SEC-${index + 1}`,
+        title: section.sectionName,
+        content: section.content,
+        order: index + 1,
+      })),
+
       exportHistory: [],
     };
-    setIsCreating(false);
+
     onCreateProposal(proposal);
     onClose();
-  };
 
+  } catch (error) {
+    console.error('Proposal n8n generation failed:', error);
+    setGenerationError('Proposal generation failed. Check n8n execution.');
+  } finally {
+  requestInProgress.current = false;
+  setIsCreating(false);
+}
+};
+  
   const canContinue = step === 1 ? Boolean(title.trim() && clientName.trim() && opportunityType.trim()) : step === 3 ? Boolean(selectedTemplateId) : true;
   const selectedTemplate = PROPOSAL_TEMPLATES.find(template => template.id === selectedTemplateId);
 
