@@ -21,13 +21,7 @@ export const ProposalWorkspace: React.FC<ProposalWorkspaceProps> = ({ project, o
   const [generatedAt, setGeneratedAt] = useState('');
 
   useEffect(() => {
-  const existingSlides: GeneratedProposalSlide[] = (project.sections || []).map(
-    (section, index) => ({
-      id: section.id || `section-${index + 1}`,
-      title: section.title,
-      content: section.content,
-    })
-  );
+  const existingSlides = project.proposalSlides || [];
 
   setGeneratedSlides(existingSlides);
   setGenerationError('');
@@ -52,13 +46,21 @@ export const ProposalWorkspace: React.FC<ProposalWorkspaceProps> = ({ project, o
 
     const slides: GeneratedProposalSlide[] = (n8nResult.sections || []).map(
       (section, index) => ({
-        id: `section-${index + 1}`,
+        ...selectedTemplate.slides[index],
+        id: `proposal-slide-${index + 1}`,
         title: section.sectionName,
         content: section.content,
       })
     );
 
     setGeneratedSlides(slides);
+    if (onUpdateProject) {
+      onUpdateProject({
+        ...project,
+        proposalSlides: slides,
+        updatedAt: new Date().toISOString(),
+      });
+    }
     setGeneratedAt(
       new Date().toLocaleTimeString([], {
         hour: '2-digit',
@@ -66,6 +68,7 @@ export const ProposalWorkspace: React.FC<ProposalWorkspaceProps> = ({ project, o
       })
     );
   } catch {
+    setGeneratedSlides([]);
     setGenerationError(
       'Proposal generation failed. Check the intake data and try again.'
     );

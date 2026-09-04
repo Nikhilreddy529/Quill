@@ -1,3 +1,5 @@
+import { GeneratedProposalSlide } from './proposal';
+
 export type SOWStatus = 'Draft' | 'Generated' | 'Under Review' | 'Approved' | 'Exported';
 
 export type SectionStatus = 'Pending' | 'Generating' | 'Review' | 'Approved' | 'Rejected' | 'Superseded';
@@ -163,6 +165,7 @@ export interface SOWProject {
   additionalRequirements: string;
   selectedTemplateId: string;
   proposalTemplateId?: string;
+  proposalSlides?: GeneratedProposalSlide[];
   frameworkApproved: boolean;
   frameworkApprovedBy?: string;
   frameworkApprovedAt?: string;

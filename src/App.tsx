@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Sidebar } from './components/Sidebar';
 import { TopHeader } from './components/TopHeader';
 import { SOWAuthoringWorkspace } from './components/SOWAuthoringWorkspace';
@@ -18,17 +18,37 @@ import { SOWProject, SOWSection, AuditLogEntry } from './types/quill';
 import { SOWTemplate } from './types/template';
 import { templateService } from './services/templateService';
 
+const APP_STATE_STORAGE_KEY = 'quill-app-state';
+
+type PersistedAppState = {
+  projects: SOWProject[];
+  activeProjectId: string;
+  activeSectionId: string;
+  currentView: 'sections' | 'dashboard' | 'framework' | 'proposal' | 'templates' | 'template-editor' | 'template-preview';
+};
+
+const loadPersistedAppState = (): Partial<PersistedAppState> => {
+  try {
+    const stored = localStorage.getItem(APP_STATE_STORAGE_KEY);
+    return stored ? JSON.parse(stored) as Partial<PersistedAppState> : {};
+  } catch {
+    return {};
+  }
+};
+
 export default function App() {
+  const persistedState = loadPersistedAppState();
+
   // Navigation States
   const [currentView, setCurrentView] = useState<
     'sections' | 'dashboard' | 'framework' | 'proposal' | 'templates' | 'template-editor' | 'template-preview'
-  >('sections');
+  >(persistedState.currentView || 'sections');
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
 
   // Application Data States
-  const [projects, setProjects] = useState<SOWProject[]>(INITIAL_SAMPLE_PROJECTS);
-  const [activeProjectId, setActiveProjectId] = useState<string>(INITIAL_SAMPLE_PROJECTS[0].id);
-  const [activeSectionId, setActiveSectionId] = useState<string>(INITIAL_SAMPLE_PROJECTS[0].sections[1]?.id || INITIAL_SAMPLE_PROJECTS[0].sections[0]?.id || '');
+  const [projects, setProjects] = useState<SOWProject[]>(persistedState.projects || INITIAL_SAMPLE_PROJECTS);
+  const [activeProjectId, setActiveProjectId] = useState<string>(persistedState.activeProjectId || INITIAL_SAMPLE_PROJECTS[0].id);
+  const [activeSectionId, setActiveSectionId] = useState<string>(persistedState.activeSectionId || INITIAL_SAMPLE_PROJECTS[0].sections[1]?.id || INITIAL_SAMPLE_PROJECTS[0].sections[0]?.id || '');
   const [auditLogs, setAuditLogs] = useState<AuditLogEntry[]>(SAMPLE_AUDIT_LOGS);
 
   // Template State
@@ -43,6 +63,15 @@ export default function App() {
   const [sourcesSectionTarget, setSourcesSectionTarget] = useState<SOWSection | null>(null);
 
   const activeProject = projects.find(p => p.id === activeProjectId) || projects[0];
+
+  useEffect(() => {
+    localStorage.setItem(APP_STATE_STORAGE_KEY, JSON.stringify({
+      projects,
+      activeProjectId,
+      activeSectionId,
+      currentView,
+    } satisfies PersistedAppState));
+  }, [projects, activeProjectId, activeSectionId, currentView]);
 
   // Project select handler
   const handleSelectProject = (projectId: string) => {
