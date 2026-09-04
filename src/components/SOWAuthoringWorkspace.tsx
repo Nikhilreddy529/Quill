@@ -27,7 +27,7 @@ import {
   Trash2
 } from 'lucide-react';
 import { SOWProject, SOWSection, SourceDocument, DetailedSourceCitation, SectionComment, UploadedProjectDocument } from '../types/quill';
-import { generateSectionContent, validatePricingIsBlank } from '../services/n8nServices';
+import { generateSectionContent, validatePricingIsBlank } from '../services/aiGeneratorService';
 
 interface SOWAuthoringWorkspaceProps {
   project: SOWProject;
@@ -40,6 +40,137 @@ interface SOWAuthoringWorkspaceProps {
   onNavigateStep?: (step: number) => void;
 }
 
+function cleanContentForDisplay(rawText: string, project?: SOWProject, sectionTitle?: string): string {
+  if (!rawText) return '';
+  
+  let text = rawText;
+
+  // 1. If it's Section 9 or Authorization with Accepted by Client / DTMC
+  const isAuthSection = 
+    (sectionTitle && sectionTitle.toLowerCase().includes('authorization')) ||
+    text.includes('Accepted by Client') || 
+    text.includes('Accepted by DTMC');
+
+  if (isAuthSection) {
+    const clientSignatory = project?.clientContact || project?.clientName || 'Riley Chen';
+    const dtmcCreator = project?.ownerName || 'Arjun Rao';
+
+    // If it's in a markdown pipe table
+    if (text.includes('| Accepted by Client') || (text.includes('|') && text.includes('Accepted by Client'))) {
+      const lines = text.split('\n');
+      const dataRow = lines.find(l => l.includes('**Name:**') || l.includes('Name:'));
+      if (dataRow) {
+        const parts = dataRow.split('|').map(s => s.trim()).filter(Boolean);
+        if (parts.length >= 2) {
+          return `Accepted by Client:\n* Name: ${clientSignatory}\n* Title: VP, Transformation\n* Signature: ___________________________\n* Date: ________________________________\n\nAccepted by DTMC:\n* Name: ${dtmcCreator}\n* Title: Engagement Partner\n* Signature: ___________________________\n* Date: ________________________________`;
+        }
+      }
+    }
+
+    // Replace dynamic values in standard list format
+    let authText = text
+      .replace(/(\*?\s*Name:\s*)(?:Riley Chen|\{\{CLIENT_SIGNATORY_NAME\}\}|\[.*?\])(?=\s*\n\s*\*?\s*Title:)/i, `$1${clientSignatory}`)
+      .replace(/(Accepted by Client:[\s\S]*?\*\s*Name:\s*)([^\n]+)/i, `$1${clientSignatory}`)
+      .replace(/(Accepted by Client:[\s\S]*?\*\s*Title:\s*)([^\n]+)/i, '$1VP, Transformation')
+      .replace(/(Accepted by DTMC:[\s\S]*?\*\s*Name:\s*)([^\n]+)/i, `$1${dtmcCreator}`)
+      .replace(/(Accepted by DTMC:[\s\S]*?\*\s*Title:\s*)([^\n]+)/i, '$1Engagement Partner');
+
+    // Also replace hardcoded Jordan Lee if still present
+    authText = authText.replace(/(Accepted by DTMC:[\s\S]*?\*\s*Name:\s*)Jordan Lee/i, `$1${dtmcCreator}`);
+
+    // If text was missing the structure, format standard template
+    if (!authText.includes('Accepted by Client:') || !authText.includes('Accepted by DTMC:')) {
+      return `Accepted by Client:\n* Name: ${clientSignatory}\n* Title: VP, Transformation\n* Signature: ___________________________\n* Date: ________________________________\n\nAccepted by DTMC:\n* Name: ${dtmcCreator}\n* Title: Engagement Partner\n* Signature: ___________________________\n* Date: ________________________________`;
+    }
+
+    // Clean any leading # marks if any
+    return authText.replace(/^\s*#{1,6}\s*\d+\.\s*[^\n]+\n+/, '').replace(/^[\t ]*#{1,6}[\t ]+/gm, '');
+  }
+
+  // 2. Remove redundant section title heading at the very start of the text
+  // e.g. "### 1. Engagement Overview", "### 2. Goals and Objectives", "### <Title>"
+  text = text.replace(/^\s*#{1,6}\s*(?:\d+\.\s*)?[^\n]+\n+/, (match) => {
+    const headingText = match.replace(/^[\s#]+/, '').trim().toLowerCase();
+    const currentTitleText = (sectionTitle || '').trim().toLowerCase();
+    if (
+      !sectionTitle ||
+      headingText.includes(currentTitleText) ||
+      currentTitleText.includes(headingText) ||
+      /^\d+\.\s+/.test(headingText)
+    ) {
+      return '';
+    }
+    return match;
+  });
+
+  // 3. Strip all leading markdown heading hash symbols (e.g. '### ', '#### ') from any line
+  // This turns "#### 1.2 Background & Strategic Alignment" into "1.2 Background & Strategic Alignment"
+  // and removes stray `#` symbols entirely
+  text = text.replace(/^[\t ]*#{1,6}[\t ]+/gm, '');
+  text = text.replace(/[\t ]+#{1,6}[\t ]*$/gm, '');
+
+  // 4. If it's Section 3 with Phase / Workstream table
+  if (text.includes('| Phase / Workstream') || text.includes('| Phase')) {
+    const lines = text.split('\n');
+    const tableRows = lines.filter(l => l.trim().startsWith('|') && !l.includes('---') && !l.includes('Phase / Workstream') && !l.includes('Phase'));
+    if (tableRows.length > 0) {
+      const converted = tableRows.map(row => {
+        const cols = row.split('|').map(s => s.trim()).filter(Boolean);
+        if (cols.length >= 3) {
+          return `* ${cols[0]}: ${cols[1]} Primary Deliverables: ${cols[2]}`;
+        } else if (cols.length === 2) {
+          return `* ${cols[0]}: ${cols[1]}`;
+        }
+        return row;
+      });
+      return converted.join('\n');
+    }
+  }
+
+  // 5. If it's Section 4 with Role | Responsibility table
+  if (text.includes('| Role') && text.includes('Responsibility')) {
+    const lines = text.split('\n');
+    const tableRows = lines.filter(l => l.trim().startsWith('|') && !l.includes('---') && !l.includes('Role'));
+    if (tableRows.length > 0) {
+      const converted = tableRows.map(row => {
+        const cols = row.split('|').map(s => s.trim()).filter(Boolean);
+        if (cols.length >= 2) {
+          return `* ${cols[0]}: ${cols[1]}`;
+        }
+        return row;
+      });
+      return converted.join('\n');
+    }
+  }
+
+  // 6. If it's Section 8 with Commercial Model table
+  if (text.includes('| Commercial Model')) {
+    const lines = text.split('\n');
+    const tableRow = lines.find(l => l.trim().startsWith('|') && !l.includes('---') && !l.includes('Commercial Model'));
+    const noteLine = lines.find(l => l.includes('fictional placeholders') || l.includes('Commercial Finance') || l.includes('blank pending'));
+    if (tableRow) {
+      const cols = tableRow.split('|').map(s => s.trim()).filter(Boolean);
+      if (cols.length >= 3) {
+        let amount = cols[1];
+        if (amount.includes('$') || amount.includes('88,000') || amount.includes('116,000')) {
+          amount = '[ — ]';
+        }
+        return `* Commercial Model: ${cols[0]}\n* Illustrative Amount: ${amount}\n* Billing: ${cols[2]}${noteLine ? `\n\n${noteLine.trim()}` : '\n\n*All fee amounts remain intentionally blank pending Commercial Finance sign-off prior to contracting.*'}`;
+      }
+    }
+  }
+
+  // 7. Replace any unvetted price in Section 8 ($88,000 to $116,000) with blank [ — ]
+  const sanitized = text
+    .replace(/\$88,000(?:\s*to\s*\$116,000)?/gi, '[ — ]')
+    .replace(/\$116,000/gi, '[ — ]');
+
+  // 8. Replace any remaining <br/> tags and HTML tags
+  return sanitized
+    .replace(/<br\s*\/?>/gi, '\n')
+    .replace(/<\/?[^>]+(>|$)/g, '');
+}
+
 export const SOWAuthoringWorkspace: React.FC<SOWAuthoringWorkspaceProps> = ({
   project,
   activeSectionId,
@@ -50,12 +181,14 @@ export const SOWAuthoringWorkspace: React.FC<SOWAuthoringWorkspaceProps> = ({
   onOpenExportModal,
   onNavigateStep,
 }) => {
-  const sections = [...project.sections].sort((a, b) => a.order - b.order);
+  const sections = [...project.sections]
+    .filter(s => s.order <= 9 && !s.title.toLowerCase().startsWith('appendix') && !(s as any).isAppendix)
+    .sort((a, b) => a.order - b.order);
   const currentSection = sections.find(s => s.id === activeSectionId) || sections[1] || sections[0];
 
   // Editor states
   const [activeTab, setActiveTab] = useState<'editor' | 'history'>('editor');
-  const [editorText, setEditorText] = useState(currentSection?.content || '');
+  const [editorText, setEditorText] = useState(cleanContentForDisplay(currentSection?.content || '', project, currentSection?.title));
   const [isRegenerating, setIsRegenerating] = useState(false);
   
   // AI Assistant input
@@ -73,11 +206,19 @@ export const SOWAuthoringWorkspace: React.FC<SOWAuthoringWorkspaceProps> = ({
   // Sync state on section change
   React.useEffect(() => {
     if (currentSection) {
-      setEditorText(currentSection.content);
+      const cleaned = cleanContentForDisplay(currentSection.content, project, currentSection.title);
+      setEditorText(cleaned);
       setAiPrompt('');
       setAiStatusMsg(null);
+
+      if (currentSection.content !== cleaned) {
+        onUpdateSection({
+          ...currentSection,
+          content: cleaned,
+        });
+      }
     }
-  }, [currentSection?.id]);
+  }, [currentSection?.id, project.id, project.ownerName, project.clientContact, project.clientName]);
 
   if (!currentSection) {
     return <div className="p-8 text-center text-slate-500">No active section found.</div>;
@@ -130,58 +271,38 @@ export const SOWAuthoringWorkspace: React.FC<SOWAuthoringWorkspaceProps> = ({
   };
 
   const handleRunAiAction = async (instruction: string) => {
-     setIsRegenerating(true);
-  setAiStatusMsg(`Applying AI action: "${instruction}"...`);
+    setIsRegenerating(true);
+    setAiStatusMsg(`Applying AI action: "${instruction}"...`);
+    try {
+      const result = await generateSectionContent(
+        currentSection.title,
+        currentSection.category,
+        project.clientName,
+        project.meetingNotes,
+        instruction + "\nExisting Content:\n" + editorText
+      );
 
-  try {
-    const result = await sendToN8n({
-      clientName: project.clientName,
-      engagementName: project.engagementName,
-      meetingTranscript: project.meetingNotes,
-      uploadedDocuments: project.uploadedDocuments?.map((doc) => ({
-        name: doc.fileName,
-        content: doc.snippet,
-      })),
-      sectionTitle: currentSection.title,
-      category: currentSection.category,
-      customInstructions:
-        instruction + "\nExisting Content:\n" + editorText,
-    });
+      const cleanedContent = cleanContentForDisplay(result.content, project, currentSection.title);
 
-    const generatedSection = result.sections?.find(
-      (section) => section.sectionName === currentSection.title
-    );
+      const updated: SOWSection = {
+        ...currentSection,
+        content: cleanedContent,
+        confidenceScore: result.confidenceScore,
+        groundedSources: result.groundedSources,
+        version: Number((currentSection.version + 0.1).toFixed(1)),
+        regenerationPrompt: instruction,
+      };
 
-    const generatedContent =
-      generatedSection?.content ||
-      result.sections?.[0]?.content ||
-      editorText;
-
-    const updated: SOWSection = {
-      ...currentSection,
-      content: generatedContent,
-      confidenceScore: result.confidenceScore ?? currentSection.confidenceScore,
-      version: Number((currentSection.version + 0.1).toFixed(1)),
-      regenerationPrompt: instruction,
-    };
-
-    setEditorText(generatedContent);
-    onUpdateSection(updated);
-
-    setAiStatusMsg(
-      result.itemsForReview?.length
-        ? "Updated section with items flagged for human review."
-        : "Updated section successfully based on the provided sources."
-    );
-
-    setAiPrompt('');
-    showToast(`AI content updated (v${updated.version})`);
-  } catch (e) {
-    console.error('n8n AI assistance failed:', e);
-    setAiStatusMsg('Failed to run AI assistance.');
-  } finally {
-    setIsRegenerating(false);
-  }
+      setEditorText(cleanedContent);
+      onUpdateSection(updated);
+      setAiStatusMsg(`Updated section successfully based on reference documents.`);
+      setAiPrompt('');
+      showToast(`AI content updated (v${updated.version})`);
+    } catch (e) {
+      setAiStatusMsg('Failed to run AI assistance.');
+    } finally {
+      setIsRegenerating(false);
+    }
   };
 
   const handleAddNewSection = () => {
@@ -192,7 +313,7 @@ export const SOWAuthoringWorkspace: React.FC<SOWAuthoringWorkspaceProps> = ({
       order: nextOrder,
       title: `${nextOrder}. Custom Scope Addendum`,
       category: 'Scope',
-      content: `### ${nextOrder}. Custom Scope Addendum\n\nAdditional client requirements and architectural specifications.`,
+      content: `Additional client requirements and architectural specifications for this engagement.`,
       status: 'Pending',
       isMandatory: false,
       isPricingSection: false,

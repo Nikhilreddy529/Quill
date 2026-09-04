@@ -28,7 +28,6 @@ import { SOWProject, SourceDocument, UploadedProjectDocument, UploadedDocCategor
 import { SAMPLE_SOURCE_DOCUMENTS } from '../data/sampleSharePointData';
 import { generateDefaultFramework } from '../services/aiGeneratorService';
 import { templateService } from '../services/templateService';
-import { sendToN8n } from '../services/n8nServices';
 
 interface CreateProjectModalProps {
   isOpen: boolean;
@@ -329,83 +328,121 @@ export const CreateProjectModal: React.FC<CreateProjectModalProps> = ({
   const handleRemoveUploadedFile = (id: string) => {
     setUploadedFiles(uploadedFiles.filter(f => f.id !== id));
   };
-  
+
   const handleCreateAndDraft = async () => {
-  setIsGenerating(true);
-  try {
-    const selectedTemplate =
-      availableTemplates.find((t) => t.id === selectedTemplateId) ||
-      availableTemplates[0];
-    if (!selectedTemplate) {
-      throw new Error("No SOW template selected.");
+    setIsGenerating(true);
+    
+    // Simulate n8n Workflow 1 execution (Graph Search + Azure OpenAI Framework Gen)
+    await new Promise((resolve) => setTimeout(resolve, 1500));
+
+    const newId = `PRJ-2026-00${Math.floor(Math.random() * 900) + 100}`;
+    const selectedTemplate = availableTemplates.find(t => t.id === selectedTemplateId) || availableTemplates[0];
+    
+    // Generate sections based on selected template if available
+    let fullSections: any[] = [];
+    if (selectedTemplate) {
+      fullSections = selectedTemplate.sections.map((sec, idx) => {
+        const sectionUploadedFiles = uploadedFiles.filter((_, fIdx) => (fIdx % selectedTemplate.sections.length) === (idx % uploadedFiles.length || 0));
+        const activeFilesForSec = sectionUploadedFiles.length > 0 ? sectionUploadedFiles : uploadedFiles.slice(0, 2);
+
+        // Replace template placeholders for this project
+        const clientSignatory = clientContact || clientName || 'Riley Chen';
+        const dtmcCreator = 'Nikhil';
+
+        let synthesizedContent = sec.content
+          .split('{{PROJECT_NAME}}').join(projectTitle || `${clientName} SOW`)
+          .split('{{CLIENT_ORGANIZATION_NAME}}').join(clientName)
+          .split('{{CLIENT_CONTACT_NAME}}').join(clientSignatory)
+          .split('{{CLIENT_CONTACT_EMAIL}}').join(clientContactEmail || 'riley.chen@acme.com')
+          .split('{{CLIENT_SIGNATORY_NAME}}').join(clientSignatory)
+          .split('{{DTMC_SIGNATORY_NAME}}').join(dtmcCreator)
+          .split('{{ANTICIPATED_START_DATE}}').join(targetStartDate)
+          .split('{{ANTICIPATED_COMPLETION_DATE}}').join(targetEndDate)
+          .split('{{CURRENCY}}').join(currency);
+
+        if (sec.order === 9 || (sec.title && sec.title.toLowerCase().includes('authorization')) || synthesizedContent.includes('Accepted by Client')) {
+          synthesizedContent = synthesizedContent
+            .replace(/(Accepted by Client:[\s\S]*?\*\s*Name:\s*)([^\n]+)/i, `$1${clientSignatory}`)
+            .replace(/(Accepted by Client:[\s\S]*?\*\s*Title:\s*)([^\n]+)/i, '$1VP, Transformation')
+            .replace(/(Accepted by DTMC:[\s\S]*?\*\s*Name:\s*)([^\n]+)/i, `$1${dtmcCreator}`)
+            .replace(/(Accepted by DTMC:[\s\S]*?\*\s*Title:\s*)([^\n]+)/i, '$1Engagement Partner');
+        }
+
+        // Clean redundant top title and # heading marks
+        synthesizedContent = synthesizedContent
+          .replace(/^\s*#{1,6}\s*\d+\.\s*[^\n]+\n+/, '')
+          .split('\n')
+          .map((line: string) => (/^\s*#{1,6}\s+/.test(line) ? line.replace(/^\s*#{1,6}\s+/, '') : line))
+          .join('\n');
+
+        return {
+          id: `SEC-${Math.floor(Math.random() * 9000) + 1000}`,
+          projectId: newId,
+          order: sec.order || idx + 1,
+          title: sec.title || `Section ${idx + 1}`,
+          category: sec.category || 'Scope',
+          content: synthesizedContent,
+          status: 'Pending' as const,
+          isMandatory: sec.isMandatory,
+          isPricingSection: sec.isPricingSection,
+          groundedSources: SAMPLE_SOURCE_DOCUMENTS.filter(s => selectedSources.includes(s.id)),
+          detailedSources: activeFilesForSec.map((f, dIdx) => ({
+            id: `DS-${idx}-${dIdx}`,
+            documentId: f.id,
+            fileName: f.fileName,
+            fileType: f.fileType,
+            category: f.category,
+            section: sec.title.split(' ')[0] || `Section ${idx + 1}`,
+            page: f.fileType === 'pdf' ? (dIdx + 1) * 2 : `Min ${(dIdx + 1) * 10}:00`,
+            snippet: f.snippet
+          })),
+          uploadedDocumentIds: activeFilesForSec.map(f => f.id),
+          version: 1,
+          lastEditedBy: "Nikhil",
+          lastEditedAt: new Date().toISOString(),
+          confidenceScore: 94
+        };
+      });
+    } else {
+      const defaultSections = generateDefaultFramework(projectType, clientName);
+      fullSections = defaultSections.map((sec, idx) => {
+        const sectionUploadedFiles = uploadedFiles.filter((_, fIdx) => (fIdx % defaultSections.length) === (idx % uploadedFiles.length || 0));
+        const activeFilesForSec = sectionUploadedFiles.length > 0 ? sectionUploadedFiles : uploadedFiles.slice(0, 2);
+
+        return {
+          id: `SEC-${Math.floor(Math.random() * 9000) + 1000}`,
+          projectId: newId,
+          order: sec.order || idx + 1,
+          title: sec.title || `Section ${idx + 1}`,
+          category: sec.category || 'Scope',
+          content: `This section has been synthesized using the uploaded project intake resources (**${uploadedFiles.map(f => f.fileName).slice(0, 2).join('**, **')}**).\n\n*Pending final approval and DTMC formatting.*`,
+          status: 'Pending' as const,
+          isMandatory: sec.isMandatory ?? true,
+          isPricingSection: sec.isPricingSection ?? false,
+          groundedSources: SAMPLE_SOURCE_DOCUMENTS.filter(s => selectedSources.includes(s.id)),
+          detailedSources: activeFilesForSec.map((f, dIdx) => ({
+            id: `DS-${idx}-${dIdx}`,
+            documentId: f.id,
+            fileName: f.fileName,
+            fileType: f.fileType,
+            category: f.category,
+            section: sec.title.split(' ')[0] || `Section ${idx + 1}`,
+            page: f.fileType === 'pdf' ? (dIdx + 1) * 2 : `Min ${(dIdx + 1) * 10}:00`,
+            snippet: f.snippet
+          })),
+          uploadedDocumentIds: activeFilesForSec.map(f => f.id),
+          version: 1,
+          lastEditedBy: "Nikhil",
+          lastEditedAt: new Date().toISOString(),
+          confidenceScore: 94
+        };
+      });
     }
-    const n8nResult = await sendToN8n({
-      clientName,
-      engagementName: projectTitle,
-      documentType: "SOW",
-      meetingTranscript: discoveryNotes,
-      uploadedDocuments: uploadedFiles.map((file) => ({
-        name: file.fileName,
-        content: file.snippet,
-      })),
-      selectedTemplate: selectedTemplate.id,
-      templateFileName: selectedTemplate.metadata.wordTemplateFile || "",
-      templateSections: selectedTemplate.sections.map((section) => ({
-        title: section.title,
-        category: section.category,
-        content: section.content,
-        order: section.order,
-        isMandatory: section.isMandatory,
-      })),
-    });
-    console.log("n8n SOW result:", n8nResult);
-    if (!n8nResult.sections || n8nResult.sections.length === 0) {
-      throw new Error("n8n returned no SOW sections.");
-    }
-    const newId =
-      n8nResult.project?.projectId || `PRJ-${Date.now().toString().slice(-6)}`;
-    const fullSections = n8nResult.sections.map((section, index) => {
-      const templateSection = selectedTemplate.sections.find(
-        (s) => s.title === section.sectionName,
-      );
-      return {
-        id: `SEC-${newId}-${index + 1}`,
-        projectId: newId,
-        order: templateSection?.order || index + 1,
-        title: section.sectionName,
-        category: templateSection?.category || "Scope",
-        content: section.content,
-        status: "Pending" as const,
-        isMandatory: templateSection?.isMandatory ?? true,
-        isPricingSection: templateSection?.isPricingSection ?? false,
-        groundedSources: SAMPLE_SOURCE_DOCUMENTS.filter((s) =>
-          selectedSources.includes(s.id),
-        ),
-        detailedSources: uploadedFiles.map((file, dIdx) => ({
-          id: `DS-${index}-${dIdx}`,
-          documentId: file.id,
-          fileName: file.fileName,
-          fileType: file.fileType,
-          category: file.category,
-          section: section.sectionName,
-          page:
-            file.fileType === "pdf" ? dIdx + 1 : `Min ${(dIdx + 1) * 10}:00`,
-          snippet: file.snippet,
-        })),
-        uploadedDocumentIds: uploadedFiles.map((f) => f.id),
-        version: 1,
-        lastEditedBy: "Nikhil",
-        lastEditedAt: new Date().toISOString(),
-        confidenceScore: 94,
-      };
-    });
+
     const newProject: SOWProject = {
       id: newId,
-      title:
-        n8nResult.project?.engagementName ||
-        projectTitle ||
-        `${clientName} SOW Engagement`,
-      clientName: n8nResult.project?.clientName || clientName,
+      title: projectTitle || `${clientName} SOW Engagement`,
+      clientName,
       clientContact,
       clientContactEmail,
       clientIndustry,
@@ -413,38 +450,33 @@ export const CreateProjectModal: React.FC<CreateProjectModalProps> = ({
       targetStartDate,
       targetEndDate,
       currency,
-      estimatedBudgetPlaceholder:
-        "[To be determined upon finalized staffing schedule]",
+      estimatedBudgetPlaceholder: "[To be determined upon finalized staffing schedule]",
       status: "Generated",
-      currentStep: 3,
+      currentStep: 3, // Framework review step
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
       ownerName: "Nikhil",
       ownerEmail: "nikhil@acme-transform.com",
-      description: `SOW generated from selected template "${selectedTemplate.metadata.name}".`,
+      description: `SOW for ${clientName} adhering to DTMC Master Services Agreement and SOW standards.`,
       meetingNotes: discoveryNotes,
-      discoveryDocNames: uploadedFiles.map((f) => f.fileName),
+      discoveryDocNames: uploadedFiles.map(f => f.fileName),
       uploadedDocuments: uploadedFiles,
-      additionalRequirements:
-        "Adhere to DTMC corporate styling standards and blank pricing placeholders.",
-      selectedTemplateId: selectedTemplate.id,
-      wordTemplateFile: selectedTemplate.metadata.wordTemplateFile,
-      sowFormat: selectedTemplate.metadata.templateType,
+      additionalRequirements: "Adhere to DTMC corporate styling standards and blank pricing placeholders.",
+      selectedTemplateId: selectedTemplateId || "TMPL-DTMC-2025-01",
+      wordTemplateFile: "DTMC_Master_SOW_Template_2025.dotx",
+      sowFormat: projectType,
       issuerName: "DTMC Advisory Group",
       issuerEmail: "advisory@dtmc.example",
       issuerPhone: "+1 555 010 2000",
       frameworkApproved: false,
       sections: fullSections,
-      exportHistory: [],
+      exportHistory: []
     };
+
     setIsGenerating(false);
     onCreateProject(newProject);
     onClose();
-  } catch (error) {
-    console.error("n8n SOW generation failed:", error);
-    setIsGenerating(false);
-  }
-};
+  };
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs animate-fade-in">
@@ -453,7 +485,7 @@ export const CreateProjectModal: React.FC<CreateProjectModalProps> = ({
         {/* Modal Header */}
         <div className="p-5 border-b border-[#E2E8F0] flex items-center justify-between bg-[#F8FAFC]">
           <div className="flex items-center space-x-3">
-            
+
             <div>
               <h2 className="text-base font-bold text-[#0F172A]">Create New SOW Document</h2>
               <p className="text-xs text-[#64748B]">Step {step} of 3 • Attach Meeting Transcriptions, Clarifications & SRS Documents</p>
@@ -616,7 +648,7 @@ export const CreateProjectModal: React.FC<CreateProjectModalProps> = ({
                     }
                   }}
                   placeholder="Add resource to create SOW"
-                  className="flex-1 bg-transparent border-none text-xs sm:text-sm black placeholder-[#71717A] focus:outline-none px-3 py-0.5"
+                  className="flex-1 bg-transparent border-none text-xs sm:text-sm text-slate-100 placeholder-[#71717A] focus:outline-none px-3 py-0.5"
                 />
 
                 <div className="flex items-center space-x-1.5 shrink-0">
@@ -715,7 +747,27 @@ export const CreateProjectModal: React.FC<CreateProjectModalProps> = ({
                   );
                 })}
               </div>
-      
+
+              {/* Discovery Notes Box */}
+              <div className="pt-2">
+                <label className="block text-xs font-semibold text-[#334155] uppercase tracking-wider mb-1.5">
+                  Discovery Meeting Notes & Summary Context
+                </label>
+                <textarea
+                  rows={3}
+                  value={discoveryNotes}
+                  onChange={(e) => setDiscoveryNotes(e.target.value)}
+                  className="w-full bg-white border border-[#CBD5E1] rounded-lg p-2.5 text-xs text-[#0F172A] focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-[#1D68F2] leading-relaxed"
+                  placeholder="Paste discovery notes here..."
+                />
+              </div>
+
+              <div className="p-3.5 bg-amber-50 border border-amber-200 rounded-xl flex items-start space-x-2.5">
+                <ShieldCheck className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
+                <div className="text-xs text-amber-800 leading-relaxed">
+                  <span className="font-bold text-amber-900">Mandatory Blank Pricing Policy:</span> In compliance with enterprise business rules, all generated pricing sections and rate schedules will remain intentionally blank placeholders for commercial finance sign-off.
+                </div>
+              </div>
             </div>
           )}
 
@@ -726,11 +778,11 @@ export const CreateProjectModal: React.FC<CreateProjectModalProps> = ({
                 <div>
                   <h3 className="text-sm font-bold text-[#0F172A]">SOW Grounding Sources Verification</h3>
                   <p className="text-xs text-[#64748B]">
-                    Confirm the {uploadedFiles.length} project resources uploaded.
+                    Confirm the {uploadedFiles.length} project resources uploaded by the Project Manager that will be used to ground every section of this SOW.
                   </p>
                 </div>
                 <span className="text-xs text-[#1D68F2] font-semibold bg-blue-50 px-2.5 py-1 rounded-full border border-blue-200">
-                  {uploadedFiles.length} Uploaded Resources 
+                  {uploadedFiles.length} Uploaded Resources Active
                 </span>
               </div>
 
@@ -757,6 +809,15 @@ export const CreateProjectModal: React.FC<CreateProjectModalProps> = ({
                       <span className="text-[10px] text-slate-500 font-medium shrink-0">{doc.category}</span>
                     </div>
                   ))}
+                </div>
+              </div>
+
+              {/* Master SOW Standard */}
+              <div className="p-4 bg-emerald-50 border border-emerald-200 rounded-xl flex items-start space-x-3">
+                <FileCheck2 className="w-5 h-5 text-emerald-600 shrink-0 mt-0.5" />
+                <div className="text-xs text-emerald-900 leading-relaxed">
+                  <div className="font-bold text-emerald-950">DTMC Corporate Master SOW Standard:</div>
+                  The AI authoring pipeline will synthesize your uploaded meeting transcriptions, requirement clarifications, and SRS specifications directly into the 10-section standardized framework.
                 </div>
               </div>
             </div>

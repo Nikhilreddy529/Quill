@@ -61,8 +61,8 @@ export const STANDARD_DTMC_MASTER_TEMPLATE: SOWTemplate = {
     modifiedBy: 'Enterprise Architecture Board',
     modifiedDate: '2026-08-18T14:30:00Z',
     approvedForUse: true,
-    wordTemplateFile: 'DTMC_Sample_SOW_01_SharePoint_Advisory (1).docx',
-    sharePointTemplateUrl: '',
+    wordTemplateFile: 'DTMC_Master_SOW_Template_2026.dotx',
+    sharePointTemplateUrl: 'https://dtmc.sharepoint.com/sites/advisory/templates/DTMC_Master_SOW_Template_2026.dotx',
   },
   coverPage: {
     companyBrand: 'DTMC',
@@ -92,14 +92,12 @@ export const STANDARD_DTMC_MASTER_TEMPLATE: SOWTemplate = {
       isAppendix: false,
       description: 'Executive summary of the engagement, strategic context, and business drivers.',
       defaultPlaceholders: ['{{PROJECT_NAME}}', '{{CLIENT_ORGANIZATION_NAME}}', '{{PRIMARY_BUSINESS_OBJECTIVE}}'],
-      content: `### 1. Engagement Overview
+      content: `This Statement of Work ("SOW") is entered into by and between **DTMC Advisory Group** ("DTMC") and **{{CLIENT_ORGANIZATION_NAME}}** ("Client") pursuant to the Master Services Agreement ("MSA") in effect between the parties.
 
-This Statement of Work ("SOW") is entered into by and between **DTMC Advisory Group** ("DTMC") and **{{CLIENT_ORGANIZATION_NAME}}** ("Client") pursuant to the Master Services Agreement ("MSA") in effect between the parties.
-
-#### 1.1 Purpose
+1.1 Purpose
 The purpose of this engagement is to provide professional advisory and technical delivery services for the **{{PROJECT_NAME}}** initiative. DTMC will collaborate with Client stakeholders to deliver high-quality, architecturally validated outcomes aligned with {{CLIENT_ORGANIZATION_NAME}}'s strategic modernization goals.
 
-#### 1.2 Background & Strategic Alignment
+1.2 Background & Strategic Alignment
 Client is undertaking modernization across target workloads to improve operational agility, enterprise resilience, and system scalability. This SOW sets forth the specific scope, deliverables, governance framework, and contractual assumptions governing this phase of delivery.`
     },
     {
@@ -113,9 +111,7 @@ Client is undertaking modernization across target workloads to improve operation
       isAppendix: false,
       description: 'Explicit measurable business and technical objectives.',
       defaultPlaceholders: ['{{CLIENT_ORGANIZATION_NAME}}', '{{TARGET_TIMELINE_WEEKS}}'],
-      content: `### 2. Goals and Objectives
-
-The primary objectives of the **{{PROJECT_NAME}}** engagement include:
+      content: `The primary objectives of the **{{PROJECT_NAME}}** engagement include:
 
 1. **Strategic Modernization**: Establish an enterprise-grade architecture foundation aligned with industry benchmarks and security frameworks.
 2. **Quality Deliverable Execution**: Formulate and deliver verified milestone deliverables within agreed sprint cadences.
@@ -133,26 +129,10 @@ The primary objectives of the **{{PROJECT_NAME}}** engagement include:
       isAppendix: false,
       description: 'In-scope workstreams, methodology, phases, and key deliverables.',
       defaultPlaceholders: ['{{PROJECT_NAME}}', '{{DELIVERY_METHODOLOGY}}'],
-      content: `### 3. Scope and Delivery Approach
-
-DTMC will execute this engagement using a structured iterative delivery approach, divided into the following foundational phases:
-
-#### 3.1 Delivery Methodology
-The project will follow DTMC's Agile Delivery Framework, consisting of two-week sprint cadences, bi-weekly steering checkpoints, and continuous integration validation.
-
-#### 3.2 In-Scope Workstreams
-- **Workstream 1: Architecture & Technical Foundations**: System discovery, target-state reference architecture design, and environment baseline verification.
-- **Workstream 2: Core Engineering & Implementation**: Iterative development of verified component services, API integrations, and database schemas.
-- **Workstream 3: Validation & Quality Assurance**: Execution of System Integration Testing (SIT), User Acceptance Testing (UAT) facilitation, and performance verification.
-- **Workstream 4: Deployment & Transition**: Controlled staging promotion, cutover runbook execution, and post-deployment hypercare support.
-
-#### 3.3 Key Deliverables Table
-| Deliverable ID | Deliverable Title | Format | Acceptance Criteria |
-|---|---|---|---|
-| DEL-01 | Architecture Blueprint & Target Design | DOCX / PDF | Written sign-off by Client Technical Lead |
-| DEL-02 | Core Engineering Codebase & Unit Test Suite | Git Repository | 85%+ automated unit test coverage passing |
-| DEL-03 | SIT / UAT Verification Report | DOCX | Zero Severity 1 / 2 blocking defects |
-| DEL-04 | Production Cutover Runbook & Handover | DOCX | Operational walkthrough completed with Client team |`
+      content: `* Engage: Kickoff, current-state workshops and prioritized requirements. Primary Deliverables: Requirements and process flows; draft plan; RAID log.
+* Envision: Data model, solution design, integration and test planning. Primary Deliverables: Solution design; wireframes; data map; test plan.
+* Enact: Configure Power Apps, Dataverse and Power Automate; migrate test data; support UAT. Primary Deliverables: Configured solution; validated migration; UAT completion.
+* Empower: Admin training, train-the-trainer, launch and stabilization. Primary Deliverables: Training materials; launch checklist; closeout report.`
     },
     {
       id: 'SEC-T-04',
@@ -165,26 +145,10 @@ The project will follow DTMC's Agile Delivery Framework, consisting of two-week 
       isAppendix: false,
       description: 'Staffing roles, RACI distribution, and escalation matrix.',
       governanceRoles: [...DEFAULT_DTMC_ROLES],
-      content: `### 4. Governance and Responsibilities
-
-A well-defined governance structure is vital to maintain delivery velocity, risk mitigation, and executive transparency.
-
-#### 4.1 Project Team Roles and Responsibilities
-The following matrix defines the primary roles and responsibilities across DTMC and {{CLIENT_ORGANIZATION_NAME}}:
-
-| Role Title | Organization | Core Responsibilities |
-|---|---|---|
-| DTMC Engagement Lead | DTMC Advisory | Overall delivery quality, scope governance and executive escalation. |
-| DTMC Project Manager | DTMC Advisory | Project planning, RAID management, status reporting, decision tracking and deliverable coordination. |
-| DTMC Solution Lead | DTMC Advisory | Solution quality, technical decisions, architecture oversight and technical delivery coordination. |
-| Client Product Owner | {{CLIENT_ORGANIZATION_NAME}} | Business priorities, stakeholder coordination, timely decisions and deliverable acceptance. |
-| Client Technical Lead | {{CLIENT_ORGANIZATION_NAME}} | Environment access, technical validation, data readiness, security coordination and deployment support. |
-| Client Subject Matter Experts | {{CLIENT_ORGANIZATION_NAME}} | Business requirements, process validation, testing participation and feedback. |
-
-#### 4.2 Governance Cadence
-- **Daily Standups**: 15-minute engineering status check.
-- **Weekly Project Status Report**: RAID log review, milestone tracking, and budget utilization monitoring.
-- **Bi-Weekly Steering Committee**: Executive stakeholder review, milestone sign-offs, and critical scope decisions.`
+      content: `* DTMC Engagement Lead: Overall delivery quality, scope governance and executive escalation.
+* DTMC Project Manager: Plan, RAID log, status reporting, decisions and deliverable tracking.
+* Client Product Owner: Priorities, stakeholder access, timely decisions and acceptance.
+* Client Technical Lead: Environment access, technical validation, data readiness and deployment coordination.`
     },
     {
       id: 'SEC-T-05',
@@ -214,22 +178,7 @@ The following matrix defines the primary roles and responsibilities across DTMC 
         acceptancePeriod: 'As stipulated in applicable Master Agreement',
         acceptanceProcess: 'Formal written acceptance submitted via Deliverable Acceptance Form'
       },
-      content: `### 5. Schedule and Acceptance
-
-#### 5.1 Project Timeline and Key Milestones
-- **Anticipated Start Date**: {{ANTICIPATED_START_DATE}}
-- **Anticipated Completion Date**: {{ANTICIPATED_COMPLETION_DATE}}
-- **Estimated Duration**: {{ESTIMATED_DURATION}}
-
-The detailed project schedule will be baselined during project initiation and maintained through the agreed governance process. Deliverables will be submitted for client review and will be considered accepted upon written approval or according to the acceptance period defined in the applicable agreement.
-
-#### 5.2 Deliverable Acceptance Procedure
-1. Upon completion of a deliverable listed in Section 3.3, DTMC will submit the deliverable accompanied by a formal Deliverable Acceptance Form (DAF).
-2. {{CLIENT_ORGANIZATION_NAME}} will review the deliverable against agreed acceptance criteria.
-3. If defects or omissions are identified, {{CLIENT_ORGANIZATION_NAME}} will provide consolidated, actionable feedback in writing.
-4. DTMC will remediate identified defects within an agreed remediation window and resubmit for formal sign-off.
-
-> **INTERNAL LEGAL NOTICE**: Acceptance language must be validated against the approved contract or clause library before the SOW is issued. Do not automatically insert a five-business-day acceptance period without contractual authorization.`
+      content: `The detailed schedule will be baselined at kickoff. Deliverables are accepted when the client provides written approval or no material exception within five business days. Dates in this sample are intentionally illustrative.`
     },
     {
       id: 'SEC-T-06',
@@ -242,15 +191,9 @@ The detailed project schedule will be baselined during project initiation and ma
       isAppendix: false,
       description: 'Foundational operational, technical, and resource assumptions.',
       defaultPlaceholders: ['{{CLIENT_ORGANIZATION_NAME}}'],
-      content: `### 6. Assumptions
-
-The scope and estimated schedule defined in this SOW are established based upon the following mutual assumptions:
-
-1. **Access & Credentials**: {{CLIENT_ORGANIZATION_NAME}} will provide DTMC consultants with necessary VPN, cloud tenant, repository, and environment credentials within five (5) business days of project kickoff.
-2. **Stakeholder Availability**: Client Subject Matter Experts and decision-makers will participate in scheduled agile ceremonies and respond to architectural clarification requests within two (2) business days.
-3. **Third-Party Licensing**: All required software, cloud subscriptions, SaaS licenses, and infrastructure hosting fees remain the direct responsibility of {{CLIENT_ORGANIZATION_NAME}}.
-4. **Data Readiness**: Test and seed data provided for development and SIT will be de-identified and sanitized by Client in compliance with applicable privacy regulations (e.g. GDPR, HIPAA, SOC 2).
-5. **Work Location**: Services will be delivered primarily remotely, with on-site workshops scheduled upon mutual agreement.`
+      content: `* Client owns source-data cleansing and approval.
+* Client procures required Microsoft licenses.
+* One legacy system and one public-site integration are included.`
     },
     {
       id: 'SEC-T-07',
@@ -263,15 +206,9 @@ The scope and estimated schedule defined in this SOW are established based upon 
       isAppendix: false,
       description: 'Explicitly excluded activities and deliverables to prevent scope creep.',
       defaultPlaceholders: ['{{CLIENT_ORGANIZATION_NAME}}'],
-      content: `### 7. Out of Scope
-
-Any activity, deliverable, or service not explicitly specified in Section 3 is strictly out of scope for this SOW. For clarity, the following items are specifically excluded:
-
-1. **Hardware Procurement**: Purchasing, installing, or physical maintenance of on-premise servers or appliances.
-2. **Legacy Archival Cleansing**: Data cleansing or extraction from legacy systems deprecated prior to the project baseline year.
-3. **Ongoing Managed Operations**: 24/7 level 1/2 user desk support following the agreed post-deployment hypercare window.
-4. **Third-Party Vendor Mediation**: Managing or resolving contractual or technical disputes with unassociated third-party software vendors.
-5. **Custom Regulatory Filing**: Direct legal representation or formal regulatory compliance audit defense.`
+      content: `* Unlisted third-party integrations.
+* Historical data remediation outside agreed templates.
+* Support beyond the defined stabilization period.`
     },
     {
       id: 'SEC-T-08',
@@ -284,19 +221,11 @@ Any activity, deliverable, or service not explicitly specified in Section 3 is s
       isAppendix: false,
       description: 'Commercial pricing structure with illustrative placeholder fees or blank rate card.',
       defaultPlaceholders: ['{{CURRENCY}}', '{{FEE_STRUCTURE_TYPE}}'],
-      content: `### 8. Illustrative Fees
+      content: `* Commercial Model: Time and materials
+* Illustrative Amount: [ — ]
+* Billing: Initial deposit plus monthly actuals
 
-> **MANDATORY POLICY NOTICE**: In strict accordance with DTMC enterprise governance rules, all financial figures, billing rates, and fee totals remain blank placeholders or illustrative in this template. Specific pricing values must be inserted and approved solely by the Commercial Finance Practice before final client issuance.
-
-#### 8.1 Professional Fees Summary
-- **Billing Model**: {{FEE_STRUCTURE_TYPE}} (e.g. Time & Materials / Milestone-Based)
-- **Currency**: {{CURRENCY}}
-
-| Commercial Model | Illustrative Amount | Billing |
-|---|---|---|
-| Time and materials | $88,000 to $116,000 | Initial deposit plus monthly actuals |
-
-*All amounts are fictional placeholders for sample evaluation and must be replaced during contracting.*`
+*All fee amounts remain intentionally blank pending Commercial Finance sign-off prior to contracting.*`
     },
     {
       id: 'SEC-T-09',
@@ -309,215 +238,106 @@ Any activity, deliverable, or service not explicitly specified in Section 3 is s
       isAppendix: false,
       description: 'Formal execution and signature blocks with signature fields.',
       defaultPlaceholders: ['{{CLIENT_ORGANIZATION_NAME}}', '{{CLIENT_SIGNATORY_NAME}}', '{{DTMC_SIGNATORY_NAME}}'],
-      content: `### 9. Authorization
+      content: `Accepted by Client:
+* Name: {{CLIENT_SIGNATORY_NAME}}
+* Title: VP, Transformation
+* Signature: ___________________________
+* Date: ________________________________
 
-| Accepted by Client | Accepted by DTMC |
-|---|---|
-| **Name:** Riley Chen<br/>**Title:** VP, Transformation<br/>**Signature:** ___________________________<br/>**Date:** ________________________________ | **Name:** Jordan Lee<br/>**Title:** Engagement Partner<br/>**Signature:** ___________________________<br/>**Date:** ________________________________ |`
-    },
-    {
-      id: 'SEC-T-10',
-      order: 10,
-      title: 'Appendix A: Data Migration Scope',
-      category: 'Appendix',
-      isMandatory: false,
-      isOptional: true,
-      isPricingSection: false,
-      isAppendix: true,
-      description: 'Optional appendix detailing data migration datasets, ETL rules, and validation criteria.',
-      defaultPlaceholders: ['{{CLIENT_ORGANIZATION_NAME}}'],
-      content: `### Appendix A: Data Migration Scope
-
-*(Optional Appendix — remove if engagement does not include data migration)*
-
-#### A.1 Scope of Data Migration
-DTMC will support the migration of agreed structured datasets from legacy databases to target schemas.
-
-#### A.2 In-Scope Source Systems
-- Source System A: Customer profile records (active accounts only)
-- Source System B: Transactional historical records (last 24 months)
-
-#### A.3 Data Cleansing & Reconciliation Criteria
-- 100% automated checksum validation on migrated record counts.
-- Client validation sign-off on staging reconciliation reports.`
-    },
-    {
-      id: 'SEC-T-11',
-      order: 11,
-      title: 'Appendix B: Integration Scope',
-      category: 'Appendix',
-      isMandatory: false,
-      isOptional: true,
-      isPricingSection: false,
-      isAppendix: true,
-      description: 'Optional appendix detailing third-party API interfaces, webhooks, and security protocols.',
-      defaultPlaceholders: [],
-      content: `### Appendix B: Integration Scope
-
-*(Optional Appendix — remove if engagement does not include API integration work)*
-
-#### B.1 Target Integrations
-| Interface ID | Target System | Protocol | Payload Type | Authentication |
-|---|---|---|---|---|
-| INT-01 | Core ERP System | REST / HTTPS | JSON | OAuth 2.0 / mTLS |
-| INT-02 | Identity Provider | SAML 2.0 / OIDC | JWT | Microsoft Entra ID |
-| INT-03 | Notification Gateway | Webhook | JSON | HMAC Signature |`
-    },
-    {
-      id: 'SEC-T-12',
-      order: 12,
-      title: 'Appendix C: Testing and Acceptance Criteria',
-      category: 'Appendix',
-      isMandatory: false,
-      isOptional: true,
-      isPricingSection: false,
-      isAppendix: true,
-      description: 'Optional appendix detailing test cycles, defect severity definitions, and exit criteria.',
-      defaultPlaceholders: [],
-      content: `### Appendix C: Testing and Acceptance Criteria
-
-*(Optional Appendix)*
-
-#### C.1 Defect Classification
-- **Severity 1 (Critical)**: Complete system outage or data corruption with no operational workaround.
-- **Severity 2 (High)**: Major business function severely impaired with high-effort workaround.
-- **Severity 3 (Medium)**: Minor business function impaired with manageable workaround.
-- **Severity 4 (Low)**: Cosmetic, documentation, or minor UI discrepancies.
-
-#### C.2 Acceptance Exit Criteria
-UAT will be deemed complete when 100% of test scenarios have been executed with 0 Severity 1 and 0 Severity 2 defects open.`
-    },
-    {
-      id: 'SEC-T-13',
-      order: 13,
-      title: 'Appendix D: Change-Control Process',
-      category: 'Appendix',
-      isMandatory: false,
-      isOptional: true,
-      isPricingSection: false,
-      isAppendix: true,
-      description: 'Optional formal change order procedure, impact assessment, and approval workflows.',
-      defaultPlaceholders: [],
-      content: `### Appendix D: Change-Control Process
-
-*(Optional Appendix)*
-
-Either party may request changes to the project scope, deliverables, or schedule by submitting a written Change Request (CR).
-
-1. **Submission**: Requester logs a formal Change Request form.
-2. **Impact Assessment**: DTMC performs technical, cost, and schedule impact analysis within 5 business days.
-3. **Approval**: Both DTMC Engagement Lead and Client Product Owner must sign the Change Order before work commences.`
-    },
-    {
-      id: 'SEC-T-14',
-      order: 14,
-      title: 'Appendix E: Approved Legal Clauses',
-      category: 'Appendix',
-      isMandatory: false,
-      isOptional: true,
-      isPricingSection: false,
-      isAppendix: true,
-      description: 'Optional appendix for enterprise confidentiality, IP ownership, and data privacy clauses.',
-      defaultPlaceholders: [],
-      content: `### Appendix E: Approved Legal Clauses
-
-*(Optional Appendix — aligned with DTMC Master Services Agreement)*
-
-- **Intellectual Property**: Pre-existing DTMC frameworks and accelerators remain the exclusive IP of DTMC. Client receives a perpetual, non-exclusive license to use custom project deliverables.
-- **Confidentiality**: All information shared during the engagement is subject to reciprocal NDA provisions in the Master Agreement.
-- **Data Protection**: Both parties agree to adhere to applicable data privacy statutes.`
+Accepted by DTMC:
+* Name: {{DTMC_SIGNATORY_NAME}}
+* Title: Engagement Partner
+* Signature: ___________________________
+* Date: ________________________________`
     }
   ]
 };
 
 export const SAMPLE_ADDITIONAL_TEMPLATES: SOWTemplate[] = [
+  STANDARD_DTMC_MASTER_TEMPLATE,
   {
-    ...STANDARD_DTMC_MASTER_TEMPLATE,
-    id: 'TMPL-SHAREPOINT-ADVISORY-2026',
+    id: 'TMPL-AZURE-CLOUD-2026',
     metadata: {
-      ...STANDARD_DTMC_MASTER_TEMPLATE.metadata,
-      id: 'TMPL-SHAREPOINT-ADVISORY-2026',
-      name: 'SharePoint Advisory SOW Template',
-      description: 'SOW template for SharePoint advisory and modernization engagements.',
-      templateType: 'Master SOW',
-      version: '1.0',
+      id: 'TMPL-AZURE-CLOUD-2026',
+      name: 'Azure Cloud Migration & Modernization SOW Template',
+      description: 'Tailored specifically for enterprise Azure infrastructure migrations, zero-trust Entra ID governance, and microservices architecture.',
+      templateType: 'Cloud Migration & Security',
+      version: '1.8',
       status: 'Ready for Use',
-      wordTemplateFile: 'DTMC_Sample_SOW_01_SharePoint_Advisory (1).docx',
-      sharePointTemplateUrl: '',
+      createdBy: 'Cloud Practice Center of Excellence',
+      createdDate: '2026-02-10T10:00:00Z',
+      modifiedBy: 'Nikhil',
+      modifiedDate: '2026-08-20T11:15:00Z',
+      approvedForUse: true,
+      wordTemplateFile: 'DTMC_Azure_Cloud_Migration_2026.dotx',
+      sharePointTemplateUrl: 'https://dtmc.sharepoint.com/sites/advisory/templates/DTMC_Azure_Cloud_Migration_2026.dotx',
     },
-    tags: ['SOW', 'SharePoint', 'Advisory'],
-    sections: STANDARD_DTMC_MASTER_TEMPLATE.sections.map(s => ({ ...s })),
+    coverPage: {
+      ...STANDARD_DTMC_MASTER_TEMPLATE.coverPage,
+      documentTitle: 'STATEMENT OF WORK — CLOUD MIGRATION',
+    },
+    usageCount: 28,
+    tags: ['Azure', 'Cloud Migration', 'Infrastructure', 'Zero-Trust'],
+    sections: STANDARD_DTMC_MASTER_TEMPLATE.sections.map(s => {
+      if (s.id === 'SEC-T-03') {
+        return {
+          ...s,
+          content: `DTMC will deliver full-lifecycle Azure Cloud Landing Zone setup, security posture hardening, workload migration, and cutover testing for target applications.`
+        };
+      }
+      return s;
+    })
   },
   {
-    ...STANDARD_DTMC_MASTER_TEMPLATE,
-    id: 'TMPL-VOLUNTEER-MANAGEMENT-2026',
+    id: 'TMPL-FIXED-PRICE-MOD-2026',
     metadata: {
-      ...STANDARD_DTMC_MASTER_TEMPLATE.metadata,
-      id: 'TMPL-VOLUNTEER-MANAGEMENT-2026',
-      name: 'Volunteer Management SOW Template',
-      description: 'SOW template for volunteer management engagements.',
-      templateType: 'Volunteer Management',
-      version: '1.0',
-      status: 'Ready for Use',
-      wordTemplateFile: 'DTMC_Sample_SOW_02_Volunteer_Management.docx',
-      sharePointTemplateUrl: '',
+      id: 'TMPL-FIXED-PRICE-MOD-2026',
+      name: 'Fixed-Price Modernization SOW Template (Milestone-Gated)',
+      description: 'Structured for milestone-governed fixed fee projects with rigorous deliverable acceptance gates and change control.',
+      templateType: 'Fixed-Price Modernization',
+      version: '1.3',
+      status: 'Draft',
+      createdBy: 'Commercial Advisory Team',
+      createdDate: '2026-03-01T14:00:00Z',
+      modifiedBy: 'Enterprise Architecture Board',
+      modifiedDate: '2026-08-22T16:00:00Z',
+      approvedForUse: false,
+      wordTemplateFile: 'DTMC_Fixed_Price_Milestone_2026.dotx',
+      sharePointTemplateUrl: 'https://dtmc.sharepoint.com/sites/advisory/templates/DTMC_Fixed_Price_Milestone_2026.dotx',
     },
-    tags: ['SOW', 'Volunteer Management'],
-    sections: STANDARD_DTMC_MASTER_TEMPLATE.sections.map(s => ({ ...s })),
-  },
-  {
-    ...STANDARD_DTMC_MASTER_TEMPLATE,
-    id: 'TMPL-BUSINESS-CENTRAL-2026',
-    metadata: {
-      ...STANDARD_DTMC_MASTER_TEMPLATE.metadata,
-      id: 'TMPL-BUSINESS-CENTRAL-2026',
-      name: 'Business Central SOW Template',
-      description: 'SOW template for Microsoft Business Central engagements.',
-      templateType: 'Business Central',
-      version: '1.0',
-      status: 'Ready for Use',
-      wordTemplateFile: 'DTMC_Sample_SOW_03_Business_Central.docx',
-      sharePointTemplateUrl: '',
+    coverPage: {
+      ...STANDARD_DTMC_MASTER_TEMPLATE.coverPage,
+      documentTitle: 'STATEMENT OF WORK — FIXED PRICE MILESTONES',
     },
-    tags: ['SOW', 'Business Central', 'ERP'],
-    sections: STANDARD_DTMC_MASTER_TEMPLATE.sections.map(s => ({ ...s })),
-  },
-  {
-    ...STANDARD_DTMC_MASTER_TEMPLATE,
-    id: 'TMPL-NETSUITE-READINESS-2026',
-    metadata: {
-      ...STANDARD_DTMC_MASTER_TEMPLATE.metadata,
-      id: 'TMPL-NETSUITE-READINESS-2026',
-      name: 'NetSuite Readiness SOW Template',
-      description: 'SOW template for NetSuite readiness and modernization assessments.',
-      templateType: 'NetSuite Readiness',
-      version: '1.0',
-      status: 'Ready for Use',
-      wordTemplateFile: 'DTMC_Sample_SOW_04_NetSuite_Readiness.docx',
-      sharePointTemplateUrl: '',
-    },
-    tags: ['SOW', 'NetSuite', 'Readiness'],
-    sections: STANDARD_DTMC_MASTER_TEMPLATE.sections.map(s => ({ ...s })),
-  },
+    usageCount: 12,
+    tags: ['Fixed-Price', 'Milestone', 'Governance'],
+    sections: STANDARD_DTMC_MASTER_TEMPLATE.sections
+  }
 ];
 
-
-const LOCAL_STORAGE_KEY = 'quill_sow_templates_v2';
+const LOCAL_STORAGE_KEY = 'quill_sow_templates_v3';
 
 // Template Service Methods
 export const templateService = {
   getTemplates(): SOWTemplate[] {
+    const sanitizeTemplate = (t: SOWTemplate): SOWTemplate => ({
+      ...t,
+      sections: t.sections
+        .filter(s => !s.isAppendix && s.order <= 9 && !s.title.toLowerCase().startsWith('appendix'))
+    });
+
     try {
       if (typeof window !== 'undefined' && typeof localStorage !== 'undefined') {
         const stored = localStorage.getItem(LOCAL_STORAGE_KEY);
         if (stored) {
-          return JSON.parse(stored);
+          const parsed = JSON.parse(stored) as SOWTemplate[];
+          return parsed.map(sanitizeTemplate);
         }
       }
     } catch (e) {
       // In SSR or test environments without window/localStorage, fall back to default templates
     }
-    return SAMPLE_ADDITIONAL_TEMPLATES;
+    return SAMPLE_ADDITIONAL_TEMPLATES.map(sanitizeTemplate);
   },
 
   getTemplateById(id: string): SOWTemplate | undefined {
@@ -888,8 +708,8 @@ export const templateService = {
         modifiedBy: 'Nikhil',
         modifiedDate: new Date().toISOString(),
         approvedForUse: false,
-        wordTemplateFile: 'DTMC_Sample_SOW_01_SharePoint_Advisory (1).docx',
-        sharePointTemplateUrl: ''
+        wordTemplateFile: 'DTMC_Master_SOW_Template_2026.dotx',
+        sharePointTemplateUrl: 'https://dtmc.sharepoint.com/sites/advisory/templates/DTMC_Master_SOW_Template_2026.dotx'
       },
       coverPage: { ...STANDARD_DTMC_MASTER_TEMPLATE.coverPage },
       usageCount: 0,
@@ -908,13 +728,17 @@ export const templateService = {
     const newProjectId = `PRJ-${Date.now().toString().slice(-4)}`;
 
     const sowSections: SOWSection[] = template.sections.map((ts, idx) => {
+      const clientSignatory = clientContact || clientName || 'Riley Chen';
+      const dtmcCreator = 'Nikhil';
+
       // Replace generic placeholders with input values
-      const processedContent = ts.content
+      let processedContent = ts.content
         .replace(/\{\{PROJECT_NAME\}\}/g, projectTitle)
         .replace(/\{\{CLIENT_ORGANIZATION_NAME\}\}/g, clientName)
         .replace(/\{\{CLIENT_CONTACT_NAME\}\}/g, clientContact || '')
         .replace(/\{\{CLIENT_CONTACT_EMAIL\}\}/g, clientContactEmail || '')
-        .replace(/\{\{CLIENT_SIGNATORY_NAME\}\}/g, clientContact || '')
+        .replace(/\{\{CLIENT_SIGNATORY_NAME\}\}/g, clientSignatory)
+        .replace(/\{\{DTMC_SIGNATORY_NAME\}\}/g, dtmcCreator)
         .replace(/\{\{ANTICIPATED_START_DATE\}\}/g, targetStartDate || '2026-10-01')
         .replace(/\{\{ANTICIPATED_COMPLETION_DATE\}\}/g, targetEndDate || '2027-03-31')
         .replace(/\{\{ESTIMATED_DURATION\}\}/g, '6 Months (24 Sprints)')
@@ -922,6 +746,22 @@ export const templateService = {
         .replace(/\{\{FEE_STRUCTURE_TYPE\}\}/g, template.metadata.templateType)
         .replace(/\{\{DOCUMENT_VERSION\}\}/g, '1.0')
         .replace(/\{\{ISSUE_DATE\}\}/g, new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }));
+
+      // If Authorization section, ensure dynamic client signatory and DTMC creator names with static titles
+      if (ts.order === 9 || ts.title.toLowerCase().includes('authorization') || processedContent.includes('Accepted by Client')) {
+        processedContent = processedContent
+          .replace(/(Accepted by Client:[\s\S]*?\*\s*Name:\s*)([^\n]+)/i, `$1${clientSignatory}`)
+          .replace(/(Accepted by Client:[\s\S]*?\*\s*Title:\s*)([^\n]+)/i, '$1VP, Transformation')
+          .replace(/(Accepted by DTMC:[\s\S]*?\*\s*Name:\s*)([^\n]+)/i, `$1${dtmcCreator}`)
+          .replace(/(Accepted by DTMC:[\s\S]*?\*\s*Title:\s*)([^\n]+)/i, '$1Engagement Partner');
+      }
+
+      // Clean redundant top heading and heading hashes (#) so text is pristine
+      processedContent = processedContent
+        .replace(/^\s*#{1,6}\s*\d+\.\s*[^\n]+\n+/, '')
+        .split('\n')
+        .map(line => (/^\s*#{1,6}\s+/.test(line) ? line.replace(/^\s*#{1,6}\s+/, '') : line))
+        .join('\n');
 
       return {
         id: `SEC-${newProjectId}-${idx + 1}`,

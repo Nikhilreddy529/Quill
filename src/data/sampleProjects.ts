@@ -6,6 +6,8 @@ export const INITIAL_SAMPLE_PROJECTS: SOWProject[] = [
     id: "PRJ-2026-ACME",
     title: "Digital Transformation - Acme Corp",
     clientName: "Acme Corp",
+    clientContact: "Riley Chen (VP Digital)",
+    clientContactEmail: "riley.chen@acme.com",
     clientIndustry: "Retail & Consumer Goods",
     projectType: "Digital Transformation",
     targetStartDate: "2026-10-01",
@@ -145,7 +147,7 @@ export const INITIAL_SAMPLE_PROJECTS: SOWProject[] = [
         version: 2,
         lastEditedBy: "Nikhil",
         lastEditedAt: "2026-08-28T10:30:00Z",
-        approvedBy: "Nikhil",
+        approvedBy: "Arjun Rao",
         approvedAt: "2026-08-28T10:45:00Z",
         confidenceScore: 98,
         validationNotes: ["Grounded in Master Template 2025"]
@@ -174,7 +176,7 @@ export const INITIAL_SAMPLE_PROJECTS: SOWProject[] = [
         version: 3.2,
         lastEditedBy: "Nikhil",
         lastEditedAt: "2026-08-28T11:30:00Z",
-        approvedBy: "Nikhil",
+        approvedBy: "Arjun Rao",
         approvedAt: "2026-08-28T11:32:00Z",
         confidenceScore: 96
       },
@@ -184,12 +186,10 @@ export const INITIAL_SAMPLE_PROJECTS: SOWProject[] = [
         order: 3,
         title: "3. Scope and Delivery Approach",
         category: "Deliverables",
-        content: `| Phase / Workstream | Key Activities | Primary Deliverables |
-|---|---|---|
-| Engage | Kickoff, current-state workshops and prioritized requirements. | Requirements and process flows; draft plan; RAID log. |
-| Envision | Data model, solution design, integration and test planning. | Solution design; wireframes; data map; test plan. |
-| Enact | Configure Power Apps, Dataverse and Power Automate; migrate test data; support UAT. | Configured solution; validated migration; UAT completion. |
-| Empower | Admin training, train-the-trainer, launch and stabilization. | Training materials; launch checklist; closeout report. |`,
+        content: `* Engage: Kickoff, current-state workshops and prioritized requirements. Primary Deliverables: Requirements and process flows; draft plan; RAID log.
+* Envision: Data model, solution design, integration and test planning. Primary Deliverables: Solution design; wireframes; data map; test plan.
+* Enact: Configure Power Apps, Dataverse and Power Automate; migrate test data; support UAT. Primary Deliverables: Configured solution; validated migration; UAT completion.
+* Empower: Admin training, train-the-trainer, launch and stabilization. Primary Deliverables: Training materials; launch checklist; closeout report.`,
         status: "Approved",
         isMandatory: true,
         isPricingSection: false,
@@ -201,7 +201,7 @@ export const INITIAL_SAMPLE_PROJECTS: SOWProject[] = [
         version: 2,
         lastEditedBy: "Nikhil",
         lastEditedAt: "2026-08-28T09:10:00Z",
-        approvedBy: "Nikhil",
+        approvedBy: "Arjun Rao",
         approvedAt: "2026-08-28T09:15:00Z",
         confidenceScore: 94
       },
@@ -211,12 +211,10 @@ export const INITIAL_SAMPLE_PROJECTS: SOWProject[] = [
         order: 4,
         title: "4. Governance and Responsibilities",
         category: "Governance",
-        content: `| Role | Responsibility |
-|---|---|
-| DTMC Engagement Lead | Overall delivery quality, scope governance and executive escalation. |
-| DTMC Project Manager | Plan, RAID log, status reporting, decisions and deliverable tracking. |
-| Client Product Owner | Priorities, stakeholder access, timely decisions and acceptance. |
-| Client Technical Lead | Environment access, technical validation, data readiness and deployment coordination. |`,
+        content: `* DTMC Engagement Lead: Overall delivery quality, scope governance and executive escalation.
+* DTMC Project Manager: Plan, RAID log, status reporting, decisions and deliverable tracking.
+* Client Product Owner: Priorities, stakeholder access, timely decisions and acceptance.
+* Client Technical Lead: Environment access, technical validation, data readiness and deployment coordination.`,
         status: "Approved",
         isMandatory: true,
         isPricingSection: false,
@@ -228,7 +226,7 @@ export const INITIAL_SAMPLE_PROJECTS: SOWProject[] = [
         version: 1,
         lastEditedBy: "Nikhil",
         lastEditedAt: "2026-08-28T08:00:00Z",
-        approvedBy: "Nikhil",
+        approvedBy: "Arjun Rao",
         approvedAt: "2026-08-28T08:30:00Z",
         confidenceScore: 95
       },
@@ -250,7 +248,7 @@ export const INITIAL_SAMPLE_PROJECTS: SOWProject[] = [
         version: 1,
         lastEditedBy: "Nikhil",
         lastEditedAt: "2026-08-27T16:00:00Z",
-        approvedBy: "Nikhil",
+        approvedBy: "Arjun Rao",
         approvedAt: "2026-08-27T16:30:00Z",
         confidenceScore: 91
       },
@@ -274,7 +272,7 @@ export const INITIAL_SAMPLE_PROJECTS: SOWProject[] = [
         version: 1,
         lastEditedBy: "Nikhil",
         lastEditedAt: "2026-08-27T17:00:00Z",
-        approvedBy: "Nikhil",
+        approvedBy: "Arjun Rao",
         approvedAt: "2026-08-27T17:15:00Z",
         confidenceScore: 96
       },
@@ -306,14 +304,16 @@ export const INITIAL_SAMPLE_PROJECTS: SOWProject[] = [
         order: 8,
         title: "8. Illustrative Fees",
         category: "Pricing",
-        content: `| Commercial Model | Illustrative Amount | Billing |
-|---|---|---|
-| Time and materials | $88,000 to $116,000 | Initial deposit plus monthly actuals |
+        content: `* Commercial Model: Time and materials
+* Illustrative Amount: [ — ]
+* Billing: Initial deposit plus monthly actuals
 
-*All amounts are fictional placeholders for sample evaluation and must be replaced during contracting.*`,
-        status: "Review",
+*All fee amounts remain intentionally blank pending Commercial Finance sign-off prior to contracting.*`,
+        status: "Approved",
         isMandatory: true,
         isPricingSection: true,
+        approvedBy: "Commercial Finance",
+        approvedAt: "2026-08-28T09:00:00Z",
         groundedSources: [SAMPLE_SOURCE_DOCUMENTS[3]],
         detailedSources: [
           { id: "DS-81", fileName: "Acme_Discovery_Meeting_Transcription_Aug26.docx", fileType: "docx", category: "Meeting Transcription", section: "Section 8", page: 15, snippet: "Illustrative commercial model and placeholder fees." }
@@ -331,9 +331,17 @@ export const INITIAL_SAMPLE_PROJECTS: SOWProject[] = [
         order: 9,
         title: "9. Authorization",
         category: "Terms",
-        content: `| Accepted by Client | Accepted by DTMC |
-|---|---|
-| **Name:** Riley Chen<br/>**Title:** VP, Transformation<br/>**Signature:** ___________________________<br/>**Date:** ________________________________ | **Name:** Jordan Lee<br/>**Title:** Engagement Partner<br/>**Signature:** ___________________________<br/>**Date:** ________________________________ |`,
+        content: `Accepted by Client:
+* Name: Riley Chen
+* Title: VP, Transformation
+* Signature: ___________________________
+* Date: ________________________________
+
+Accepted by DTMC:
+* Name: Arjun Rao
+* Title: Engagement Partner
+* Signature: ___________________________
+* Date: ________________________________`,
         status: "Approved",
         isMandatory: true,
         isPricingSection: false,
@@ -343,9 +351,9 @@ export const INITIAL_SAMPLE_PROJECTS: SOWProject[] = [
         ],
         uploadedDocumentIds: ["DOC-ACME-002"],
         version: 1,
-        lastEditedBy: "Nikhil",
+        lastEditedBy: "Legal Counsel",
         lastEditedAt: "2026-08-26T10:00:00Z",
-        approvedBy: "Nikhil",
+        approvedBy: "Legal Counsel",
         approvedAt: "2026-08-26T10:30:00Z",
         confidenceScore: 100
       }
@@ -356,6 +364,8 @@ export const INITIAL_SAMPLE_PROJECTS: SOWProject[] = [
     id: "PRJ-2026-001",
     title: "Contoso Cloud Migration & Modernization SOW",
     clientName: "Contoso Financial Services Ltd.",
+    clientContact: "Sarah Jenkins (Head of Infrastructure)",
+    clientContactEmail: "s.jenkins@contoso.co.uk",
     clientIndustry: "Financial Services",
     projectType: "Cloud Migration",
     targetStartDate: "2026-10-01",
@@ -440,7 +450,7 @@ export const INITIAL_SAMPLE_PROJECTS: SOWProject[] = [
         order: 1,
         title: "1. Engagement Overview",
         category: "Scope",
-        content: `### 1. Engagement Overview\n\nThis SOW defines migration into Azure for Contoso.`,
+        content: `This SOW defines migration into Azure for Contoso.`,
         status: "Approved",
         isMandatory: true,
         isPricingSection: false,
@@ -449,8 +459,8 @@ export const INITIAL_SAMPLE_PROJECTS: SOWProject[] = [
           { id: "DS-CON-1", fileName: "Contoso_Architecture_Discovery_Transcript.docx", fileType: "docx", category: "Meeting Transcription", section: "Section 1", page: 1, snippet: "Core banking Azure migration objectives." }
         ],
         uploadedDocumentIds: ["DOC-CON-001", "DOC-CON-002"],
-          version: 2,
-          lastEditedBy: "Nikhil",
+        version: 2,
+        lastEditedBy: "David Miller",
         lastEditedAt: "2026-08-28T08:45:00Z",
         confidenceScore: 97
       }

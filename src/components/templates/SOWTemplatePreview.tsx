@@ -65,7 +65,7 @@ export const SOWTemplatePreview: React.FC<SOWTemplatePreviewProps> = ({
     '{{ESTIMATED_DURATION}}': '4 Months (8 Two-Week Sprints)',
     '{{CURRENCY}}': 'USD',
     '{{FEE_STRUCTURE_TYPE}}': 'Time and Materials / Milestone-Based',
-    '{{DTMC_SIGNATORY_NAME}}': 'Jordan Lee',
+    '{{DTMC_SIGNATORY_NAME}}': 'Arjun Rao',
     '{{DTMC_SIGNATORY_TITLE}}': 'Engagement Partner',
     '{{CLIENT_SIGNATORY_NAME}}': 'Riley Chen',
     '{{CLIENT_SIGNATORY_TITLE}}': 'VP, Transformation'
@@ -186,11 +186,11 @@ export const SOWTemplatePreview: React.FC<SOWTemplatePreviewProps> = ({
         );
       }
 
-      // H4 Headings
-      if (trimmed.startsWith('#### ')) {
+      // H4 Headings or Numbered Subheadings (e.g. 1.1 Purpose)
+      if (trimmed.startsWith('#### ') || /^\d+\.\d+\s+/.test(trimmed)) {
         return (
-          <h4 key={idx} className="text-sm font-bold font-calibri text-[#10334F] pt-1">
-            {trimmed.replace('#### ', '')}
+          <h4 key={idx} className="text-sm font-bold font-calibri text-[#10334F] pt-2">
+            {trimmed.replace(/^####\s*/, '')}
           </h4>
         );
       }
@@ -578,14 +578,14 @@ export const SOWTemplatePreview: React.FC<SOWTemplatePreviewProps> = ({
                   <tbody className="divide-y divide-[#CBD5E1] bg-white">
                     <tr className="divide-x divide-[#CBD5E1]">
                       <td className="py-2.5 px-3 font-medium align-top">Time and materials</td>
-                      <td className="py-2.5 px-3 text-[#0F172A] align-top font-semibold">  </td>
+                      <td className="py-2.5 px-3 text-[#0F172A] align-top font-semibold">[ — ]</td>
                       <td className="py-2.5 px-3 text-[#0F172A] align-top">Initial deposit plus monthly actuals</td>
                     </tr>
                   </tbody>
                 </table>
               </div>
               <p className="text-[11px] text-[#475569] italic pt-1 font-aptos">
-                All amounts are fictional placeholders for sample evaluation and must be replaced during contracting.
+                All fee amounts remain intentionally blank pending Commercial Finance sign-off prior to contracting.
               </p>
             </div>
 
@@ -606,13 +606,13 @@ export const SOWTemplatePreview: React.FC<SOWTemplatePreviewProps> = ({
                     <tr>
                       <td className="p-4 align-top space-y-2 text-[#0F172A]">
                         <div>Name: {showSampleData ? sampleReplacements['{{CLIENT_SIGNATORY_NAME}}'] : 'Riley Chen'}</div>
-                        <div>Title: {showSampleData ? sampleReplacements['{{CLIENT_SIGNATORY_TITLE}}'] : 'VP, Transformation'}</div>
+                        <div>Title: VP, Transformation</div>
                         <div className="pt-2">Signature: __________________________</div>
                         <div>Date: __________________________</div>
                       </td>
                       <td className="p-4 align-top space-y-2 text-[#0F172A]">
-                        <div>Name: {showSampleData ? sampleReplacements['{{DTMC_SIGNATORY_NAME}}'] : 'Jordan Lee'}</div>
-                        <div>Title: {showSampleData ? sampleReplacements['{{DTMC_SIGNATORY_TITLE}}'] : 'Engagement Partner'}</div>
+                        <div>Name: {showSampleData ? sampleReplacements['{{DTMC_SIGNATORY_NAME}}'] : 'Arjun Rao'}</div>
+                        <div>Title: Engagement Partner</div>
                         <div className="pt-2">Signature: __________________________</div>
                         <div>Date: __________________________</div>
                       </td>

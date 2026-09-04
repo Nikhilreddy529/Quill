@@ -43,6 +43,25 @@ export const ExportModal: React.FC<ExportModalProps> = ({
 
   if (!isOpen) return null;
 
+  const handleAutoFixBlankPricing = () => {
+    const updatedSections = project.sections.map(section => {
+      let content = section.content;
+      content = content
+        .replace(/\$88,000(?:\s*to\s*\$116,000)?/gi, '[ — ]')
+        .replace(/\$116,000/gi, '[ — ]')
+        .replace(/(?:\$|€|£|¥)\s*\d{1,3}(?:,\d{3})*(?:\.\d{2})?/gi, '[ — ]')
+        .replace(/\b\d{1,3}(?:,\d{3})*\s*(?:USD|EUR|GBP)\b/gi, '[ — ]');
+      return {
+        ...section,
+        content,
+      };
+    });
+    onExportComplete({
+      ...project,
+      sections: updatedSections,
+    });
+  };
+
   const handleTriggerExport = async () => {
     setExportError(null);
     if (!preflight.canExport) {
@@ -185,6 +204,16 @@ export const ExportModal: React.FC<ExportModalProps> = ({
                   <li key={idx}>{err}</li>
                 ))}
               </ul>
+              {!preflight.pricingCompliant && (
+                <button
+                  type="button"
+                  onClick={handleAutoFixBlankPricing}
+                  className="mt-2 text-xs font-semibold text-emerald-800 bg-emerald-100 hover:bg-emerald-200 border border-emerald-300 px-3 py-1.5 rounded-lg flex items-center space-x-1.5 cursor-pointer transition w-fit"
+                >
+                  <ShieldCheck className="w-3.5 h-3.5 text-emerald-700" />
+                  <span>Enforce DTMC Blank Pricing Policy (Replace prices with blanks)</span>
+                </button>
+              )}
               {onNavigateToSectionReview && preflight.unapprovedSections.length > 0 && (
                 <button
                   type="button"
@@ -239,6 +268,9 @@ export const ExportModal: React.FC<ExportModalProps> = ({
             <div className="p-3 bg-[#F8FAFC] rounded-xl border border-[#E2E8F0] space-y-1">
               <div className="text-[#64748B]">Accepted SOW Version:</div>
               <div className="font-bold text-[#1D68F2] text-sm">Version 1.0 (Master Contract)</div>
+              <div className="text-[11px] text-[#475569] pt-0.5">
+                Target Dates: <span className="font-semibold text-[#0F172A]">{project.targetStartDate} to {project.targetEndDate}</span>
+              </div>
             </div>
           </div>
 
