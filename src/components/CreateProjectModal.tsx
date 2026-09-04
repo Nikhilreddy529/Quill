@@ -1,7 +1,6 @@
 import React, { useState, useRef } from 'react';
 import { 
   X, 
-  Sparkles, 
   Search, 
   FileText, 
   Building, 
@@ -747,27 +746,6 @@ export const CreateProjectModal: React.FC<CreateProjectModalProps> = ({
                   );
                 })}
               </div>
-
-              {/* Discovery Notes Box */}
-              <div className="pt-2">
-                <label className="block text-xs font-semibold text-[#334155] uppercase tracking-wider mb-1.5">
-                  Discovery Meeting Notes & Summary Context
-                </label>
-                <textarea
-                  rows={3}
-                  value={discoveryNotes}
-                  onChange={(e) => setDiscoveryNotes(e.target.value)}
-                  className="w-full bg-white border border-[#CBD5E1] rounded-lg p-2.5 text-xs text-[#0F172A] focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-[#1D68F2] leading-relaxed"
-                  placeholder="Paste discovery notes here..."
-                />
-              </div>
-
-              <div className="p-3.5 bg-amber-50 border border-amber-200 rounded-xl flex items-start space-x-2.5">
-                <ShieldCheck className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
-                <div className="text-xs text-amber-800 leading-relaxed">
-                  <span className="font-bold text-amber-900">Mandatory Blank Pricing Policy:</span> In compliance with enterprise business rules, all generated pricing sections and rate schedules will remain intentionally blank placeholders for commercial finance sign-off.
-                </div>
-              </div>
             </div>
           )}
 
@@ -778,7 +756,7 @@ export const CreateProjectModal: React.FC<CreateProjectModalProps> = ({
                 <div>
                   <h3 className="text-sm font-bold text-[#0F172A]">SOW Grounding Sources Verification</h3>
                   <p className="text-xs text-[#64748B]">
-                    Confirm the {uploadedFiles.length} project resources uploaded by the Project Manager that will be used to ground every section of this SOW.
+                    Confirm the {uploadedFiles.length} project resources uploaded.
                   </p>
                 </div>
                 <span className="text-xs text-[#1D68F2] font-semibold bg-blue-50 px-2.5 py-1 rounded-full border border-blue-200">
@@ -809,15 +787,6 @@ export const CreateProjectModal: React.FC<CreateProjectModalProps> = ({
                       <span className="text-[10px] text-slate-500 font-medium shrink-0">{doc.category}</span>
                     </div>
                   ))}
-                </div>
-              </div>
-
-              {/* Master SOW Standard */}
-              <div className="p-4 bg-emerald-50 border border-emerald-200 rounded-xl flex items-start space-x-3">
-                <FileCheck2 className="w-5 h-5 text-emerald-600 shrink-0 mt-0.5" />
-                <div className="text-xs text-emerald-900 leading-relaxed">
-                  <div className="font-bold text-emerald-950">DTMC Corporate Master SOW Standard:</div>
-                  The AI authoring pipeline will synthesize your uploaded meeting transcriptions, requirement clarifications, and SRS specifications directly into the 10-section standardized framework.
                 </div>
               </div>
             </div>

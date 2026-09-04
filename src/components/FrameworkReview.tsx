@@ -136,7 +136,7 @@ export const FrameworkReview: React.FC<FrameworkReviewProps> = ({
           <div className="space-y-1">
             <div className="flex items-center space-x-2">
               <span className="text-[10px] font-bold uppercase tracking-widest px-2.5 py-0.5 rounded-full bg-blue-50 text-[#1D68F2] border border-blue-200">
-                Phase 1: SOW Framework Outline (QTK-016 - 020)
+                Phase 1: SOW Framework Outline
               </span>
               {project.frameworkApproved ? (
                 <span className="text-[10px] font-bold px-2.5 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 flex items-center space-x-1">
@@ -151,7 +151,7 @@ export const FrameworkReview: React.FC<FrameworkReviewProps> = ({
             </div>
             <h2 className="text-xl font-bold text-[#0F172A] tracking-tight">SOW Framework & Document Structure</h2>
             <p className="text-xs text-[#64748B]">
-              Review, reorder, or add custom sections from the <strong className="text-[#1D68F2]">DTMC Allowed Section Catalogue</strong>. Deep drafting is strictly gated behind framework sign-off (QTK-019).
+              Review, reorder, or add custom sections from the <strong className="text-[#1D68F2]">DTMC Allowed Section Catalogue</strong>. 
             </p>
           </div>
 
@@ -207,7 +207,7 @@ export const FrameworkReview: React.FC<FrameworkReviewProps> = ({
         {showCatalogue && (
           <div className="p-4 bg-purple-50/50 border-b border-purple-100 space-y-3">
             <div className="flex items-center justify-between">
-              <div className="text-xs font-bold text-purple-900">DTMC Allowed Section Catalogue (QTK-016 Schema)</div>
+              <div className="text-xs font-bold text-purple-900">DTMC Allowed Section Catalogue</div>
               <span className="text-[10px] text-purple-700">Click any standard section to append to framework</span>
             </div>
 
@@ -339,28 +339,6 @@ export const FrameworkReview: React.FC<FrameworkReviewProps> = ({
         </div>
       </div>
 
-      {/* Grounding and Safeguards Info */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <div className="bg-white border border-[#E2E8F0] rounded-xl p-4 flex items-start space-x-3 shadow-xs">
-          <ShieldCheck className="w-5 h-5 text-[#1D68F2] shrink-0 mt-0.5" />
-          <div className="text-xs text-[#334155] space-y-1">
-            <span className="font-bold text-[#0F172A]">Framework-First Architecture (QTK-016 & QTK-019):</span>
-            <p className="text-[#64748B] leading-relaxed">
-              Locking the outline before drafting guarantees structural alignment with legal standards and prevents sprawling ungrounded text generation.
-            </p>
-          </div>
-        </div>
-
-        <div className="bg-white border border-[#E2E8F0] rounded-xl p-4 flex items-start space-x-3 shadow-xs">
-          <Lock className="w-5 h-5 text-amber-600 shrink-0 mt-0.5" />
-          <div className="text-xs text-[#334155] space-y-1">
-            <span className="font-bold text-[#0F172A]">Blank Pricing Safeguard (QTK-016):</span>
-            <p className="text-[#64748B] leading-relaxed">
-              All commercial and fee sections strictly use standardized blank placeholders to safeguard against binding commercial commitments.
-            </p>
-          </div>
-        </div>
-      </div>
 
       {/* Impact Analysis Modal (QTK-020) */}
       {impactResult && (
