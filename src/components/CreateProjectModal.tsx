@@ -27,6 +27,7 @@ import { SOWProject, SourceDocument, UploadedProjectDocument, UploadedDocCategor
 import { SAMPLE_SOURCE_DOCUMENTS } from '../data/sampleSharePointData';
 import { generateDefaultFramework } from '../services/aiGeneratorService';
 import { templateService } from '../services/templateService';
+import { sendToN8n } from '../services/n8nServices';
 
 interface CreateProjectModalProps {
   isOpen: boolean;
@@ -329,13 +330,68 @@ export const CreateProjectModal: React.FC<CreateProjectModalProps> = ({
   };
 
   const handleCreateAndDraft = async () => {
-    setIsGenerating(true);
-    
-    // Simulate n8n Workflow 1 execution (Graph Search + Azure OpenAI Framework Gen)
-    await new Promise((resolve) => setTimeout(resolve, 1500));
+  setIsGenerating(true);
 
+  
     const newId = `PRJ-2026-00${Math.floor(Math.random() * 900) + 100}`;
-    const selectedTemplate = availableTemplates.find(t => t.id === selectedTemplateId) || availableTemplates[0];
+
+    const selectedTemplate =
+      availableTemplates.find(t => t.id === selectedTemplateId) ||
+      availableTemplates[0];
+console.log('SENDING TO N8N:', {
+  clientName,
+  engagementName: projectTitle,
+  documentType: 'SOW',
+  meetingTranscript: discoveryNotes,
+  uploadedDocuments: uploadedFiles,
+  selectedTemplateId,
+  selectedTemplate,
+  templateFileName:
+    selectedTemplate?.metadata.wordTemplateFile ||
+    selectedTemplate?.metadata.name,
+  templateSections: selectedTemplate?.sections
+    .filter(section => section.order <= 9 && !section.isAppendix)
+    .map(section => ({
+      title: section.title,
+      category: section.category,
+      content: section.content,
+      order: section.order,
+      isMandatory: section.isMandatory,
+    })),
+});
+console.log('TEMPLATE SENT TO N8N:', {
+  selectedTemplateId,
+  selectedTemplateName: selectedTemplate?.metadata.name,
+  templateFileName: selectedTemplate?.metadata.wordTemplateFile,
+});
+const n8nResponse = await sendToN8n({
+  clientName,
+  engagementName: projectTitle,
+  documentType: 'SOW',
+  meetingTranscript: discoveryNotes,
+  uploadedDocuments: uploadedFiles.map(file => ({
+    name: file.fileName,
+    content: file.snippet,
+  })),
+  selectedTemplate: selectedTemplateId,
+  templateFileName:
+    selectedTemplate?.metadata.wordTemplateFile ||
+    selectedTemplate?.metadata.name,
+  templateSections: selectedTemplate?.sections
+    .filter(section => section.order <= 9 && !section.isAppendix)
+    .map(section => ({
+      title: section.title,
+      category: section.category,
+      content: section.content,
+      order: section.order,
+      isMandatory: section.isMandatory,
+    })),
+});
+
+console.log('n8n SOW response:', n8nResponse);
+    
+
+    // Continue building the project from the n8n response...
     
     // Generate sections based on selected template if available
     let fullSections: any[] = [];

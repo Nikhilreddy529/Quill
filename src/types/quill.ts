@@ -134,6 +134,21 @@ export interface SOWSection {
   previousContentSnapshot?: string; // For diff viewer
   requiresReapproval?: boolean;
 }
+export interface SOWSectionContributor {
+  id: string;
+  name: string;
+  email: string;
+  assignedAt: string;
+  assignedBy: string;
+  status: 'Assigned' | 'Approved';
+}
+
+export interface QuillUser {
+  id: string;
+  name: string;
+  email: string;
+  role: 'Project Manager' | 'Contributor';
+}
 
 export interface SOWProject {
   id: string;
@@ -171,7 +186,9 @@ export interface SOWProject {
   frameworkApprovedAt?: string;
   frameworkVersion?: number;
   sections: SOWSection[];
+  sectionContributors?: Record<string, SOWSectionContributor>;
   exportHistory: ExportRecord[];
+  
 }
 
 export interface SourceDocument {

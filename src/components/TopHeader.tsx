@@ -9,20 +9,24 @@ import {
   Copy,
   LayoutDashboard
 } from 'lucide-react';
-import { SOWProject } from '../types/quill';
+import { QuillUser, SOWProject } from '../types/quill';
 
 interface TopHeaderProps {
   currentProject: SOWProject;
   currentView: string;
   setCurrentView: (view: any) => void;
   onOpenNotifications?: () => void;
+  currentUser: QuillUser;
+  onChangeCurrentUser: (user: QuillUser) => void;
 }
 
 export const TopHeader: React.FC<TopHeaderProps> = ({
   currentProject,
   currentView,
   setCurrentView,
-  onOpenNotifications
+  onOpenNotifications,
+  currentUser,
+  onChangeCurrentUser
 }) => {
   return (
     <header className="h-16 bg-white border-b border-[#E2E8F0] px-6 flex items-center justify-between sticky top-0 z-30 select-none">
@@ -185,16 +189,65 @@ export const TopHeader: React.FC<TopHeaderProps> = ({
         </button>
 
         {/* User Profile Avatar */}
-        <div className="flex items-center space-x-2.5 pl-2 border-l border-[#E2E8F0]">
-          <div className="w-8 h-8 rounded-full bg-[#1D68F2] text-white text-xs font-bold flex items-center justify-center shadow-sm">
-            N
-          </div>
-          <div className="hidden sm:block text-left">
-            <div className="text-xs font-bold text-[#0F172A] leading-tight">Nikhil</div>
-            <div className="text-[10px] text-[#64748B]">Project Manager</div>
-          </div>
-        </div>
+        {/* User Profile + Role Switch */}
+{/* User Profile + Contributor Switch */}
+<div className="flex items-center space-x-2.5 pl-2 border-l border-[#E2E8F0]">
+  <div className="w-8 h-8 rounded-full bg-[#1D68F2] text-white text-xs font-bold flex items-center justify-center shadow-sm">
+    {currentUser.name.charAt(0).toUpperCase()}
+  </div>
 
+  <div className="hidden sm:block text-left">
+    <div className="text-xs font-bold text-[#0F172A] leading-tight">
+      {currentUser.name}
+    </div>
+    <div className="text-[10px] text-[#64748B]">
+      {currentUser.role}
+    </div>
+  </div>
+
+  <select
+    value={currentUser.id}
+    onChange={(e) => {
+      const selectedId = e.target.value;
+
+      if (selectedId === 'manager-001') {
+        onChangeCurrentUser({
+          id: 'manager-001',
+          name: 'Nikhil',
+          email: 'nikhil@dtmc.com',
+          role: 'Project Manager',
+        });
+        return;
+      }
+
+      const contributor = Object.values(
+        currentProject.sectionContributors || {}
+      ).find(c => c.id === selectedId);
+
+      if (contributor) {
+        onChangeCurrentUser({
+          id: contributor.id,
+          name: contributor.name,
+          email: contributor.email,
+          role: 'Contributor',
+        });
+      }
+    }}
+    className="text-[10px] border border-[#CBD5E1] rounded-md px-1.5 py-1 bg-white text-[#475569] cursor-pointer"
+  >
+    <option value="manager-001">
+      Nikhil — Manager
+    </option>
+
+    {Object.values(currentProject.sectionContributors || {}).map(
+      contributor => (
+        <option key={contributor.id} value={contributor.id}>
+          {contributor.name} — Contributor
+        </option>
+      )
+    )}
+  </select>
+</div>
       </div>
 
     </header>

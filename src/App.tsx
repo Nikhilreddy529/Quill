@@ -14,7 +14,7 @@ import { SOWTemplateEditor } from './components/templates/SOWTemplateEditor';
 import { SOWTemplatePreview } from './components/templates/SOWTemplatePreview';
 import { INITIAL_SAMPLE_PROJECTS } from './data/sampleProjects';
 import { SAMPLE_SOURCE_DOCUMENTS, SAMPLE_AUDIT_LOGS } from './data/sampleSharePointData';
-import { SOWProject, SOWSection, AuditLogEntry } from './types/quill';
+import { SOWProject, SOWSection, AuditLogEntry, QuillUser } from './types/quill';
 import { SOWTemplate } from './types/template';
 import { templateService } from './services/templateService';
 
@@ -50,6 +50,12 @@ export default function App() {
   const [activeProjectId, setActiveProjectId] = useState<string>(persistedState.activeProjectId || INITIAL_SAMPLE_PROJECTS[0].id);
   const [activeSectionId, setActiveSectionId] = useState<string>(persistedState.activeSectionId || INITIAL_SAMPLE_PROJECTS[0].sections[1]?.id || INITIAL_SAMPLE_PROJECTS[0].sections[0]?.id || '');
   const [auditLogs, setAuditLogs] = useState<AuditLogEntry[]>(SAMPLE_AUDIT_LOGS);
+const [currentUser, setCurrentUser] = useState<QuillUser>({
+  id: 'manager-001',
+  name: 'Nikhil',
+  email: 'nikhil@dtmc.com',
+  role: 'Project Manager',
+});
 
   // Template State
   const [activeTemplate, setActiveTemplate] = useState<SOWTemplate | null>(null);
@@ -288,6 +294,8 @@ export default function App() {
           currentView={currentView}
           setCurrentView={setCurrentView}
           onOpenNotifications={() => setCurrentView('dashboard')}
+          currentUser={currentUser}
+onChangeCurrentUser={setCurrentUser}
         />
 
         {/* Dynamic View Body */}
@@ -304,6 +312,8 @@ export default function App() {
               onOpenSourcesDrawer={handleOpenSourcesDrawer}
               onOpenExportModal={() => handleOpenExportModal(activeProject)}
               onNavigateStep={handleNavigateStep}
+              currentUser={currentUser}
+              onChangeCurrentUser={setCurrentUser}
             />
           )}
 
