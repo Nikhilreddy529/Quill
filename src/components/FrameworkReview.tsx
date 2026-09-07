@@ -191,7 +191,7 @@ export const FrameworkReview: React.FC<FrameworkReviewProps> = ({
               className="text-xs text-purple-700 hover:text-purple-900 font-semibold flex items-center space-x-1 cursor-pointer bg-purple-50 px-2.5 py-1 rounded-md border border-purple-200"
             >
               <Sliders className="w-3.5 h-3.5" />
-              <span>{showCatalogue ? 'Hide Catalogue' : 'Browse Allowed Catalogue (QTK-016)'}</span>
+              <span>{showCatalogue ? 'Hide Catalogue' : 'Browse Allowed Catalogue'}</span>
             </button>
 
             <button
