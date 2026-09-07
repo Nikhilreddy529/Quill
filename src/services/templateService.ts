@@ -94,11 +94,7 @@ export const STANDARD_DTMC_MASTER_TEMPLATE: SOWTemplate = {
       defaultPlaceholders: ['{{PROJECT_NAME}}', '{{CLIENT_ORGANIZATION_NAME}}', '{{PRIMARY_BUSINESS_OBJECTIVE}}'],
       content: `### 1. Engagement Overview
 
-This Statement of Work ("SOW") is entered into by and between **DTMC Advisory Group** ("DTMC") and **{{CLIENT_ORGANIZATION_NAME}}** ("Client") pursuant to the Master Services Agreement ("MSA") in effect between the parties.
-
-The purpose of this engagement is to provide professional advisory and technical delivery services for the **{{PROJECT_NAME}}** initiative. DTMC will collaborate with Client stakeholders to deliver high-quality, architecturally validated outcomes aligned with {{CLIENT_ORGANIZATION_NAME}}'s strategic modernization goals.
-
-Client is undertaking modernization across target workloads to improve operational agility, enterprise resilience, and system scalability. This SOW sets forth the specific scope, deliverables, governance framework, and contractual assumptions governing this phase of delivery.`
+{{CLIENT_ORGANIZATION_NAME}} wants a governed and sustainable foundation for **{{PROJECT_NAME}}**. DTMC will assess the current state, define the target model and create an actionable implementation roadmap.`
     },
     {
       id: 'SEC-T-02',
@@ -113,12 +109,10 @@ Client is undertaking modernization across target workloads to improve operation
       defaultPlaceholders: ['{{CLIENT_ORGANIZATION_NAME}}', '{{TARGET_TIMELINE_WEEKS}}'],
       content: `### 2. Goals and Objectives
 
-The primary objectives of the **{{PROJECT_NAME}}** engagement include:
-
-1. **Strategic Modernization**: Establish an enterprise-grade architecture foundation aligned with industry benchmarks and security frameworks.
-2. **Quality Deliverable Execution**: Formulate and deliver verified milestone deliverables within agreed sprint cadences.
-3. **Risk Mitigation**: Identify technical debt, security gaps, and operational bottlenecks early through formal governance and decision tracking.
-4. **Knowledge Transfer**: Equip {{CLIENT_ORGANIZATION_NAME}} technical teams and operational owners with transition runbooks, architectural blueprints, and handover sessions.`
+- Assess current structures, permissions and governance practices.
+- Define a client-centric information architecture and reusable patterns.
+- Create governance, resourcing, migration and AI-readiness recommendations.
+- Provide a sequenced roadmap with priorities, dependencies and decision points.`
     },
     {
       id: 'SEC-T-03',
@@ -133,21 +127,10 @@ The primary objectives of the **{{PROJECT_NAME}}** engagement include:
       defaultPlaceholders: ['{{PROJECT_NAME}}', '{{DELIVERY_METHODOLOGY}}'],
       content: `### 3. Scope and Delivery Approach
 
-DTMC will execute this engagement using a structured iterative delivery approach, divided into the following foundational phases:
-
-The project will follow DTMC's Agile Delivery Framework, consisting of two-week sprint cadences, bi-weekly steering checkpoints, and continuous integration validation.
-
-- **Workstream 1: Architecture & Technical Foundations**: System discovery, target-state reference architecture design, and environment baseline verification.
-- **Workstream 2: Core Engineering & Implementation**: Iterative development of verified component services, API integrations, and database schemas.
-- **Workstream 3: Validation & Quality Assurance**: Execution of System Integration Testing (SIT), User Acceptance Testing (UAT) facilitation, and performance verification.
-- **Workstream 4: Deployment & Transition**: Controlled staging promotion, cutover runbook execution, and post-deployment hypercare support.
-
-| Deliverable ID | Deliverable Title | Format | Acceptance Criteria |
-|---|---|---|---|
-| DEL-01 | Architecture Blueprint & Target Design | DOCX / PDF | Written sign-off by Client Technical Lead |
-| DEL-02 | Core Engineering Codebase & Unit Test Suite | Git Repository | 85%+ automated unit test coverage passing |
-| DEL-03 | SIT / UAT Verification Report | DOCX | Zero Severity 1 / 2 blocking defects |
-| DEL-04 | Production Cutover Runbook & Handover | DOCX | Operational walkthrough completed with Client team |`
+| Phase / Workstream | Key Activities | Primary Deliverables |
+|---|---|---|
+| Engage | Kickoff, stakeholder interviews, configuration review and requirements capture. | Discovery summary; findings register; requirements brief. |
+| Envision | Target information architecture, governance model, migration strategy and AI-readiness assessment. | Solution design; governance plan; implementation roadmap. |`
     },
     {
       id: 'SEC-T-04',
@@ -162,18 +145,12 @@ The project will follow DTMC's Agile Delivery Framework, consisting of two-week 
       governanceRoles: [...DEFAULT_DTMC_ROLES],
       content: `### 4. Governance and Responsibilities
 
-| Role Title | Organization | Core Responsibilities |
-|---|---|---|
-| DTMC Engagement Lead | DTMC Advisory | Overall delivery quality, scope governance and executive escalation. |
-| DTMC Project Manager | DTMC Advisory | Project planning, RAID management, status reporting, decision tracking and deliverable coordination. |
-| DTMC Solution Lead | DTMC Advisory | Solution quality, technical decisions, architecture oversight and technical delivery coordination. |
-| Client Product Owner | {{CLIENT_ORGANIZATION_NAME}} | Business priorities, stakeholder coordination, timely decisions and deliverable acceptance. |
-| Client Technical Lead | {{CLIENT_ORGANIZATION_NAME}} | Environment access, technical validation, data readiness, security coordination and deployment support. |
-| Client Subject Matter Experts | {{CLIENT_ORGANIZATION_NAME}} | Business requirements, process validation, testing participation and feedback. |
-
-- **Daily Standups**: 15-minute engineering status check.
-- **Weekly Project Status Report**: RAID log review, milestone tracking, and budget utilization monitoring.
-- **Bi-Weekly Steering Committee**: Executive stakeholder review, milestone sign-offs, and critical scope decisions.`
+| Role | Responsibility |
+|---|---|
+| DTMC Engagement Lead | Overall delivery quality, scope governance and executive escalation. |
+| DTMC Project Manager | Plan, RAID log, status reporting, decisions and deliverable tracking. |
+| Client Product Owner | Priorities, stakeholder access, timely decisions and acceptance. |
+| Client Technical Lead | Environment access, technical validation, data readiness and deployment coordination. |`
     },
     {
       id: 'SEC-T-05',
@@ -205,18 +182,7 @@ The project will follow DTMC's Agile Delivery Framework, consisting of two-week 
       },
       content: `### 5. Schedule and Acceptance
 
-- **Anticipated Start Date**: {{ANTICIPATED_START_DATE}}
-- **Anticipated Completion Date**: {{ANTICIPATED_COMPLETION_DATE}}
-- **Estimated Duration**: {{ESTIMATED_DURATION}}
-
-The detailed project schedule will be baselined during project initiation and maintained through the agreed governance process. Deliverables will be submitted for client review and will be considered accepted upon written approval or according to the acceptance period defined in the applicable agreement.
-
-1. Upon completion of a deliverable listed in Section 3, DTMC will submit the deliverable accompanied by a formal Deliverable Acceptance Form (DAF).
-2. {{CLIENT_ORGANIZATION_NAME}} will review the deliverable against agreed acceptance criteria.
-3. If defects or omissions are identified, {{CLIENT_ORGANIZATION_NAME}} will provide consolidated, actionable feedback in writing.
-4. DTMC will remediate identified defects within an agreed remediation window and resubmit for formal sign-off.
-
-> **INTERNAL LEGAL NOTICE**: Acceptance language must be validated against the approved contract or clause library before the SOW is issued. Do not automatically insert a five-business-day acceptance period without contractual authorization.`
+The detailed schedule will be baselined at kickoff. Deliverables are accepted when the client provides written approval or no material exception within five business days. Dates in this sample are intentionally illustrative.`
     },
     {
       id: 'SEC-T-06',
@@ -231,13 +197,9 @@ The detailed project schedule will be baselined during project initiation and ma
       defaultPlaceholders: ['{{CLIENT_ORGANIZATION_NAME}}'],
       content: `### 6. Assumptions
 
-The scope and estimated schedule defined in this SOW are established based upon the following mutual assumptions:
-
-1. **Access & Credentials**: {{CLIENT_ORGANIZATION_NAME}} will provide DTMC consultants with necessary VPN, cloud tenant, repository, and environment credentials within five (5) business days of project kickoff.
-2. **Stakeholder Availability**: Client Subject Matter Experts and decision-makers will participate in scheduled agile ceremonies and respond to architectural clarification requests within two (2) business days.
-3. **Third-Party Licensing**: All required software, cloud subscriptions, SaaS licenses, and infrastructure hosting fees remain the direct responsibility of {{CLIENT_ORGANIZATION_NAME}}.
-4. **Data Readiness**: Test and seed data provided for development and SIT will be de-identified and sanitized by Client in compliance with applicable privacy regulations (e.g. GDPR, HIPAA, SOC 2).
-5. **Work Location**: Services will be delivered primarily remotely, with on-site workshops scheduled upon mutual agreement.`
+- Client provides appropriate tenant access and stakeholder availability.
+- Standard Microsoft 365 tools will be used for collaboration and deliverables.
+- Client feedback is provided within five business days.`
     },
     {
       id: 'SEC-T-07',
@@ -252,13 +214,9 @@ The scope and estimated schedule defined in this SOW are established based upon 
       defaultPlaceholders: ['{{CLIENT_ORGANIZATION_NAME}}'],
       content: `### 7. Out of Scope
 
-Any activity, deliverable, or service not explicitly specified in Section 3 is strictly out of scope for this SOW. For clarity, the following items are specifically excluded:
-
-1. **Hardware Procurement**: Purchasing, installing, or physical maintenance of on-premise servers or appliances.
-2. **Legacy Archival Cleansing**: Data cleansing or extraction from legacy systems deprecated prior to the project baseline year.
-3. **Ongoing Managed Operations**: 24/7 level 1/2 user desk support following the agreed post-deployment hypercare window.
-4. **Third-Party Vendor Mediation**: Managing or resolving contractual or technical disputes with unassociated third-party software vendors.
-5. **Custom Regulatory Filing**: Direct legal representation or formal regulatory compliance audit defense.`
+- Production migration or site build.
+- Custom Power Platform development.
+- Licensing procurement and ongoing managed services.`
     },
     {
       id: 'SEC-T-08',
@@ -273,16 +231,11 @@ Any activity, deliverable, or service not explicitly specified in Section 3 is s
       defaultPlaceholders: ['{{CURRENCY}}', '{{FEE_STRUCTURE_TYPE}}'],
       content: `### 8. Illustrative Fees
 
-> **MANDATORY POLICY NOTICE**: In strict accordance with DTMC enterprise governance rules, all financial figures, billing rates, and fee totals remain blank placeholders or illustrative in this template. Specific pricing values must be inserted and approved solely by the Commercial Finance Practice before final client issuance.
-
-- **Billing Model**: {{FEE_STRUCTURE_TYPE}} (e.g. Time & Materials / Milestone-Based)
-- **Currency**: {{CURRENCY}}
-
 | Commercial Model | Illustrative Amount | Billing |
 |---|---|---|
-| Time and materials | $88,000 to $116,000 | Initial deposit plus monthly actuals |
+| Time and materials | $24,000 to $32,000 | Monthly, based on actual effort |
 
-*All amounts are fictional placeholders for sample evaluation and must be replaced during contracting.*`
+All amounts are fictional placeholders for sample evaluation and must be replaced during contracting.`
     },
     {
       id: 'SEC-T-09',
@@ -299,7 +252,7 @@ Any activity, deliverable, or service not explicitly specified in Section 3 is s
 
 | Accepted by Client | Accepted by DTMC |
 |---|---|
-| **Name:** Riley Chen<br/>**Title:** VP, Transformation<br/>**Signature:** ___________________________<br/>**Date:** ________________________________ | **Name:** Jordan Lee<br/>**Title:** Engagement Partner<br/>**Signature:** ___________________________<br/>**Date:** ________________________________ |`
+| **Name:** {{CLIENT_SIGNATORY_NAME}}<br/>**Title:** VP, Transformation<br/>**Signature:** __________________<br/>**Date:** __________________ | **Name:** {{DTMC_SIGNATORY_NAME}}<br/>**Title:** Engagement Partner<br/>**Signature:** __________________<br/>**Date:** __________________ |`
     },
     {
       id: 'SEC-T-10',
