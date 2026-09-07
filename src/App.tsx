@@ -39,28 +39,40 @@ const loadPersistedAppState = (): Partial<PersistedAppState> => {
 export default function App() {
   const persistedState = loadPersistedAppState();
 
-  // Navigation States
   const [currentView, setCurrentView] = useState<
     'sections' | 'dashboard' | 'framework' | 'proposal' | 'templates' | 'template-editor' | 'template-preview'
   >(persistedState.currentView || 'sections');
+
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
 
-  // Application Data States
-  const [projects, setProjects] = useState<SOWProject[]>(persistedState.projects || INITIAL_SAMPLE_PROJECTS);
-  const [activeProjectId, setActiveProjectId] = useState<string>(persistedState.activeProjectId || INITIAL_SAMPLE_PROJECTS[0].id);
-  const [activeSectionId, setActiveSectionId] = useState<string>(persistedState.activeSectionId || INITIAL_SAMPLE_PROJECTS[0].sections[1]?.id || INITIAL_SAMPLE_PROJECTS[0].sections[0]?.id || '');
-  const [auditLogs, setAuditLogs] = useState<AuditLogEntry[]>(SAMPLE_AUDIT_LOGS);
-const [currentUser, setCurrentUser] = useState<QuillUser>({
-  id: 'manager-001',
-  name: 'Nikhil',
-  email: 'nikhil@dtmc.com',
-  role: 'Project Manager',
-});
+  const [projects, setProjects] = useState<SOWProject[]>(
+    persistedState.projects || INITIAL_SAMPLE_PROJECTS
+  );
 
-  // Template State
+  const [activeProjectId, setActiveProjectId] = useState<string>(
+    persistedState.activeProjectId || INITIAL_SAMPLE_PROJECTS[0].id
+  );
+
+  const [activeSectionId, setActiveSectionId] = useState<string>(
+    persistedState.activeSectionId ||
+    INITIAL_SAMPLE_PROJECTS[0].sections[1]?.id ||
+    INITIAL_SAMPLE_PROJECTS[0].sections[0]?.id ||
+    ''
+  );
+
+  const [auditLogs, setAuditLogs] = useState<AuditLogEntry[]>(SAMPLE_AUDIT_LOGS);
+
+  // Current signed-in user. Starts as the project manager.
+  // SOWAuthoringWorkspace can switch this to a contributor after assignment.
+  const [currentUser, setCurrentUser] = useState<QuillUser>({
+    id: 'pm-001',
+    name: 'Project Manager',
+    email: '',
+    role: 'Project Manager',
+  });
+
   const [activeTemplate, setActiveTemplate] = useState<SOWTemplate | null>(null);
 
-  // Modals & Drawers
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [isProposalCreateModalOpen, setIsProposalCreateModalOpen] = useState(false);
   const [isExportModalOpen, setIsExportModalOpen] = useState(false);
@@ -69,6 +81,19 @@ const [currentUser, setCurrentUser] = useState<QuillUser>({
   const [sourcesSectionTarget, setSourcesSectionTarget] = useState<SOWSection | null>(null);
 
   const activeProject = projects.find(p => p.id === activeProjectId) || projects[0];
+
+  // When the active project changes, return to that project's manager.
+  // This does not interfere with contributor mode while staying in the same project.
+  useEffect(() => {
+    if (!activeProject) return;
+
+    setCurrentUser({
+      id: 'pm-001',
+      name: activeProject.ownerName || 'Project Manager',
+      email: activeProject.ownerEmail || '',
+      role: 'Project Manager',
+    });
+  }, [activeProject?.id]);
 
   useEffect(() => {
     localStorage.setItem(APP_STATE_STORAGE_KEY, JSON.stringify({
@@ -79,11 +104,18 @@ const [currentUser, setCurrentUser] = useState<QuillUser>({
     } satisfies PersistedAppState));
   }, [projects, activeProjectId, activeSectionId, currentView]);
 
-  // Project select handler
   const handleSelectProject = (projectId: string) => {
     setActiveProjectId(projectId);
     const target = projects.find(p => p.id === projectId);
+
     if (target) {
+      setCurrentUser({
+        id: 'pm-001',
+        name: target.ownerName || 'Project Manager',
+        email: target.ownerEmail || '',
+        role: 'Project Manager',
+      });
+
       if (!target.frameworkApproved) {
         setCurrentView('framework');
       } else {
@@ -99,7 +131,13 @@ const [currentUser, setCurrentUser] = useState<QuillUser>({
     setActiveSectionId(newProject.sections[0]?.id || '');
     setCurrentView('framework');
 
-    // Add Audit Log
+    setCurrentUser({
+      id: 'pm-001',
+      name: newProject.ownerName || 'Project Manager',
+      email: newProject.ownerEmail || '',
+      role: 'Project Manager',
+    });
+
     const newLog: AuditLogEntry = {
       id: `LOG-${Math.floor(Math.random() * 9000) + 1000}`,
       timestamp: new Date().toISOString(),
@@ -112,6 +150,7 @@ const [currentUser, setCurrentUser] = useState<QuillUser>({
       status: 'SUCCESS',
       executionTimeMs: 320,
     };
+
     setAuditLogs([newLog, ...auditLogs]);
   };
 
@@ -120,6 +159,14 @@ const [currentUser, setCurrentUser] = useState<QuillUser>({
     setActiveProjectId(newProposal.id);
     setActiveSectionId('');
     setCurrentView('proposal');
+
+    setCurrentUser({
+      id: 'pm-001',
+      name: newProposal.ownerName || 'Project Manager',
+      email: newProposal.ownerEmail || '',
+      role: 'Project Manager',
+    });
+
     const newLog: AuditLogEntry = {
       id: `LOG-${Math.floor(Math.random() * 9000) + 1000}`,
       timestamp: new Date().toISOString(),
@@ -132,10 +179,10 @@ const [currentUser, setCurrentUser] = useState<QuillUser>({
       status: 'SUCCESS',
       executionTimeMs: 320,
     };
+
     setAuditLogs(prev => [newLog, ...prev]);
   };
 
-  // Template handlers
   const handleSelectTemplateToEdit = (template: SOWTemplate) => {
     setActiveTemplate(template);
     setCurrentView('template-editor');
@@ -157,7 +204,6 @@ const [currentUser, setCurrentUser] = useState<QuillUser>({
   };
 
   const handleUseTemplateToCreateSOW = (template: SOWTemplate) => {
-    // Generate new SOW project from template
     const newProject = templateService.createSOWProjectFromTemplate(
       template,
       'Acme Global Enterprises',
@@ -171,18 +217,26 @@ const [currentUser, setCurrentUser] = useState<QuillUser>({
     setActiveSectionId(newProject.sections[0]?.id || '');
     setCurrentView('framework');
 
+    setCurrentUser({
+      id: 'pm-001',
+      name: newProject.ownerName || 'Project Manager',
+      email: newProject.ownerEmail || '',
+      role: 'Project Manager',
+    });
+
     const newLog: AuditLogEntry = {
       id: `LOG-${Math.floor(Math.random() * 9000) + 1000}`,
       timestamp: new Date().toISOString(),
       projectId: newProject.id,
       projectTitle: newProject.title,
-      user: 'Nikhil',
-      userEmail: 'nikhil@acme-transform.com',
+      user: newProject.ownerName,
+      userEmail: newProject.ownerEmail,
       action: 'TEMPLATE_USED_FOR_SOW',
       details: `Initialized new Statement of Work "${newProject.title}" directly from template "${template.metadata.name}" (v${template.metadata.version}).`,
       status: 'SUCCESS',
       executionTimeMs: 140,
     };
+
     setAuditLogs(prev => [newLog, ...prev]);
   };
 
@@ -192,18 +246,22 @@ const [currentUser, setCurrentUser] = useState<QuillUser>({
 
   const handleUpdateSection = (updatedSection: SOWSection) => {
     if (!activeProject) return;
-    const updatedSections = activeProject.sections.map(s => s.id === updatedSection.id ? updatedSection : s);
+
+    const updatedSections = activeProject.sections.map(
+      s => s.id === updatedSection.id ? updatedSection : s
+    );
+
     const allApproved = updatedSections.every(s => s.status === 'Approved');
-    
+
     const updatedProject: SOWProject = {
       ...activeProject,
       sections: updatedSections,
       status: allApproved ? 'Approved' : 'Under Review',
       updatedAt: new Date().toISOString(),
     };
+
     handleUpdateProject(updatedProject);
 
-    // Audit log if approved
     if (updatedSection.status === 'Approved') {
       const newLog: AuditLogEntry = {
         id: `LOG-${Math.floor(Math.random() * 9000) + 1000}`,
@@ -217,25 +275,27 @@ const [currentUser, setCurrentUser] = useState<QuillUser>({
         status: 'SUCCESS',
         executionTimeMs: 85,
       };
+
       setAuditLogs(prev => [newLog, ...prev]);
     }
   };
 
   const handleApproveFramework = () => {
     if (!activeProject) return;
+
     const updatedProject: SOWProject = {
       ...activeProject,
       frameworkApproved: true,
       status: 'Under Review',
       updatedAt: new Date().toISOString(),
     };
+
     handleUpdateProject(updatedProject);
     setCurrentView('sections');
     setActiveSectionId(activeProject.sections[0]?.id || '');
   };
 
   const handleOpenExportModal = (target: SOWProject) => {
-    // Ensure all pricing sections adhere to DTMC Blank Pricing Policy
     const sanitizedSections = target.sections.map(s => {
       if (s.content.includes('$88,000') || s.content.includes('$116,000')) {
         return {
@@ -246,6 +306,7 @@ const [currentUser, setCurrentUser] = useState<QuillUser>({
           status: 'Approved' as const,
         };
       }
+
       return s;
     });
 
@@ -274,8 +335,6 @@ const [currentUser, setCurrentUser] = useState<QuillUser>({
 
   return (
     <div className="flex h-screen bg-[#F8FAFC] text-[#0F172A] overflow-hidden font-sans">
-      
-      {/* Left Dark Navy Sidebar */}
       <Sidebar
         currentView={currentView}
         setCurrentView={setCurrentView}
@@ -285,23 +344,19 @@ const [currentUser, setCurrentUser] = useState<QuillUser>({
         setIsCollapsed={setIsSidebarCollapsed}
       />
 
-      {/* Main Right Area */}
       <div className="flex-1 flex flex-col min-w-0 overflow-y-auto">
-        
-        {/* Top Header Bar */}
         <TopHeader
           currentProject={activeProject}
           currentView={currentView}
           setCurrentView={setCurrentView}
           onOpenNotifications={() => setCurrentView('dashboard')}
+           currentUser={currentUser}
+          onChangeCurrentUser={setCurrentUser}
           currentUser={currentUser}
 onChangeCurrentUser={setCurrentUser}
         />
 
-        {/* Dynamic View Body */}
         <div className="flex-1 flex flex-col">
-          
-          {/* VIEW 1: SOW 3-Column Authoring Workspace */}
           {currentView === 'sections' && (
             <SOWAuthoringWorkspace
               project={activeProject}
@@ -314,10 +369,11 @@ onChangeCurrentUser={setCurrentUser}
               onNavigateStep={handleNavigateStep}
               currentUser={currentUser}
               onChangeCurrentUser={setCurrentUser}
+              currentUser={currentUser}
+              onChangeCurrentUser={setCurrentUser}
             />
           )}
 
-          {/* VIEW 2: Dashboard (Project lists & Overview) */}
           {currentView === 'dashboard' && (
             <div className="p-8 max-w-7xl mx-auto w-full">
               <Dashboard
@@ -330,7 +386,6 @@ onChangeCurrentUser={setCurrentUser}
             </div>
           )}
 
-          {/* VIEW 3: Framework Reviewer (Section structure builder) */}
           {currentView === 'framework' && (
             <div className="p-8 max-w-7xl mx-auto w-full">
               <FrameworkReview
@@ -342,7 +397,6 @@ onChangeCurrentUser={setCurrentUser}
             </div>
           )}
 
-          {/* VIEW 4: Proposal Workspace */}
           {currentView === 'proposal' && (
             <ProposalWorkspace
               project={activeProject}
@@ -351,7 +405,6 @@ onChangeCurrentUser={setCurrentUser}
             />
           )}
 
-          {/* VIEW 5: SOW Templates Directory */}
           {currentView === 'templates' && (
             <SOWTemplateList
               onSelectTemplateToEdit={handleSelectTemplateToEdit}
@@ -361,7 +414,6 @@ onChangeCurrentUser={setCurrentUser}
             />
           )}
 
-          {/* VIEW 8: SOW Template Editor */}
           {currentView === 'template-editor' && activeTemplate && (
             <SOWTemplateEditor
               template={activeTemplate}
@@ -371,7 +423,6 @@ onChangeCurrentUser={setCurrentUser}
             />
           )}
 
-          {/* VIEW 9: SOW Template Preview */}
           {currentView === 'template-preview' && activeTemplate && (
             <SOWTemplatePreview
               template={activeTemplate}
@@ -380,12 +431,9 @@ onChangeCurrentUser={setCurrentUser}
               onBack={() => setCurrentView('templates')}
             />
           )}
-
         </div>
-
       </div>
 
-      {/* Create SOW Intake Wizard Modal */}
       {isCreateModalOpen && (
         <CreateProjectModal
           isOpen={isCreateModalOpen}
@@ -402,7 +450,6 @@ onChangeCurrentUser={setCurrentUser}
         />
       )}
 
-      {/* DTMC Word Document Export Modal */}
       {isExportModalOpen && (
         <ExportModal
           isOpen={isExportModalOpen}
@@ -410,6 +457,7 @@ onChangeCurrentUser={setCurrentUser}
           project={exportTargetProject}
           onExportComplete={(updated) => {
             handleUpdateProject(updated);
+
             const newLog: AuditLogEntry = {
               id: `LOG-${Math.floor(Math.random() * 9000) + 1000}`,
               timestamp: new Date().toISOString(),
@@ -422,12 +470,12 @@ onChangeCurrentUser={setCurrentUser}
               status: 'SUCCESS',
               executionTimeMs: 890,
             };
+
             setAuditLogs(prev => [newLog, ...prev]);
           }}
         />
       )}
 
-      {/* Grounded Sources Drawer */}
       {sourcesDrawerOpen && (
         <SourcesPanel
           isOpen={sourcesDrawerOpen}
@@ -437,13 +485,6 @@ onChangeCurrentUser={setCurrentUser}
           allSources={SAMPLE_SOURCE_DOCUMENTS}
         />
       )}
-
     </div>
   );
 }
-
-
-
-
-
-

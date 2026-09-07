@@ -39,6 +39,10 @@ export interface N8nProjectResponse {
   sections?: Array<{
     sectionName: string;
     content: string;
+    order?: number;
+    category?: string;
+    isMandatory?: boolean;
+    isPricingSection?: boolean;
   }>;
 
   itemsForReview?: Array<{
@@ -50,6 +54,63 @@ export interface N8nProjectResponse {
   pricingVerifiedBlank?: boolean;
   validationNotes?: string[];
 }
+
+/**
+ * Contributor assignment request.
+ *
+ * This is intentionally separate from N8nProjectRequest because
+ * contributor actions do not contain documentType.
+ */
+export interface AssignContributorRequest {
+  action: 'ASSIGN_CONTRIBUTOR';
+
+  projectId: string;
+  projectTitle: string;
+
+  sectionId: string;
+  sectionTitle: string;
+
+  contributor: {
+    id: string;
+    name: string;
+    email: string;
+  };
+
+  assignedBy: {
+    name: string;
+    email: string;
+  };
+}
+
+/**
+ * Contributor section approval request.
+ */
+export interface ContributorSectionUpdateRequest {
+  action: 'CONTRIBUTOR_SECTION_APPROVED';
+
+  projectId: string;
+  sectionId: string;
+  sectionTitle: string;
+
+  contributor: {
+    id: string;
+    name: string;
+    email: string;
+  };
+
+  content: string;
+  version: number;
+  approvedAt: string;
+}
+
+/**
+ * Generic n8n action request.
+ *
+ * Used for contributor actions such as assignment and approval.
+ */
+export type N8nActionRequest =
+  | AssignContributorRequest
+  | ContributorSectionUpdateRequest;
 
 const N8N_WEBHOOK_URL = (import.meta as any).env.VITE_N8N_WEBHOOK_URL;
 
@@ -94,24 +155,43 @@ function parseN8nOutput(output: unknown): N8nProjectResponse {
   }
 }
 
-export async function sendToN8n(
-  request: N8nProjectRequest
-): Promise<N8nProjectResponse> {
+/**
+ * Common n8n webhook caller.
+ */
+async function callN8n<T>(
+  request: unknown
+): Promise<T> {
   if (!N8N_WEBHOOK_URL) {
-    throw new Error('VITE_N8N_WEBHOOK_URL is not configured.');
+    throw new Error(
+      'VITE_N8N_WEBHOOK_URL is not configured.'
+    );
   }
+
+  console.log('Sending request to n8n:', request);
 
   const response = await fetch(N8N_WEBHOOK_URL, {
     method: 'POST',
+
     headers: {
       'Content-Type': 'application/json',
     },
+
     body: JSON.stringify(request),
   });
 
   if (!response.ok) {
+    let errorDetails = '';
+
+    try {
+      errorDetails = await response.text();
+    } catch {
+      // Ignore response parsing errors.
+    }
+
     throw new Error(
-      `n8n request failed with status ${response.status}`
+      `n8n request failed with status ${response.status}${
+        errorDetails ? `: ${errorDetails}` : ''
+      }`
     );
   }
 
@@ -121,7 +201,9 @@ export async function sendToN8n(
   console.log('RAW N8N RESPONSE:', text);
 
   if (!text.trim()) {
-    throw new Error('n8n returned an empty response.');
+    throw new Error(
+      'n8n returned an empty response.'
+    );
   }
 
   let parsedData: unknown;
@@ -130,7 +212,9 @@ export async function sendToN8n(
   try {
     parsedData = JSON.parse(text);
   } catch {
-    throw new Error('n8n returned invalid JSON.');
+    throw new Error(
+      'n8n returned invalid JSON.'
+    );
   }
 
   /**
@@ -145,7 +229,11 @@ export async function sendToN8n(
     typeof parsedData === 'object' &&
     'output' in parsedData
   ) {
-    const output = (parsedData as { output?: unknown }).output;
+    const output = (
+      parsedData as {
+        output?: unknown;
+      }
+    ).output;
 
     return parseN8nOutput(output);
   }
@@ -170,105 +258,41 @@ export async function sendToN8n(
    * n8n returns a JSON string containing another JSON object.
    */
   if (typeof parsedData === 'string') {
-    return parseN8nOutput(parsedData);
+    try {
+      return JSON.parse(parsedData) as T;
+    } catch {
+      throw new Error(
+        'n8n returned invalid JSON text.'
+      );
+    }
   }
 
-  throw new Error('n8n returned an unsupported response format.');
+  return parsedData as T;
 }
 
-
-/* ============================================================
-   CONTRIBUTOR FUNCTIONS
-   ============================================================ */
-
-export interface AssignContributorRequest {
-  action: 'ASSIGN_CONTRIBUTOR';
-  projectId: string;
-  sectionId: string;
-  sectionTitle: string;
-  contributor: {
-    id: string;
-    name: string;
-    email: string;
-  };
-  assignedBy: string;
-  assignedByEmail: string;
+/**
+ * Generate an SOW or Proposal through n8n.
+ */
+export async function sendToN8n(
+  request: N8nProjectRequest
+): Promise<N8nProjectResponse> {
+  return callN8n<N8nProjectResponse>(request);
 }
 
-export interface ContributorSectionUpdateRequest {
-  action: 'APPROVE_CONTRIBUTOR_SECTION';
-  projectId: string;
-  sectionId: string;
-  sectionTitle: string;
-  contributorEmail: string;
-  approvedBy: string;
-  approvedByEmail: string;
-}
-
+/**
+ * Assign a contributor to a specific SOW section.
+ */
 export async function assignContributor(
   request: AssignContributorRequest
-): Promise<N8nProjectResponse> {
-  if (!N8N_WEBHOOK_URL) {
-    throw new Error('VITE_N8N_WEBHOOK_URL is not configured.');
-  }
-
-  const response = await fetch(N8N_WEBHOOK_URL, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify(request),
-  });
-
-  if (!response.ok) {
-    throw new Error(
-      `n8n contributor assignment failed with status ${response.status}`
-    );
-  }
-
-  const text = await response.text();
-
-  if (!text.trim()) {
-    return {};
-  }
-
-  try {
-    return JSON.parse(text) as N8nProjectResponse;
-  } catch {
-    return {};
-  }
+): Promise<any> {
+  return callN8n<any>(request);
 }
 
+/**
+ * Submit contributor approval for a section.
+ */
 export async function submitContributorApproval(
   request: ContributorSectionUpdateRequest
-): Promise<N8nProjectResponse> {
-  if (!N8N_WEBHOOK_URL) {
-    throw new Error('VITE_N8N_WEBHOOK_URL is not configured.');
-  }
-
-  const response = await fetch(N8N_WEBHOOK_URL, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify(request),
-  });
-
-  if (!response.ok) {
-    throw new Error(
-      `n8n contributor approval failed with status ${response.status}`
-    );
-  }
-
-  const text = await response.text();
-
-  if (!text.trim()) {
-    return {};
-  }
-
-  try {
-    return JSON.parse(text) as N8nProjectResponse;
-  } catch {
-    return {};
-  }
+): Promise<any> {
+  return callN8n<any>(request);
 }

@@ -188,7 +188,7 @@ export interface SOWProject {
   sections: SOWSection[];
   sectionContributors?: Record<string, SOWSectionContributor>;
   exportHistory: ExportRecord[];
-  
+  sectionContributors?: Record<string, SOWSectionContributor>;
 }
 
 export interface SourceDocument {
@@ -261,4 +261,18 @@ export interface N8nWorkflowDefinition {
   nodes: N8nWorkflowNode[];
   samplePayload: Record<string, any>;
   sampleResponse: Record<string, any>;
+}
+export interface SOWSectionContributor {
+  id: string;
+  name: string;
+  email: string;
+  assignedAt: string;
+  assignedBy: string;
+}
+
+export interface QuillUser {
+  id: string;
+  name: string;
+  email: string;
+  role: 'Project Manager' | 'Contributor';
 }

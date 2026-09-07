@@ -9,13 +9,15 @@ import {
   Copy,
   LayoutDashboard
 } from 'lucide-react';
-import { QuillUser, SOWProject } from '../types/quill';
+import { QuillUser, SOWProject, QuillUser } from '../types/quill';
 
 interface TopHeaderProps {
   currentProject: SOWProject;
   currentView: string;
   setCurrentView: (view: any) => void;
   onOpenNotifications?: () => void;
+  currentUser: QuillUser;
+  onChangeCurrentUser: (user: QuillUser) => void;
   currentUser: QuillUser;
   onChangeCurrentUser: (user: QuillUser) => void;
 }
@@ -25,6 +27,8 @@ export const TopHeader: React.FC<TopHeaderProps> = ({
   currentView,
   setCurrentView,
   onOpenNotifications,
+  currentUser,
+  onChangeCurrentUser,
   currentUser,
   onChangeCurrentUser
 }) => {
@@ -188,22 +192,71 @@ export const TopHeader: React.FC<TopHeaderProps> = ({
           <HelpCircle className="w-4 h-4" />
         </button>
 
-        {/* User Profile Avatar */}
-        {/* User Profile + Role Switch */}
-{/* User Profile + Contributor Switch */}
-<div className="flex items-center space-x-2.5 pl-2 border-l border-[#E2E8F0]">
-  <div className="w-8 h-8 rounded-full bg-[#1D68F2] text-white text-xs font-bold flex items-center justify-center shadow-sm">
-    {currentUser.name.charAt(0).toUpperCase()}
-  </div>
+        {/* User Profile / Contributor Context */}
+        <div className="flex items-center space-x-2.5 pl-2 border-l border-[#E2E8F0]">
+          <div className="w-8 h-8 rounded-full bg-[#1D68F2] text-white text-xs font-bold flex items-center justify-center shadow-sm">
+            {currentUser.name.charAt(0).toUpperCase()}
+          </div>
+          <div className="hidden sm:block text-left">
+            <select
+              value={currentUser.email}
+              onChange={(e) => {
+                const selected = [
+                  {
+                    id: 'USER-PM-NIKHIL',
+                    name: currentProject.ownerName || 'Nikhil',
+                    email: currentProject.ownerEmail || 'nikhil@acme-transform.com',
+                    role: 'Project Manager' as const,
+                  },
+                  ...Object.values(currentProject.sectionContributors || {}).map(c => ({
+                    id: c.id,
+                    name: c.name,
+                    email: c.email,
+                    role: 'Contributor' as const,
+                  })),
+                ].find(u => u.email === e.target.value);
+                if (selected) onChangeCurrentUser(selected);
+              }}
+              className="text-xs font-bold text-[#0F172A] leading-tight bg-transparent border-none outline-none cursor-pointer max-w-[140px]"
+              title="Switch user for the contributor MVP"
+            >
+              {[
+                {
+                  id: 'USER-PM-NIKHIL',
+                  name: currentProject.ownerName || 'Nikhil',
+                  email: currentProject.ownerEmail || 'nikhil@acme-transform.com',
+                  role: 'Project Manager' as const,
+                },
+                ...Object.values(currentProject.sectionContributors || {}).map(c => ({
+                  id: c.id,
+                  name: c.name,
+                  email: c.email,
+                  role: 'Contributor' as const,
+                })),
+              ].filter((u, i, arr) => arr.findIndex(x => x.email === u.email) === i).map(user => (
+                <option key={user.email} value={user.email}>{user.name}</option>
+              ))}
+            </select>
+            <div className="text-[10px] text-[#64748B]">{currentUser.role}</div>
 
-  <div className="hidden sm:block text-left">
-    <div className="text-xs font-bold text-[#0F172A] leading-tight">
-      {currentUser.name}
-    </div>
-    <div className="text-[10px] text-[#64748B]">
-      {currentUser.role}
-    </div>
-  </div>
+            {currentUser.role === 'Contributor' && (
+              <button
+                type="button"
+                onClick={() =>
+                  onChangeCurrentUser({
+                    id: 'USER-PM-NIKHIL',
+                    name: currentProject.ownerName || 'Project Manager',
+                    email: currentProject.ownerEmail || '',
+                    role: 'Project Manager',
+                  })
+                }
+                className="mt-1 text-[10px] font-semibold text-[#1D68F2] hover:underline cursor-pointer"
+              >
+                Back to Project Manager
+              </button>
+            )}
+          </div>
+        </div>
 
   <select
     value={currentUser.id}
