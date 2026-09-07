@@ -63,8 +63,6 @@ export const STANDARD_DTMC_MASTER_TEMPLATE: SOWTemplate = {
     approvedForUse: true,
     wordTemplateFile: 'DTMC_Sample_SOW_01_SharePoint_Advisory (1).docx',
     sharePointTemplateUrl: '',
-    wordTemplateFile: 'DTMC_Sample_SOW_01_SharePoint_Advisory (1).docx',
-    sharePointTemplateUrl: '',
   },
   coverPage: {
     companyBrand: 'DTMC',
@@ -441,12 +439,111 @@ export const SAMPLE_ADDITIONAL_TEMPLATES: SOWTemplate[] = [
 
     coverPage: {
       ...STANDARD_DTMC_MASTER_TEMPLATE.coverPage,
-      documentTitle: 'STATEMENT OF WORK — FIXED PRICE MILESTONES',
     },
-    usageCount: 12,
-    tags: ['Fixed-Price', 'Milestone', 'Governance'],
-    sections: STANDARD_DTMC_MASTER_TEMPLATE.sections
-  }
+
+    usageCount: 0,
+
+    tags: [
+      'Volunteer Management',
+      'Google Drive Template',
+    ],
+
+    sections:
+      STANDARD_DTMC_MASTER_TEMPLATE.sections
+        .filter(
+          s =>
+            s.order >= 1 &&
+            s.order <= 9 &&
+            !s.isAppendix
+        ),
+  },
+
+  {
+    id: 'TMPL-BUSINESS-CENTRAL-2026',
+
+    metadata: {
+      id: 'TMPL-BUSINESS-CENTRAL-2026',
+      name:
+        'DTMC_Sample_SOW_03_Business_Central.docx',
+      description:
+        'Business Central SOW template from the approved Google Drive sample library.',
+      templateType: 'Business Central',
+      version: '1.0',
+      status: 'Ready for Use',
+      createdBy: 'DTMC',
+      createdDate: '2026-01-15T09:00:00Z',
+      modifiedBy: 'DTMC',
+      modifiedDate: '2026-08-18T14:30:00Z',
+      approvedForUse: true,
+      wordTemplateFile:
+        'DTMC_Sample_SOW_03_Business_Central.docx',
+      sharePointTemplateUrl: '',
+    },
+
+    coverPage: {
+      ...STANDARD_DTMC_MASTER_TEMPLATE.coverPage,
+    },
+
+    usageCount: 0,
+
+    tags: [
+      'Business Central',
+      'Google Drive Template',
+    ],
+
+    sections:
+      STANDARD_DTMC_MASTER_TEMPLATE.sections
+        .filter(
+          s =>
+            s.order >= 1 &&
+            s.order <= 9 &&
+            !s.isAppendix
+        ),
+  },
+
+  {
+    id: 'TMPL-NETSUITE-READINESS-2026',
+
+    metadata: {
+      id: 'TMPL-NETSUITE-READINESS-2026',
+      name:
+        'DTMC_Sample_SOW_04_NetSuite_Readiness.docx',
+      description:
+        'NetSuite Readiness SOW template from the approved Google Drive sample library.',
+      templateType: 'NetSuite Readiness',
+      version: '1.0',
+      status: 'Ready for Use',
+      createdBy: 'DTMC',
+      createdDate: '2026-01-15T09:00:00Z',
+      modifiedBy: 'DTMC',
+      modifiedDate: '2026-08-18T14:30:00Z',
+      approvedForUse: true,
+      wordTemplateFile:
+        'DTMC_Sample_SOW_04_NetSuite_Readiness.docx',
+      sharePointTemplateUrl: '',
+    },
+
+    coverPage: {
+      ...STANDARD_DTMC_MASTER_TEMPLATE.coverPage,
+    },
+
+    usageCount: 0,
+
+    tags: [
+      'NetSuite',
+      'Readiness',
+      'Google Drive Template',
+    ],
+
+    sections:
+      STANDARD_DTMC_MASTER_TEMPLATE.sections
+        .filter(
+          s =>
+            s.order >= 1 &&
+            s.order <= 9 &&
+            !s.isAppendix
+        ),
+  },
 ];
 
 const LOCAL_STORAGE_KEY = 'quill_sow_templates_v2';
@@ -459,13 +556,11 @@ export const templateService = {
         const stored = localStorage.getItem(LOCAL_STORAGE_KEY);
         if (stored) {
           return JSON.parse(stored);
-          return JSON.parse(stored);
         }
       }
     } catch (e) {
       // In SSR or test environments without window/localStorage, fall back to default templates
     }
-    return SAMPLE_ADDITIONAL_TEMPLATES;
     return SAMPLE_ADDITIONAL_TEMPLATES;
   },
 
@@ -839,8 +934,6 @@ export const templateService = {
         approvedForUse: false,
         wordTemplateFile: 'DTMC_Sample_SOW_01_SharePoint_Advisory (1).docx',
         sharePointTemplateUrl: ''
-        wordTemplateFile: 'DTMC_Sample_SOW_01_SharePoint_Advisory (1).docx',
-        sharePointTemplateUrl: ''
       },
       coverPage: { ...STANDARD_DTMC_MASTER_TEMPLATE.coverPage },
       usageCount: 0,
@@ -861,12 +954,10 @@ export const templateService = {
     const sowSections: SOWSection[] = template.sections.map((ts, idx) => {
       // Replace generic placeholders with input values
       const processedContent = ts.content
-      const processedContent = ts.content
         .replace(/\{\{PROJECT_NAME\}\}/g, projectTitle)
         .replace(/\{\{CLIENT_ORGANIZATION_NAME\}\}/g, clientName)
         .replace(/\{\{CLIENT_CONTACT_NAME\}\}/g, clientContact || '')
         .replace(/\{\{CLIENT_CONTACT_EMAIL\}\}/g, clientContactEmail || '')
-        .replace(/\{\{CLIENT_SIGNATORY_NAME\}\}/g, clientContact || '')
         .replace(/\{\{CLIENT_SIGNATORY_NAME\}\}/g, clientContact || '')
         .replace(/\{\{ANTICIPATED_START_DATE\}\}/g, targetStartDate || '2026-10-01')
         .replace(/\{\{ANTICIPATED_COMPLETION_DATE\}\}/g, targetEndDate || '2027-03-31')

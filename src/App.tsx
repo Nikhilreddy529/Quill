@@ -352,8 +352,6 @@ export default function App() {
           onOpenNotifications={() => setCurrentView('dashboard')}
            currentUser={currentUser}
           onChangeCurrentUser={setCurrentUser}
-          currentUser={currentUser}
-onChangeCurrentUser={setCurrentUser}
         />
 
         <div className="flex-1 flex flex-col">
@@ -367,8 +365,6 @@ onChangeCurrentUser={setCurrentUser}
               onOpenSourcesDrawer={handleOpenSourcesDrawer}
               onOpenExportModal={() => handleOpenExportModal(activeProject)}
               onNavigateStep={handleNavigateStep}
-              currentUser={currentUser}
-              onChangeCurrentUser={setCurrentUser}
               currentUser={currentUser}
               onChangeCurrentUser={setCurrentUser}
             />

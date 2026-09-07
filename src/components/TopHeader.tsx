@@ -9,15 +9,13 @@ import {
   Copy,
   LayoutDashboard
 } from 'lucide-react';
-import { QuillUser, SOWProject, QuillUser } from '../types/quill';
+import { SOWProject, QuillUser } from '../types/quill';
 
 interface TopHeaderProps {
   currentProject: SOWProject;
   currentView: string;
   setCurrentView: (view: any) => void;
   onOpenNotifications?: () => void;
-  currentUser: QuillUser;
-  onChangeCurrentUser: (user: QuillUser) => void;
   currentUser: QuillUser;
   onChangeCurrentUser: (user: QuillUser) => void;
 }
@@ -27,8 +25,6 @@ export const TopHeader: React.FC<TopHeaderProps> = ({
   currentView,
   setCurrentView,
   onOpenNotifications,
-  currentUser,
-  onChangeCurrentUser,
   currentUser,
   onChangeCurrentUser
 }) => {
@@ -258,49 +254,6 @@ export const TopHeader: React.FC<TopHeaderProps> = ({
           </div>
         </div>
 
-  <select
-    value={currentUser.id}
-    onChange={(e) => {
-      const selectedId = e.target.value;
-
-      if (selectedId === 'manager-001') {
-        onChangeCurrentUser({
-          id: 'manager-001',
-          name: 'Nikhil',
-          email: 'nikhil@dtmc.com',
-          role: 'Project Manager',
-        });
-        return;
-      }
-
-      const contributor = Object.values(
-        currentProject.sectionContributors || {}
-      ).find(c => c.id === selectedId);
-
-      if (contributor) {
-        onChangeCurrentUser({
-          id: contributor.id,
-          name: contributor.name,
-          email: contributor.email,
-          role: 'Contributor',
-        });
-      }
-    }}
-    className="text-[10px] border border-[#CBD5E1] rounded-md px-1.5 py-1 bg-white text-[#475569] cursor-pointer"
-  >
-    <option value="manager-001">
-      Nikhil — Manager
-    </option>
-
-    {Object.values(currentProject.sectionContributors || {}).map(
-      contributor => (
-        <option key={contributor.id} value={contributor.id}>
-          {contributor.name} — Contributor
-        </option>
-      )
-    )}
-  </select>
-</div>
       </div>
 
     </header>

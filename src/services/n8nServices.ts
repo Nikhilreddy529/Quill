@@ -115,47 +115,6 @@ export type N8nActionRequest =
 const N8N_WEBHOOK_URL = (import.meta as any).env.VITE_N8N_WEBHOOK_URL;
 
 /**
- * Attempts to convert an n8n output value into a N8nProjectResponse.
- * Handles:
- * - Direct JSON objects
- * - JSON strings
- * - Markdown ```json ... ``` wrapped strings
- */
-function parseN8nOutput(output: unknown): N8nProjectResponse {
-  // Already an object
-  if (output && typeof output === 'object') {
-    return output as N8nProjectResponse;
-  }
-
-  if (typeof output !== 'string') {
-    throw new Error('n8n output is not a valid JSON object.');
-  }
-
-  let cleaned = output.trim();
-
-  // Remove Markdown code fences if Gemini/n8n returned them
-  if (cleaned.startsWith('```')) {
-    cleaned = cleaned
-      .replace(/^```(?:json)?\s*/i, '')
-      .replace(/\s*```$/i, '')
-      .trim();
-  }
-
-  try {
-    const parsed = JSON.parse(cleaned);
-
-    if (parsed && typeof parsed === 'object') {
-      return parsed as N8nProjectResponse;
-    }
-
-    throw new Error('Parsed n8n output is not an object.');
-  } catch {
-    console.error('Unable to parse n8n output:', output);
-    throw new Error('n8n returned invalid JSON inside output.');
-  }
-}
-
-/**
  * Common n8n webhook caller.
  */
 async function callN8n<T>(
@@ -197,9 +156,6 @@ async function callN8n<T>(
 
   const text = await response.text();
 
-  // Debugging: shows exactly what n8n returned
-  console.log('RAW N8N RESPONSE:', text);
-
   if (!text.trim()) {
     throw new Error(
       'n8n returned an empty response.'
@@ -208,7 +164,6 @@ async function callN8n<T>(
 
   let parsedData: unknown;
 
-  // Parse the HTTP response itself
   try {
     parsedData = JSON.parse(text);
   } catch {
@@ -218,11 +173,8 @@ async function callN8n<T>(
   }
 
   /**
-   * Case 1:
-   * n8n returns:
-   * {
-   *   "output": "..."
-   * }
+   * n8n AI Agent / webhook responses can sometimes
+   * wrap the actual JSON inside an "output" property.
    */
   if (
     parsedData &&
@@ -235,27 +187,22 @@ async function callN8n<T>(
       }
     ).output;
 
-    return parseN8nOutput(output);
+    if (typeof output === 'string') {
+      try {
+        return JSON.parse(output) as T;
+      } catch {
+        throw new Error(
+          'n8n returned invalid JSON inside output.'
+        );
+      }
+    }
+
+    return output as T;
   }
 
   /**
-   * Case 2:
-   * n8n directly returns:
-   * {
-   *   "project": {...},
-   *   "sections": [...]
-   * }
-   */
-  if (
-    parsedData &&
-    typeof parsedData === 'object'
-  ) {
-    return parsedData as N8nProjectResponse;
-  }
-
-  /**
-   * Case 3:
-   * n8n returns a JSON string containing another JSON object.
+   * Handle a response where the entire response
+   * is itself a JSON string.
    */
   if (typeof parsedData === 'string') {
     try {
