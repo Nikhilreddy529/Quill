@@ -67,14 +67,24 @@ export const CreateProposalModal: React.FC<CreateProposalModalProps> = ({ isOpen
     });
     setFiles(previous => [...newFiles, ...previous]);
   };
-const handleCreate = async () => {
+  const handleCreate = async () => {
   if (!selectedTemplateId || requestInProgress.current) return;
+
+  const selectedTemplate = PROPOSAL_TEMPLATES.find(
+    template => template.id === selectedTemplateId
+  );
+
+  if (!selectedTemplate) {
+    setGenerationError('Please select a valid proposal template.');
+    return;
+  }
 
   requestInProgress.current = true;
   setIsCreating(true);
   setGenerationError('');
 
   try {
+    // 1. Execute n8n ONCE and generate the proposal content
     const n8nResult = await sendToN8n({
       clientName,
       engagementName: title,
@@ -85,8 +95,46 @@ const handleCreate = async () => {
         content: file.snippet,
       })),
       selectedTemplate: selectedTemplateId,
+
+      // IMPORTANT:
+      // Give AI the exact slide structure of the selected template
+      templateSections: selectedTemplate.slides.map((slide, index) => ({
+        title: slide.title,
+        content: slide.content,
+        order: index + 1,
+      })),
     });
+
+    console.log('N8N GENERATED PROPOSAL:', n8nResult);
+    console.log('N8N GENERATED SECTIONS:', n8nResult.sections);
+
+    // 2. Convert AI-generated sections into actual proposal slides
+    const generatedSlides: GeneratedProposalSlide[] = (
+      n8nResult.sections || []
+    )
+      .slice(0, selectedTemplate.slides.length)
+      .map((section, index): GeneratedProposalSlide => ({
+        ...selectedTemplate.slides[index],
+        id: `proposal-slide-${index + 1}`,
+        title: section.sectionName,
+        content: section.content,
+      }));
+
+    console.log(
+      'PROPOSAL CREATED WITH SLIDES:',
+      generatedSlides
+    );
+
+    // 3. Make sure AI actually returned slides
+    if (generatedSlides.length === 0) {
+      throw new Error(
+        'n8n completed but did not return any generated proposal slides.'
+      );
+    }
+
+    // 4. Create the project WITH the generated slides
     const now = new Date().toISOString();
+
     const proposal: SOWProject = {
       id: `PROP-2026-${Math.floor(Math.random() * 900) + 100}`,
       title: title || `${clientName} Proposal`,
@@ -97,14 +145,18 @@ const handleCreate = async () => {
       meetingNotes: notes,
       uploadedDocuments: files,
       discoveryDocNames: files.map(file => file.fileName),
+
       proposalTemplateId: selectedTemplateId,
+
       clientContact: '',
       clientContactEmail: '',
       targetStartDate: '',
       targetEndDate: '',
       currency: 'USD',
+
       estimatedBudgetPlaceholder:
         '[To be determined during commercial review]',
+
       status: 'Draft',
       currentStep: 4,
       createdAt: now,
@@ -112,32 +164,40 @@ const handleCreate = async () => {
 
       ownerName: 'Nikhil',
       ownerEmail: 'nikhil@acme-transform.com',
+
       additionalRequirements:
         'Use only grounded intake evidence and preserve blank commercial placeholders.',
+
       selectedTemplateId: '',
       frameworkApproved: true,
+
       sections: [],
-      proposalSlides: (n8nResult.sections || []).map((section, index): GeneratedProposalSlide => ({
-        ...PROPOSAL_TEMPLATES.find(template => template.id === selectedTemplateId)!.slides[index],
-        id: `proposal-slide-${index + 1}`,
-        title: section.sectionName,
-        content: section.content,
-      })),
+
+      // THIS IS THE IMPORTANT PART
+      // Workspace receives the AI-generated slides immediately
+      proposalSlides: generatedSlides,
 
       exportHistory: [],
     };
 
+    // 5. Open ProposalWorkspace with those already-generated slides
     onCreateProposal(proposal);
     onClose();
 
   } catch (error) {
     console.error('Proposal n8n generation failed:', error);
-    setGenerationError('Proposal generation failed. Check n8n execution.');
+
+    setGenerationError(
+      error instanceof Error
+        ? error.message
+        : 'Proposal generation failed. Check n8n execution.'
+    );
   } finally {
-  requestInProgress.current = false;
-  setIsCreating(false);
-}
+    requestInProgress.current = false;
+    setIsCreating(false);
+  }
 };
+
   
   const canContinue = step === 1 ? Boolean(title.trim() && clientName.trim() && opportunityType.trim()) : step === 3 ? Boolean(selectedTemplateId) : true;
   const selectedTemplate = PROPOSAL_TEMPLATES.find(template => template.id === selectedTemplateId);

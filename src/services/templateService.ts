@@ -96,10 +96,8 @@ export const STANDARD_DTMC_MASTER_TEMPLATE: SOWTemplate = {
 
 This Statement of Work ("SOW") is entered into by and between **DTMC Advisory Group** ("DTMC") and **{{CLIENT_ORGANIZATION_NAME}}** ("Client") pursuant to the Master Services Agreement ("MSA") in effect between the parties.
 
-#### 1.1 Purpose
 The purpose of this engagement is to provide professional advisory and technical delivery services for the **{{PROJECT_NAME}}** initiative. DTMC will collaborate with Client stakeholders to deliver high-quality, architecturally validated outcomes aligned with {{CLIENT_ORGANIZATION_NAME}}'s strategic modernization goals.
 
-#### 1.2 Background & Strategic Alignment
 Client is undertaking modernization across target workloads to improve operational agility, enterprise resilience, and system scalability. This SOW sets forth the specific scope, deliverables, governance framework, and contractual assumptions governing this phase of delivery.`
     },
     {
@@ -137,16 +135,13 @@ The primary objectives of the **{{PROJECT_NAME}}** engagement include:
 
 DTMC will execute this engagement using a structured iterative delivery approach, divided into the following foundational phases:
 
-#### 3.1 Delivery Methodology
 The project will follow DTMC's Agile Delivery Framework, consisting of two-week sprint cadences, bi-weekly steering checkpoints, and continuous integration validation.
 
-#### 3.2 In-Scope Workstreams
 - **Workstream 1: Architecture & Technical Foundations**: System discovery, target-state reference architecture design, and environment baseline verification.
 - **Workstream 2: Core Engineering & Implementation**: Iterative development of verified component services, API integrations, and database schemas.
 - **Workstream 3: Validation & Quality Assurance**: Execution of System Integration Testing (SIT), User Acceptance Testing (UAT) facilitation, and performance verification.
 - **Workstream 4: Deployment & Transition**: Controlled staging promotion, cutover runbook execution, and post-deployment hypercare support.
 
-#### 3.3 Key Deliverables Table
 | Deliverable ID | Deliverable Title | Format | Acceptance Criteria |
 |---|---|---|---|
 | DEL-01 | Architecture Blueprint & Target Design | DOCX / PDF | Written sign-off by Client Technical Lead |
@@ -167,11 +162,6 @@ The project will follow DTMC's Agile Delivery Framework, consisting of two-week 
       governanceRoles: [...DEFAULT_DTMC_ROLES],
       content: `### 4. Governance and Responsibilities
 
-A well-defined governance structure is vital to maintain delivery velocity, risk mitigation, and executive transparency.
-
-#### 4.1 Project Team Roles and Responsibilities
-The following matrix defines the primary roles and responsibilities across DTMC and {{CLIENT_ORGANIZATION_NAME}}:
-
 | Role Title | Organization | Core Responsibilities |
 |---|---|---|
 | DTMC Engagement Lead | DTMC Advisory | Overall delivery quality, scope governance and executive escalation. |
@@ -181,7 +171,6 @@ The following matrix defines the primary roles and responsibilities across DTMC 
 | Client Technical Lead | {{CLIENT_ORGANIZATION_NAME}} | Environment access, technical validation, data readiness, security coordination and deployment support. |
 | Client Subject Matter Experts | {{CLIENT_ORGANIZATION_NAME}} | Business requirements, process validation, testing participation and feedback. |
 
-#### 4.2 Governance Cadence
 - **Daily Standups**: 15-minute engineering status check.
 - **Weekly Project Status Report**: RAID log review, milestone tracking, and budget utilization monitoring.
 - **Bi-Weekly Steering Committee**: Executive stakeholder review, milestone sign-offs, and critical scope decisions.`
@@ -216,15 +205,13 @@ The following matrix defines the primary roles and responsibilities across DTMC 
       },
       content: `### 5. Schedule and Acceptance
 
-#### 5.1 Project Timeline and Key Milestones
 - **Anticipated Start Date**: {{ANTICIPATED_START_DATE}}
 - **Anticipated Completion Date**: {{ANTICIPATED_COMPLETION_DATE}}
 - **Estimated Duration**: {{ESTIMATED_DURATION}}
 
 The detailed project schedule will be baselined during project initiation and maintained through the agreed governance process. Deliverables will be submitted for client review and will be considered accepted upon written approval or according to the acceptance period defined in the applicable agreement.
 
-#### 5.2 Deliverable Acceptance Procedure
-1. Upon completion of a deliverable listed in Section 3.3, DTMC will submit the deliverable accompanied by a formal Deliverable Acceptance Form (DAF).
+1. Upon completion of a deliverable listed in Section 3, DTMC will submit the deliverable accompanied by a formal Deliverable Acceptance Form (DAF).
 2. {{CLIENT_ORGANIZATION_NAME}} will review the deliverable against agreed acceptance criteria.
 3. If defects or omissions are identified, {{CLIENT_ORGANIZATION_NAME}} will provide consolidated, actionable feedback in writing.
 4. DTMC will remediate identified defects within an agreed remediation window and resubmit for formal sign-off.
@@ -288,7 +275,6 @@ Any activity, deliverable, or service not explicitly specified in Section 3 is s
 
 > **MANDATORY POLICY NOTICE**: In strict accordance with DTMC enterprise governance rules, all financial figures, billing rates, and fee totals remain blank placeholders or illustrative in this template. Specific pricing values must be inserted and approved solely by the Commercial Finance Practice before final client issuance.
 
-#### 8.1 Professional Fees Summary
 - **Billing Model**: {{FEE_STRUCTURE_TYPE}} (e.g. Time & Materials / Milestone-Based)
 - **Currency**: {{CURRENCY}}
 
