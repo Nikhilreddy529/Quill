@@ -5,9 +5,9 @@ import {
   ArrowRight,
   Check,
   FileText,
-  FileUp,
+  Mic,
+  Plus,
   Trash2,
-  UploadCloud,
   X,
 } from 'lucide-react';
 import { PROPOSAL_TEMPLATES } from '../services/proposalTemplateService';
@@ -34,11 +34,97 @@ export const CreateProposalModal: React.FC<CreateProposalModalProps> = ({ isOpen
   const [notes, setNotes] = useState('Discovery notes, meeting transcript themes, and requirement clarifications will be used as proposal context.');
   const [selectedTemplateId, setSelectedTemplateId] = useState('');
   const [files, setFiles] = useState<UploadedProjectDocument[]>([]);
+  const [resourceInputValue, setResourceInputValue] = useState('');
+  const [isListening, setIsListening] = useState(false);
+  const [isDragging, setIsDragging] = useState(false);
   const [generationError, setGenerationError] = useState('');
   const fileInputRef = useRef<HTMLInputElement>(null);
   const requestInProgress = useRef(false);
 
   if (!isOpen) return null;
+
+  const handleAddResourceFromCapsule = (textToSubmit?: string) => {
+    const rawText = (textToSubmit !== undefined ? textToSubmit : resourceInputValue).trim();
+    if (!rawText) return;
+
+    const lower = rawText.toLowerCase();
+    let category: UploadedDocCategory = 'Discovery Notes';
+    let prefix = 'Discovery_Note';
+    if (lower.includes('transcript') || lower.includes('meeting') || lower.includes('call') || lower.includes('recording')) {
+      category = 'Meeting Transcription';
+      prefix = 'Meeting_Transcription';
+    } else if (lower.includes('srs') || lower.includes('spec') || lower.includes('technical') || lower.includes('api') || lower.includes('architecture')) {
+      category = 'SRS Document';
+      prefix = 'Technical_Spec';
+    } else if (lower.includes('requirement') || lower.includes('clarif') || lower.includes('scope') || lower.includes('deliverable')) {
+      category = 'Requirement Clarification';
+      prefix = 'Requirement_Note';
+    }
+
+    const timestamp = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    const cleanTitle = rawText.length > 35 ? `${rawText.substring(0, 32)}...` : rawText;
+    const newResource: UploadedProjectDocument = {
+      id: `PROP-CAPSULE-${Date.now()}`,
+      fileName: `${prefix}_${Date.now().toString().slice(-4)}.docx`,
+      fileType: 'docx',
+      fileSizeBytes: 145000,
+      uploadedAt: new Date().toISOString(),
+      uploadedBy: 'Nikhil (PM)',
+      category,
+      sectionReference: `Direct Input • ${timestamp}`,
+      pageOrTimestamp: `Recorded at ${timestamp}`,
+      snippet: rawText,
+      keyRequirementsExtracted: [cleanTitle, 'Directly ingested via proposal resource bar'],
+    };
+
+    setFiles(previous => [newResource, ...previous]);
+    setResourceInputValue('');
+    setIsListening(false);
+  };
+
+  const handleToggleDictation = () => {
+    const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+    if (SpeechRecognition) {
+      try {
+        if (isListening) {
+          setIsListening(false);
+          return;
+        }
+        const recognition = new SpeechRecognition();
+        recognition.continuous = false;
+        recognition.interimResults = false;
+        recognition.lang = 'en-US';
+        recognition.onstart = () => setIsListening(true);
+        recognition.onresult = (event: any) => {
+          const transcript = event.results[0][0].transcript;
+          if (transcript) setResourceInputValue(previous => previous ? `${previous} ${transcript}` : transcript);
+          setIsListening(false);
+        };
+        recognition.onerror = () => setIsListening(false);
+        recognition.onend = () => setIsListening(false);
+        recognition.start();
+        return;
+      } catch (error) {
+        console.warn('Speech recognition init error', error);
+      }
+    }
+
+    if (!isListening) {
+      setIsListening(true);
+      setTimeout(() => {
+        setResourceInputValue('Discovery meeting note: confirm the proposal scope, outcomes, and implementation priorities.');
+        setIsListening(false);
+      }, 1500);
+    } else {
+      setIsListening(false);
+    }
+  };
+
+  const handleFileDrop = (event: React.DragEvent<HTMLDivElement>) => {
+    event.preventDefault();
+    setIsDragging(false);
+    if (event.dataTransfer.files.length > 0) processFiles(event.dataTransfer.files);
+  };
 
   const processFiles = (fileList: FileList | File[]) => {
     const newFiles = Array.from(fileList).map((file, index): UploadedProjectDocument => {
@@ -234,11 +320,14 @@ export const CreateProposalModal: React.FC<CreateProposalModalProps> = ({ isOpen
           </div>}
 
           {step === 2 && <div className="space-y-4">
-            <div><h3 className="text-sm font-bold text-[#0F172A]">Upload PM Resources</h3><p className="mt-1 text-xs text-[#64748B]">Attach transcripts, discovery notes, requirements, SRS, architecture documents, or client briefs.</p></div>
+            <div><h3 className="text-sm font-bold text-[#0F172A]">Upload Document</h3><p className="mt-1 text-xs text-[#64748B]">Attach PM documents or enter live meeting notes & clarifications</p></div>
             <input ref={fileInputRef} type="file" multiple accept=".pdf,.docx,.doc,.txt,.md,.xlsx,.csv,.pptx" className="hidden" onChange={event => { if (event.target.files) processFiles(event.target.files); event.target.value = ''; }} />
-            <button onClick={() => fileInputRef.current?.click()} className="flex w-full cursor-pointer flex-col items-center justify-center rounded-xl border border-dashed border-[#93C5FD] bg-blue-50/40 px-6 py-8 text-center transition hover:bg-blue-50"><UploadCloud className="mb-2 h-7 w-7 text-[#1D68F2]" /><span className="text-sm font-bold text-[#0F172A]">Add intake resources</span><span className="mt-1 text-xs text-[#64748B]">Choose one or more files from your device</span></button>
-            {files.length === 0 ? <div className="rounded-xl border border-[#E2E8F0] bg-[#F8FAFC] p-4 text-center text-xs text-[#64748B]">No files attached yet. You can continue with notes and add resources later.</div> : <div className="space-y-2">{files.map(file => <div key={file.id} className="flex items-center gap-3 rounded-lg border border-[#E2E8F0] p-3"><FileUp className="h-4 w-4 shrink-0 text-[#1D68F2]" /><div className="min-w-0 flex-1"><div className="truncate text-xs font-bold text-[#0F172A]">{file.fileName}</div><div className="text-[11px] text-[#64748B]">{file.category}</div></div><button onClick={() => setFiles(previous => previous.filter(item => item.id !== file.id))} title="Remove resource" className="cursor-pointer rounded-md p-1.5 text-[#94A3B8] transition hover:bg-rose-50 hover:text-rose-500"><Trash2 className="h-4 w-4" /></button></div>)}</div>}
-            <div><label className="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-[#334155]">Discovery Notes & Meeting Context</label><textarea rows={4} className={`${inputClass} leading-relaxed`} value={notes} onChange={event => setNotes(event.target.value)} placeholder="Paste discovery notes or meeting transcript context here." /></div>
+            <div onDragOver={event => { event.preventDefault(); setIsDragging(true); }} onDragLeave={() => setIsDragging(false)} onDrop={handleFileDrop} className={`relative flex w-full items-center rounded-full border px-4 py-2.5 shadow-sm transition ${isDragging ? 'border-[#1D68F2] bg-blue-50 ring-2 ring-blue-100' : 'border-[#33353A] bg-white hover:bg-[#FDFBD3] focus-within:border-[#525660] focus-within:ring-1 focus-within:ring-[#525660]'}`}>
+              <button type="button" onClick={() => fileInputRef.current?.click()} title="Attach file or document" className="-ml-1 shrink-0 cursor-pointer rounded-full p-1 text-[#94A3B8] transition hover:bg-slate-700/50 hover:text-white"><Plus className="h-5 w-5" /></button>
+              <input type="text" value={resourceInputValue} onChange={event => setResourceInputValue(event.target.value)} onKeyDown={event => { if (event.key === 'Enter' && !event.shiftKey) { event.preventDefault(); handleAddResourceFromCapsule(); } }} placeholder="Add resource to create Proposal" className="flex-1 bg-transparent px-3 py-0.5 text-xs text-slate-700 placeholder-[#71717A] focus:outline-none sm:text-sm" />
+              <div className="flex shrink-0 items-center space-x-1.5">{resourceInputValue.trim() && <button type="button" onClick={() => handleAddResourceFromCapsule()} className="cursor-pointer rounded-full bg-[#1D68F2] px-3 py-1 text-[11px] font-bold text-white transition hover:bg-[#1554c0]">Add</button>}<button type="button" onClick={handleToggleDictation} title={isListening ? 'Listening... click to stop' : 'Voice dictation / speech transcript'} className={`cursor-pointer rounded-full p-1.5 transition ${isListening ? 'animate-pulse bg-rose-500/20 text-rose-400' : 'text-[#94A3B8] hover:bg-slate-700/50 hover:text-white'}`}><Mic className="h-4 w-4" /></button></div>
+            </div>
+            <div className="max-h-[340px] space-y-2.5 overflow-y-auto pr-1">{files.map(file => { const isPdf = file.fileType === 'pdf'; return <div key={file.id} className="flex items-start justify-between gap-3 rounded-xl border border-[#E2E8F0] bg-white p-3.5 shadow-xs transition hover:border-[#BFDBFE] hover:bg-[#F8FAFC]"><div className="flex min-w-0 flex-1 items-start space-x-3"><div className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-[10px] font-bold">{isPdf ? <div className="flex h-8 w-8 items-center justify-center rounded-lg border border-rose-200 bg-rose-50 text-rose-600">PDF</div> : file.category === 'Meeting Transcription' ? <div className="flex h-8 w-8 items-center justify-center rounded-lg border border-amber-200 bg-amber-50 text-amber-600">TRX</div> : file.category === 'SRS Document' ? <div className="flex h-8 w-8 items-center justify-center rounded-lg border border-purple-200 bg-purple-50 text-purple-600">SRS</div> : <div className="flex h-8 w-8 items-center justify-center rounded-lg border border-blue-200 bg-blue-50 text-blue-600">DOC</div>}</div><div className="min-w-0 flex-1 space-y-1"><div className="flex flex-wrap items-center space-x-2"><span className="truncate text-xs font-bold text-[#0F172A]">{file.fileName}</span><span className={`rounded-full border px-2 py-0.5 text-[10px] font-semibold ${file.category === 'Meeting Transcription' ? 'border-amber-200 bg-amber-50 text-amber-700' : file.category === 'Requirement Clarification' ? 'border-emerald-50 bg-emerald-50 text-emerald-700' : file.category === 'SRS Document' ? 'border-purple-200 bg-purple-50 text-purple-700' : 'border-blue-200 bg-blue-50 text-blue-700'}`}>{file.category}</span></div><div className="text-[11px] text-[#64748B]">Reference: <span className="font-semibold text-[#334155]">{file.sectionReference}</span> • {file.uploadedBy}</div>{file.snippet && <p className="line-clamp-2 rounded-lg border border-[#E2E8F0] bg-[#F8FAFC] p-2 text-[11px] italic text-[#475569]">"{file.snippet}"</p>}</div></div><button type="button" onClick={() => setFiles(previous => previous.filter(item => item.id !== file.id))} title="Remove resource" className="cursor-pointer rounded-md p-1.5 text-[#94A3B8] transition hover:bg-rose-50 hover:text-rose-500"><Trash2 className="h-4 w-4" /></button></div>; })}</div>
           </div>}
 
           {step === 3 && <div className="space-y-4">

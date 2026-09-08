@@ -377,6 +377,7 @@ export default function App() {
                 auditLogs={auditLogs}
                 onSelectProject={handleSelectProject}
                 onOpenCreateModal={() => setIsCreateModalOpen(true)}
+                onOpenProposalModal={() => setIsProposalCreateModalOpen(true)}
                 onOpenExportModal={handleOpenExportModal}
               />
             </div>

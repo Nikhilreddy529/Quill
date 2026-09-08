@@ -60,10 +60,10 @@ export const Dashboard: React.FC<DashboardProps> = ({
             </button>
             <button
               onClick={onOpenProposalModal}
-              className="flex items-center space-x-2 border border-[#CBD5E1] bg-white hover:bg-slate-50 text-[#0F172A] font-semibold px-5 py-2.5 rounded-lg transition active:scale-95 cursor-pointer text-sm"
+              className="flex items-center space-x-2 bg-[#1D68F2] hover:bg-[#1554c0] text-white font-bold px-5 py-2.5 rounded-lg shadow-sm shadow-blue-500/20 transition active:scale-95 cursor-pointer text-sm"
             >
-              <FileText className="w-4 h-4 text-[#1D68F2]" />
-              <span>Generate Proposal</span>
+              <FileText className="w-4 h-4 text-white" />
+              <span>Generate New Proposal</span>
             </button>
           </div>
         </div>
