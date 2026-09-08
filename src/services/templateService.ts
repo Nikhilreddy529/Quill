@@ -53,7 +53,7 @@ export const STANDARD_DTMC_MASTER_TEMPLATE: SOWTemplate = {
     id: 'TMPL-DTMC-MASTER-2026',
     name: 'DTMC Standard Master SOW Template',
     description: 'The official DTMC advisory framework template for enterprise digital transformations and modernization projects.',
-    templateType: 'Master SOW',
+    templateType: '',
     version: '2.4',
     status: 'Ready for Use',
     createdBy: 'Nikhil (Project Manager)',

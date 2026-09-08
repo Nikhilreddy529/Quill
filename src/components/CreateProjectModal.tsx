@@ -40,7 +40,7 @@ export const CreateProjectModal: React.FC<CreateProjectModalProps> = ({
   onClose,
   onCreateProject,
 }) => {
-  const [step, setStep] = useState<1 | 2 | 3>(1);
+  const [step, setStep] = useState<1 | 2 | 3 | 4>(1);
   const [isGenerating, setIsGenerating] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [isDragging, setIsDragging] = useState(false);
@@ -543,7 +543,7 @@ console.log('n8n SOW response:', n8nResponse);
 
             <div>
               <h2 className="text-base font-bold text-[#0F172A]">Create New SOW Document</h2>
-              <p className="text-xs text-[#64748B]">Step {step} of 3 • Attach Meeting Transcriptions, Clarifications & SRS Documents</p>
+              <p className="text-xs text-[#64748B]">Step {step} of 4 • Prepare grounded SOW inputs</p>
             </div>
           </div>
           <button
@@ -555,31 +555,23 @@ console.log('n8n SOW response:', n8nResponse);
         </div>
 
         {/* Step Indicator */}
-        <div className="grid grid-cols-3 border-b border-[#E2E8F0] bg-[#F8FAFC] text-xs font-semibold">
-          <button 
-            onClick={() => setStep(1)}
-            className={`py-3 text-center border-b-2 transition cursor-pointer ${
-              step === 1 ? 'border-[#1D68F2] text-[#1D68F2] bg-blue-50/50 font-bold' : 'border-transparent text-[#64748B] hover:text-[#0F172A]'
-            }`}
-          >
-            1. Client & Scope
-          </button>
-          <button 
-            onClick={() => setStep(2)}
-            className={`py-3 text-center border-b-2 transition cursor-pointer ${
-              step === 2 ? 'border-[#1D68F2] text-[#1D68F2] bg-blue-50/50 font-bold' : 'border-transparent text-[#64748B] hover:text-[#0F172A]'
-            }`}
-          >
-            2. Upload PM Resources ({uploadedFiles.length})
-          </button>
-          <button 
-            onClick={() => setStep(3)}
-            className={`py-3 text-center border-b-2 transition cursor-pointer ${
-              step === 3 ? 'border-[#1D68F2] text-[#1D68F2] bg-blue-50/50 font-bold' : 'border-transparent text-[#64748B] hover:text-[#0F172A]'
-            }`}
-          >
-            3. Review Grounding & Generate
-          </button>
+        <div className="grid grid-cols-4 border-b border-[#E2E8F0] bg-[#F8FAFC] text-xs font-semibold">
+          {[1, 2, 3, 4].map(item => (
+            <button
+              key={item}
+              onClick={() => setStep(item as 1 | 2 | 3 | 4)}
+              className={`py-3 text-center border-b-2 transition cursor-pointer ${
+                step === item
+                  ? 'border-[#1D68F2] text-[#1D68F2] bg-blue-50/50 font-bold'
+                  : 'border-transparent text-[#64748B] hover:text-[#0F172A]'
+              }`}
+            >
+              {item === 1 && '1. Client & Scope'}
+              {item === 2 && '2. Select Template'}
+              {item === 3 && `3. Upload PM Resources (${uploadedFiles.length})`}
+              {item === 4 && '4. Review & Generate'}
+            </button>
+          ))}
         </div>
 
         {/* Form Body */}
@@ -602,7 +594,7 @@ console.log('n8n SOW response:', n8nResponse);
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div>
+                 <div className="sm:col-span-2">
                   <label className="block text-xs font-semibold text-[#334155] uppercase tracking-wider mb-1.5">
                     Client Name
                   </label>
@@ -614,22 +606,7 @@ console.log('n8n SOW response:', n8nResponse);
                   />
                 </div>
 
-                <div>
-                  <label className="block text-xs font-semibold text-[#334155] uppercase tracking-wider mb-1.5">
-                    SOW Architecture Template
-                  </label>
-                  <select
-                    value={selectedTemplateId}
-                    onChange={(e) => setSelectedTemplateId(e.target.value)}
-                    className="w-full bg-white border border-[#CBD5E1] rounded-lg px-3.5 py-2.5 text-sm text-[#0F172A] focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-[#1D68F2] cursor-pointer"
-                  >
-                    {availableTemplates.map(t => (
-                      <option key={t.id} value={t.id}>
-                        {t.metadata.name} (v{t.metadata.version})
-                      </option>
-                    ))}
-                  </select>
-                </div>
+
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -662,8 +639,59 @@ console.log('n8n SOW response:', n8nResponse);
             </div>
           )}
 
-          {/* STEP 2: UPLOAD PM INTAKE RESOURCES */}
+          {/* STEP 2: SELECT SOW TEMPLATE */}
           {step === 2 && (
+            <div className="space-y-4">
+              <div>
+                <h3 className="text-sm font-bold text-[#0F172A]">Select SOW Template</h3>
+                <p className="mt-1 text-xs text-[#64748B]">
+                  Choose the approved Word blueprint. The AI will use this structure after you confirm.
+                </p>
+              </div>
+
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                {availableTemplates.map(template => (
+                  <button
+                    key={template.id}
+                    type="button"
+                    onClick={() => setSelectedTemplateId(template.id)}
+                    className={`cursor-pointer rounded-xl border p-4 text-left transition ${
+                      selectedTemplateId === template.id
+                        ? 'border-[#1D68F2] bg-blue-50/60 ring-2 ring-blue-100'
+                        : 'border-[#E2E8F0] hover:border-blue-300 hover:bg-slate-50'
+                    }`}
+                  >
+                    <div className="flex items-start justify-between gap-3">
+                      <span className="text-sm font-bold text-[#0F172A]">
+                        {template.metadata.templateType || template.metadata.name}
+                      </span>
+                      {selectedTemplateId === template.id && (
+                        <Check className="h-4 w-4 shrink-0 text-[#1D68F2]" />
+                      )}
+                    </div>
+                    <p className="mt-2 text-xs leading-5 text-[#64748B]">
+                      {template.metadata.description}
+                    </p>
+                    <div className="mt-3 text-[11px] font-semibold text-[#475569]">
+                      {template.sections.filter(section => section.order <= 9 && !section.isAppendix).length} sections • v{template.metadata.version}
+                    </div>
+                    <div className="mt-1 truncate text-[10px] text-[#94A3B8]" title={template.metadata.wordTemplateFile}>
+                      {template.metadata.wordTemplateFile}
+                    </div>
+                  </button>
+                ))}
+              </div>
+
+              {!selectedTemplateId && (
+                <div className="rounded-lg border border-amber-200 bg-amber-50 p-3 text-xs font-semibold text-amber-800">
+                  Choose an SOW template before continuing.
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* STEP 3: UPLOAD PM INTAKE RESOURCES */}
+          {step === 3 && (
             <div className="space-y-4">
               <input
                 type="file"
@@ -805,8 +833,8 @@ console.log('n8n SOW response:', n8nResponse);
             </div>
           )}
 
-          {/* STEP 3: REVIEW GROUNDING & GENERATE */}
-          {step === 3 && (
+          {/* STEP 4: REVIEW GROUNDING & GENERATE */}
+          {step === 4 && (
             <div className="space-y-4">
               <div className="flex items-center justify-between">
                 <div>
@@ -825,7 +853,7 @@ console.log('n8n SOW response:', n8nResponse);
                 <div className="text-xs font-bold text-[#0F172A] flex items-center justify-between">
                   <span>Resources Attached to this SOW:</span>
                   <button 
-                    onClick={() => setStep(2)}
+                    onClick={() => setStep(3)}
                     className="text-[11px] font-semibold text-[#1D68F2] hover:underline cursor-pointer"
                   >
                     Edit / Add more files
@@ -856,7 +884,7 @@ console.log('n8n SOW response:', n8nResponse);
             {step > 1 ? (
               <button
                 type="button"
-                onClick={() => setStep(prev => (prev - 1) as any)}
+                onClick={() => setStep(prev => (prev - 1) as 1 | 2 | 3 | 4)}
                 className="text-xs text-[#475569] hover:text-[#0F172A] font-semibold px-4 py-2 rounded-lg bg-white hover:bg-slate-50 border border-[#CBD5E1] transition cursor-pointer"
               >
                 Back
@@ -873,13 +901,13 @@ console.log('n8n SOW response:', n8nResponse);
           </div>
 
           <div className="flex items-center space-x-3">
-            {step < 3 ? (
+            {step < 4 ? (
               <button
                 type="button"
                 onClick={() => setStep(prev => (prev + 1) as any)}
                 className="text-xs bg-[#1D68F2] hover:bg-[#1554c0] text-white font-bold px-5 py-2.5 rounded-lg transition cursor-pointer shadow-xs"
               >
-                Next: {step === 1 ? 'Upload PM Resources' : 'Review & Generate'}
+                Next: {step === 1 ? 'Select Template' : step === 2 ? 'Upload PM Resources' : 'Review & Generate'}
               </button>
             ) : (
               <button
