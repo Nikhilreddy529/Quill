@@ -117,10 +117,10 @@ export const ProposalWorkspace: React.FC<ProposalWorkspaceProps> = ({ project, o
               <Presentation className="w-4 h-4 text-[#1D68F2]" />
               <span>Export PPTX</span>
             </button>
-            <button disabled={isGenerating} onClick={handleGenerate} className="inline-flex items-center justify-center space-x-2 rounded-lg bg-[#1D68F2] px-4 py-2 text-sm font-bold text-white shadow-sm shadow-blue-500/20 hover:bg-[#1554c0] transition active:scale-[0.99] cursor-pointer disabled:opacity-60 disabled:cursor-wait">
+            {/* <button disabled={isGenerating} onClick={handleGenerate} className="inline-flex items-center justify-center space-x-2 rounded-lg bg-[#1D68F2] px-4 py-2 text-sm font-bold text-white shadow-sm shadow-blue-500/20 hover:bg-[#1554c0] transition active:scale-[0.99] cursor-pointer disabled:opacity-60 disabled:cursor-wait">
               <CheckCircle2 className="w-4 h-4" />
               <span>{isGenerating ? 'Generating...' : 'Generate Proposal'}</span>
-            </button>
+            </button> */}
           </div>
         </div>
       </div>
