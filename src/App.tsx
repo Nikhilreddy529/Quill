@@ -130,7 +130,10 @@ export default function App() {
         email: target.ownerEmail || '',
         role: 'Project Manager',
       });
-      if (!target.frameworkApproved) {
+      if (target.id.startsWith('PROP-')) {
+        setCurrentView('proposal');
+        setActiveSectionId('');
+      } else if (!target.frameworkApproved) {
         setCurrentView('framework');
       } else {
         setCurrentView('sections');

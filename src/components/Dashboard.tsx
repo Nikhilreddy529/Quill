@@ -29,6 +29,9 @@ export const Dashboard: React.FC<DashboardProps> = ({
   onOpenExportModal,
 }) => {
   const totalProjects = projects.length;
+  const activeProposalCount = projects.filter(
+    p => p.id.startsWith('PROP-')
+  ).length;
   const approvedProjects = projects.filter(
     p => p.status === 'Approved' || p.status === 'Exported'
   ).length;
@@ -100,7 +103,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
 
           <div>
             <div className="text-2xl font-bold text-[#0F172A]">
-              "2"
+              {activeProposalCount}
             </div>
             <div className="text-xs font-medium text-[#64748B]">
               Total Proposals
@@ -297,7 +300,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
                           className="flex items-center space-x-1 bg-[#1D68F2] hover:bg-[#1554c0] text-white text-xs font-bold px-3 py-1.5 rounded-lg transition active:scale-95 cursor-pointer shadow-xs"
                         >
                           <span>
-                            Review SOW
+                            {project.id.startsWith('PROP-') ? 'Review Proposal' : 'Review SOW'}
                           </span>
 
                           <ArrowRight className="w-3 h-3" />

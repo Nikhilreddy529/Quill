@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { ArrowRight, CheckCircle2, FileText, Sparkles, ShieldCheck, Presentation, Check, LayoutTemplate } from 'lucide-react';
+import { ArrowRight, CheckCircle2, ShieldCheck, Presentation, Check, LayoutTemplate } from 'lucide-react';
 import { SOWProject } from '../types/quill';
 import { PROPOSAL_TEMPLATES, getProposalTemplate } from '../services/proposalTemplateService';
 //import { generateProposalContent } from '../services/proposalGenerationService';
@@ -96,27 +96,20 @@ export const ProposalWorkspace: React.FC<ProposalWorkspaceProps> = ({ project, o
         <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-5">
           <div className="space-y-3">
             <div className="inline-flex items-center space-x-2 px-3 py-1.5 rounded-full bg-blue-50 border border-blue-200 text-[#1D68F2] text-[11px] font-bold uppercase tracking-[0.12em]">
-              <Sparkles className="w-3.5 h-3.5" />
-              <span>AI Proposal Draft</span>
+              <span>Proposal Draft</span>
             </div>
             <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-[#0F172A]">
-              {project.title || `${project.clientName} Proposal`}
+              Proposal workspace
             </h1>
+            <div className="text-base font-semibold text-[#334155]">
+              {project.title}
+            </div>
             <p className="text-sm text-[#475569] max-w-3xl leading-relaxed">
               Professional consulting proposal generated from client context, discovery notes, transcript inputs, and uploaded project artifacts. This draft is structured for executive review and later conversion to a final SOW.
             </p>
           </div>
 
           <div className="flex flex-wrap items-center gap-3">
-            {onOpenSow && (
-              <button
-                onClick={onOpenSow}
-                className="inline-flex items-center justify-center space-x-2 rounded-lg border border-[#CBD5E1] bg-white px-4 py-2 text-sm font-semibold text-[#0F172A] hover:bg-slate-50 transition cursor-pointer"
-              >
-                <FileText className="w-4 h-4 text-[#1D68F2]" />
-                <span>Open SOW</span>
-              </button>
-            )}
             <button
               disabled={isGenerating || generatedSlides.length === 0} onClick={() => exportProposalDeck(project, selectedTemplate, generatedSlides)}
               className="inline-flex items-center justify-center space-x-2 rounded-lg border border-[#CBD5E1] bg-white px-4 py-2 text-sm font-semibold text-[#0F172A] hover:bg-slate-50 transition cursor-pointer disabled:opacity-50 disabled:cursor-wait"
