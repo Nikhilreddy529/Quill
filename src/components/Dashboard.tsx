@@ -41,14 +41,12 @@ export const Dashboard: React.FC<DashboardProps> = ({
         <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
           <div className="space-y-2 max-w-2xl">
             <div className="inline-flex items-center space-x-2 px-3 py-1 rounded-full bg-blue-50 border border-blue-200 text-[#1D68F2] text-xs font-semibold">
-              <span className="tracking-wide">AI SOW Drafting & Grounding Active</span>
+              <span className="tracking-wide">SOW/ Proposal Drafting & Grounding Active</span>
             </div>
             <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-[#0F172A]">
-              Statement of Work Authoring Workspace
+              Quill Workspace
             </h1>
-            <p className="text-sm text-[#475569] leading-relaxed">
-              Architect and generate enterprise Statement of Work documents grounded against verified reference SOWs, governed by human-in-the-loop section approval, and exported directly into corporate DTMC Word format.
-            </p>
+            
           </div>
 
           <div className="flex flex-wrap items-center gap-3">
@@ -77,7 +75,17 @@ export const Dashboard: React.FC<DashboardProps> = ({
           </div>
           <div>
             <div className="text-2xl font-bold text-[#0F172A]">{totalProjects}</div>
-            <div className="text-xs font-medium text-[#64748B]">Total SOW Engagements</div>
+            <div className="text-xs font-medium text-[#64748B]">Total SOW</div>
+          </div>
+        </div>
+
+        <div className="bg-white border border-[#E2E8F0] rounded-xl p-4.5 flex items-center space-x-4 shadow-xs">
+          <div className="w-12 h-12 rounded-lg bg-blue-50 border border-blue-200 flex items-center justify-center text-[#1D68F2]">
+            <ShieldCheck className="w-6 h-6" />
+          </div>
+          <div>
+            <div className="text-2xl font-bold text-[#0F172A]">"2"</div>
+            <div className="text-xs font-medium text-[#64748B]">Total Proposals</div>
           </div>
         </div>
 
@@ -100,16 +108,6 @@ export const Dashboard: React.FC<DashboardProps> = ({
             <div className="text-xs font-medium text-[#64748B]">Fully Approved / Exported</div>
           </div>
         </div>
-
-        <div className="bg-white border border-[#E2E8F0] rounded-xl p-4.5 flex items-center space-x-4 shadow-xs">
-          <div className="w-12 h-12 rounded-lg bg-blue-50 border border-blue-200 flex items-center justify-center text-[#1D68F2]">
-            <ShieldCheck className="w-6 h-6" />
-          </div>
-          <div>
-            <div className="text-2xl font-bold text-[#0F172A]">100%</div>
-            <div className="text-xs font-medium text-[#64748B]">Pricing Blank Compliance</div>
-          </div>
-        </div>
       </div>
 
       {/* Projects Table */}
@@ -117,23 +115,11 @@ export const Dashboard: React.FC<DashboardProps> = ({
         <div className="p-5 border-b border-[#E2E8F0] bg-[#F8FAFC] flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div>
             <h2 className="text-base font-bold text-[#0F172A] flex items-center space-x-2">
-              <span>Active SOW Projects</span>
+              <span>Active Projects</span>
               <span className="text-xs bg-blue-50 text-[#1D68F2] font-semibold px-2.5 py-0.5 rounded-full border border-blue-200">
                 {projects.length}
               </span>
             </h2>
-            <p className="text-xs text-[#64748B] mt-0.5">
-              Managed SOW engagements with human-in-the-loop section approval
-            </p>
-          </div>
-
-          <div className="flex items-center space-x-2">
-            <button 
-              onClick={onOpenCreateModal}
-              className="text-xs bg-white hover:bg-slate-50 text-[#0F172A] border border-[#CBD5E1] font-semibold px-3 py-1.5 rounded-lg transition flex items-center space-x-1.5 cursor-pointer shadow-2xs"
-            >
-              <span>+ Quick Intake</span>
-            </button>
           </div>
         </div>
 

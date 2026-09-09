@@ -100,9 +100,6 @@ export const TopHeader: React.FC<TopHeaderProps> = ({
             placeholder="Search projects, documents..."
             className="w-full bg-[#F8FAFC] border border-[#E2E8F0] rounded-lg pl-8 pr-12 py-1.5 text-xs text-[#0F172A] placeholder-[#94A3B8] focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-[#1D68F2]"
           />
-          <div className="absolute right-2.5 top-2 px-1.5 py-0.5 bg-white border border-[#CBD5E1] rounded text-[10px] font-mono text-[#64748B]">
-            ⌘K
-          </div>
         </div>
 
         {/* View Switchers */}
@@ -168,25 +165,22 @@ export const TopHeader: React.FC<TopHeaderProps> = ({
           </button>
         </div>
 
-        {/* Notification Bell */}
+        {/* Notification Bell
         <button 
           onClick={onOpenNotifications}
           className="relative p-2 text-[#64748B] hover:text-[#0F172A] hover:bg-[#F1F5F9] rounded-lg transition cursor-pointer"
           title="Notifications"
         >
           <Bell className="w-4 h-4" />
-          <span className="absolute top-1 right-1 w-4 h-4 bg-[#EF4444] text-white text-[9px] font-bold rounded-full flex items-center justify-center border-2 border-white">
-            3
-          </span>
-        </button>
+        </button> */}
 
         {/* Help Circle */}
-        <button 
+        {/* <button 
           className="p-2 text-[#64748B] hover:text-[#0F172A] hover:bg-[#F1F5F9] rounded-lg transition cursor-pointer"
           title="DTMC SOW Help & Guidelines"
         >
           <HelpCircle className="w-4 h-4" />
-        </button>
+        </button> */}
 
         {/* User Profile / Contributor Context */}
         <div className="flex items-center space-x-2.5 pl-2 border-l border-[#E2E8F0]">
