@@ -58,7 +58,7 @@ function cleanContentForDisplay(rawText: string, project?: SOWProject, sectionTi
 
   if (isAuthSection) {
     const clientSignatory = project?.clientContact || project?.clientName || 'Riley Chen';
-    const dtmcCreator = project?.ownerName || 'Arjun Rao';
+    const dtmcCreator = project?.ownerName || 'Project Manager';
 
     // If it's in a markdown pipe table
     if (text.includes('| Accepted by Client') || (text.includes('|') && text.includes('Accepted by Client'))) {
@@ -205,6 +205,7 @@ export const SOWAuthoringWorkspace: React.FC<SOWAuthoringWorkspaceProps> = ({
 
   const currentSection =
     sections.find(s => s.id === activeSectionId) || sections[0];
+  const sectionVersionHistory = currentSection?.versionHistory || [];
 
   // Find the section assigned to the current contributor.
   const assignedSection = !isManager
@@ -910,27 +911,32 @@ export const SOWAuthoringWorkspace: React.FC<SOWAuthoringWorkspaceProps> = ({
             {activeTab === 'history' ? (
               <div className="space-y-4">
                 <h4 className="text-xs font-bold text-[#0F172A] uppercase tracking-wider">Revision History for {currentSection.title}</h4>
-                <div className="space-y-2 text-xs">
-                  <div className="p-3 bg-slate-50 border border-slate-200 rounded-lg flex items-center justify-between">
-                    <div>
-                      <span className="font-bold text-[#0F172A]">Version {currentSection.version}</span>
-                      <span className="text-[#64748B] ml-2">by {currentSection.lastEditedBy}</span>
-                    </div>
-                    <span className="text-[#94A3B8] font-mono">Current Active</span>
+                {sectionVersionHistory.length === 0 && currentSection.status !== 'Approved' ? (
+                  <div className="p-3 bg-slate-50 border border-slate-200 rounded-lg text-xs text-[#64748B]">
+                    No version history available for this section.
                   </div>
-                  <div className="p-3 bg-white border border-slate-200 rounded-lg flex items-center justify-between">
-                    <div>
-                      <span className="font-semibold text-[#334155]">Version 2.0</span>
-                      <span className="text-[#64748B] ml-2">Approved by Arjun Rao</span>
-                    </div>
-                    <button 
-                      onClick={() => showToast('Restored previous snapshot')}
-                      className="text-xs text-[#1D68F2] hover:underline"
-                    >
-                      Restore
-                    </button>
+                ) : (
+                  <div className="space-y-2 text-xs">
+                    {currentSection.status === 'Approved' && (
+                      <div className="p-3 bg-slate-50 border border-slate-200 rounded-lg flex items-center justify-between">
+                        <div>
+                          <span className="font-bold text-[#0F172A]">Version {currentSection.version}</span>
+                          <span className="text-[#64748B] ml-2">by {currentSection.approvedBy || currentSection.lastEditedBy}</span>
+                        </div>
+                        <span className="text-[#94A3B8]">Current Active</span>
+                      </div>
+                    )}
+                    {sectionVersionHistory.map((snapshot) => (
+                      <div key={`${snapshot.version}-${snapshot.timestamp}`} className="p-3 bg-white border border-slate-200 rounded-lg flex items-center justify-between">
+                        <div>
+                          <span className="font-semibold text-[#334155]">Version {snapshot.version}</span>
+                          <span className="text-[#64748B] ml-2">by {snapshot.editedBy}</span>
+                        </div>
+                        <span className="text-[#94A3B8]">{new Date(snapshot.timestamp).toLocaleString()}</span>
+                      </div>
+                    ))}
                   </div>
-                </div>
+                )}
               </div>
             ) : (
               <div className="flex-1 flex flex-col space-y-4">
@@ -1085,12 +1091,18 @@ export const SOWAuthoringWorkspace: React.FC<SOWAuthoringWorkspaceProps> = ({
 
               <div className="flex items-center justify-between">
                 <span className="text-[#64748B]">Approved by</span>
-                <span className="font-semibold text-[#0F172A]">{currentSection.approvedBy || "Arjun Rao"}</span>
+                <span className="font-semibold text-[#0F172A]">
+                  {currentSection.status === 'Approved' && currentSection.approvedBy ? currentSection.approvedBy : 'Not approved'}
+                </span>
               </div>
 
               <div className="flex items-center justify-between">
                 <span className="text-[#64748B]">Approved on</span>
-                <span className="font-medium text-[#334155]">Aug 28, 2025 11:32 AM</span>
+                <span className="font-medium text-[#334155]">
+                  {currentSection.status === 'Approved' && currentSection.approvedAt
+                    ? new Date(currentSection.approvedAt).toLocaleString()
+                    : 'Not available'}
+                </span>
               </div>
 
               <div className="flex items-center justify-between">
