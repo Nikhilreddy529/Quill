@@ -50,12 +50,12 @@ export const CreateProjectModal: React.FC<CreateProjectModalProps> = ({
   );
 
   // Form State
-  const [clientName, setClientName] = useState('Acme Global Enterprises');
-  const [clientContact, setClientContact] = useState('Riley Chen');
-  const [clientContactEmail, setClientContactEmail] = useState('riley.chen@acme.com');
-  const [clientIndustry, setClientIndustry] = useState('Financial Services');
+  const [clientName, setClientName] = useState('');
+  const [clientContact, setClientContact] = useState('');
+  const [clientContactEmail, setClientContactEmail] = useState('');
+  const [clientIndustry, setClientIndustry] = useState('');
   const [projectType, setProjectType] = useState('Cloud Migration');
-  const [projectTitle, setProjectTitle] = useState('Acme Multi-Cloud Migration & Security SOW');
+  const [projectTitle, setProjectTitle] = useState('');
   const [targetStartDate, setTargetStartDate] = useState('2026-10-01');
   const [targetEndDate, setTargetEndDate] = useState('2027-03-31');
   const [currency, setCurrency] = useState('USD');
@@ -65,89 +65,89 @@ export const CreateProjectModal: React.FC<CreateProjectModalProps> = ({
 
   // Uploaded Intake Resources (Meeting Transcriptions, Requirement Clarifications, SRS, PDF/Word)
   const [uploadedFiles, setUploadedFiles] = useState<UploadedProjectDocument[]>([
-    {
-      id: 'DOC-NEW-001',
-      fileName: 'Acme_Discovery_Meeting_Transcription_Aug26.docx',
-      fileType: 'docx',
-      fileSizeBytes: 245760,
-      uploadedAt: new Date().toISOString(),
-      uploadedBy: 'Nikhil (PM)',
-      category: 'Meeting Transcription',
-      sectionReference: 'Section 2.1 • Min 14:20',
-      pageOrTimestamp: 'Timestamp 14:20 - 45:10',
-      snippet: "Client VP Engineering: 'We need full microservices transformation with SIT/UAT, data migration, and mandatory 30-day go-live hypercare support. Hardware procurement will remain strictly with our internal IT team.'",
-      keyRequirementsExtracted: [
-        'Microservices architecture migration',
-        'SIT and UAT test suite sign-off',
-        '30-day post go-live operational support'
-      ]
-    },
-    {
-      id: 'DOC-NEW-002',
-      fileName: 'Acme_Client_Requirement_Clarifications.docx',
-      fileType: 'docx',
-      fileSizeBytes: 184320,
-      uploadedAt: new Date().toISOString(),
-      uploadedBy: 'Nikhil (PM)',
-      category: 'Requirement Clarification',
-      sectionReference: 'Section 2.2 • Item 4',
-      pageOrTimestamp: 'Page 2 of 4',
-      snippet: "Email confirmation with CTO: 'Confirmed that data cleansing of legacy archival databases prior to 2020 is out of scope. Third-party software licenses will be procured directly by Acme Corp.'",
-      keyRequirementsExtracted: [
-        'Data cleansing restricted to active 2020-present datasets',
-        'Third-party software licensing excluded from SOW',
-        'Access credentials provided within 5 business days'
-      ]
-    },
-    {
-      id: 'DOC-NEW-003',
-      fileName: 'Acme_Omnichannel_SRS_v2.4.pdf',
-      fileType: 'pdf',
-      fileSizeBytes: 1258291,
-      uploadedAt: new Date().toISOString(),
-      uploadedBy: 'Nikhil (PM)',
-      category: 'SRS Document',
-      sectionReference: 'Section 1 & 2 • Page 12',
-      pageOrTimestamp: 'Page 12-18',
-      snippet: 'Software Requirements Specification (SRS): High-availability web and mobile portal. System must guarantee Disaster Recovery RTO < 1 hour and RPO < 15 minutes with zero data loss on financial transactions.',
-      keyRequirementsExtracted: [
-        'RTO < 1 hour and RPO < 15 minutes',
-        'High-concurrency e-commerce checkout API',
-        'ISO 27001 and PCI-DSS Level 1 compliance'
-      ]
-    },
-    {
-      id: 'DOC-NEW-004',
-      fileName: 'Acme_IT_Infrastructure_Assessment.pdf',
-      fileType: 'pdf',
-      fileSizeBytes: 860160,
-      uploadedAt: new Date().toISOString(),
-      uploadedBy: 'Nikhil (PM)',
-      category: 'Architecture & Scope PDF',
-      sectionReference: 'Section 4 • Page 6',
-      pageOrTimestamp: 'Page 6 of 22',
-      snippet: 'Technical audit of on-premise VMware infrastructure: 48 virtual nodes, dual SQL Server 2019 clusters, and legacy AS400 middleware bridges.',
-      keyRequirementsExtracted: [
-        'Migration of 48 VM workloads',
-        'Database modernization to Azure SQL Managed Instance'
-      ]
-    },
-    {
-      id: 'DOC-NEW-005',
-      fileName: 'Acme_Digital_Transformation_Scope_Baseline.docx',
-      fileType: 'docx',
-      fileSizeBytes: 317440,
-      uploadedAt: new Date().toISOString(),
-      uploadedBy: 'Nikhil (PM)',
-      category: 'Client Brief Word Doc',
-      sectionReference: 'Section 2 & 3 • Page 3',
-      pageOrTimestamp: 'Page 3 of 8',
-      snippet: 'Deliverables baseline agreed during pre-sales: DEL-01 Architecture Blueprint, DEL-02 Microservices Codebase, DEL-03 Migration Verification, DEL-04 Operational Runbook.',
-      keyRequirementsExtracted: [
-        'Contractual deliverable references DEL-01 to DEL-04',
-        'Agile two-week sprint cadences'
-      ]
-    }
+    // {
+    //   id: 'DOC-NEW-001',
+    //   fileName: 'Acme_Discovery_Meeting_Transcription_Aug26.docx',
+    //   fileType: 'docx',
+    //   fileSizeBytes: 245760,
+    //   uploadedAt: new Date().toISOString(),
+    //   uploadedBy: 'Nikhil (PM)',
+    //   category: 'Meeting Transcription',
+    //   sectionReference: 'Section 2.1 • Min 14:20',
+    //   pageOrTimestamp: 'Timestamp 14:20 - 45:10',
+    //   snippet: "Client VP Engineering: 'We need full microservices transformation with SIT/UAT, data migration, and mandatory 30-day go-live hypercare support. Hardware procurement will remain strictly with our internal IT team.'",
+    //   keyRequirementsExtracted: [
+    //     'Microservices architecture migration',
+    //     'SIT and UAT test suite sign-off',
+    //     '30-day post go-live operational support'
+    //   ]
+    // },
+    // {
+    //   id: 'DOC-NEW-002',
+    //   fileName: 'Acme_Client_Requirement_Clarifications.docx',
+    //   fileType: 'docx',
+    //   fileSizeBytes: 184320,
+    //   uploadedAt: new Date().toISOString(),
+    //   uploadedBy: 'Nikhil (PM)',
+    //   category: 'Requirement Clarification',
+    //   sectionReference: 'Section 2.2 • Item 4',
+    //   pageOrTimestamp: 'Page 2 of 4',
+    //   snippet: "Email confirmation with CTO: 'Confirmed that data cleansing of legacy archival databases prior to 2020 is out of scope. Third-party software licenses will be procured directly by Acme Corp.'",
+    //   keyRequirementsExtracted: [
+    //     'Data cleansing restricted to active 2020-present datasets',
+    //     'Third-party software licensing excluded from SOW',
+    //     'Access credentials provided within 5 business days'
+    //   ]
+    // },
+    // {
+    //   id: 'DOC-NEW-003',
+    //   fileName: 'Acme_Omnichannel_SRS_v2.4.pdf',
+    //   fileType: 'pdf',
+    //   fileSizeBytes: 1258291,
+    //   uploadedAt: new Date().toISOString(),
+    //   uploadedBy: 'Nikhil (PM)',
+    //   category: 'SRS Document',
+    //   sectionReference: 'Section 1 & 2 • Page 12',
+    //   pageOrTimestamp: 'Page 12-18',
+    //   snippet: 'Software Requirements Specification (SRS): High-availability web and mobile portal. System must guarantee Disaster Recovery RTO < 1 hour and RPO < 15 minutes with zero data loss on financial transactions.',
+    //   keyRequirementsExtracted: [
+    //     'RTO < 1 hour and RPO < 15 minutes',
+    //     'High-concurrency e-commerce checkout API',
+    //     'ISO 27001 and PCI-DSS Level 1 compliance'
+    //   ]
+    // },
+    // {
+    //   id: 'DOC-NEW-004',
+    //   fileName: 'Acme_IT_Infrastructure_Assessment.pdf',
+    //   fileType: 'pdf',
+    //   fileSizeBytes: 860160,
+    //   uploadedAt: new Date().toISOString(),
+    //   uploadedBy: 'Nikhil (PM)',
+    //   category: 'Architecture & Scope PDF',
+    //   sectionReference: 'Section 4 • Page 6',
+    //   pageOrTimestamp: 'Page 6 of 22',
+    //   snippet: 'Technical audit of on-premise VMware infrastructure: 48 virtual nodes, dual SQL Server 2019 clusters, and legacy AS400 middleware bridges.',
+    //   keyRequirementsExtracted: [
+    //     'Migration of 48 VM workloads',
+    //     'Database modernization to Azure SQL Managed Instance'
+    //   ]
+    // },
+    // {
+    //   id: 'DOC-NEW-005',
+    //   fileName: 'Acme_Digital_Transformation_Scope_Baseline.docx',
+    //   fileType: 'docx',
+    //   fileSizeBytes: 317440,
+    //   uploadedAt: new Date().toISOString(),
+    //   uploadedBy: 'Nikhil (PM)',
+    //   category: 'Client Brief Word Doc',
+    //   sectionReference: 'Section 2 & 3 • Page 3',
+    //   pageOrTimestamp: 'Page 3 of 8',
+    //   snippet: 'Deliverables baseline agreed during pre-sales: DEL-01 Architecture Blueprint, DEL-02 Microservices Codebase, DEL-03 Migration Verification, DEL-04 Operational Runbook.',
+    //   keyRequirementsExtracted: [
+    //     'Contractual deliverable references DEL-01 to DEL-04',
+    //     'Agile two-week sprint cadences'
+    //   ]
+    // }
   ]);
 
   // Upload Form & Capsule Input State
@@ -568,7 +568,7 @@ console.log('n8n SOW response:', n8nResponse);
             >
               {item === 1 && '1. Client & Scope'}
               {item === 2 && '2. Select Template'}
-              {item === 3 && `3. Upload PM Resources (${uploadedFiles.length})`}
+              {item === 3 && `3. Upload Resources (${uploadedFiles.length})`}
               {item === 4 && '4. Review & Generate'}
             </button>
           ))}
@@ -602,6 +602,7 @@ console.log('n8n SOW response:', n8nResponse);
                     type="text"
                     value={clientName}
                     onChange={(e) => setClientName(e.target.value)}
+                     placeholder="e.g. Global Enterprise"
                     className="w-full bg-white border border-[#CBD5E1] rounded-lg px-3.5 py-2.5 text-sm text-[#0F172A] focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-[#1D68F2]"
                   />
                 </div>
@@ -907,7 +908,7 @@ console.log('n8n SOW response:', n8nResponse);
                 onClick={() => setStep(prev => (prev + 1) as any)}
                 className="text-xs bg-[#1D68F2] hover:bg-[#1554c0] text-white font-bold px-5 py-2.5 rounded-lg transition cursor-pointer shadow-xs"
               >
-                Next: {step === 1 ? 'Select Template' : step === 2 ? 'Upload PM Resources' : 'Review & Generate'}
+                Next: {step === 1 ? 'Select Template' : step === 2 ? 'Upload Resources' : 'Review & Generate'}
               </button>
             ) : (
               <button

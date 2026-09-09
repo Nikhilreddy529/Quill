@@ -198,7 +198,7 @@ export const FrameworkReview: React.FC<FrameworkReviewProps> = ({
               onClick={() => setIsManualMode(!isManualMode)}
               className="text-xs text-[#1D68F2] hover:underline font-semibold flex items-center space-x-1 cursor-pointer"
             >
-              <span>{isManualMode ? 'Hide Section Builder' : '+ Add Custom Section'}</span>
+              {/* <span>{isManualMode ? 'Hide Section Builder' : '+ Add Custom Section'}</span> */}
             </button>
           </div>
         </div>
