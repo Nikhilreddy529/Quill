@@ -14,6 +14,7 @@ import { SOWProject, AuditLogEntry } from '../types/quill';
 interface DashboardProps {
   projects: SOWProject[];
   auditLogs: AuditLogEntry[];
+  searchQuery?: string;
   onSelectProject: (projectId: string) => void;
   onOpenCreateModal: () => void;
   onOpenProposalModal: () => void;
@@ -23,11 +24,25 @@ interface DashboardProps {
 export const Dashboard: React.FC<DashboardProps> = ({
   projects,
   auditLogs,
+    searchQuery = '',
   onSelectProject,
   onOpenCreateModal,
   onOpenProposalModal,
   onOpenExportModal,
 }) => {
+  const normalizedSearch = searchQuery.trim().toLowerCase();
+
+const filteredProjects = projects.filter((project) => {
+  if (!normalizedSearch) return true;
+
+  return (
+    project.title?.toLowerCase().includes(normalizedSearch) ||
+    project.clientName?.toLowerCase().includes(normalizedSearch) ||
+    project.id?.toLowerCase().includes(normalizedSearch) ||
+    (project.id.startsWith('PROP-') ? 'proposal' : 'sow')
+      .includes(normalizedSearch)
+  );
+});
   const totalProjects = projects.length;
   const activeProposalCount = projects.filter(
     p => p.id.startsWith('PROP-')
@@ -187,7 +202,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
             </thead>
 
             <tbody className="divide-y divide-[#E2E8F0]">
-              {projects.map((project) => {
+              {filteredProjects.map((project) => {
                 const totalSec = project.sections.length;
 
                 const approvedSec = project.sections.filter(

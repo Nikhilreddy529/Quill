@@ -18,6 +18,8 @@ interface TopHeaderProps {
   onOpenNotifications?: () => void;
   currentUser: QuillUser;
   onChangeCurrentUser: (user: QuillUser) => void;
+  searchQuery: string;
+  setSearchQuery: (value: string) => void;
 }
 
 export const TopHeader: React.FC<TopHeaderProps> = ({
@@ -26,7 +28,9 @@ export const TopHeader: React.FC<TopHeaderProps> = ({
   setCurrentView,
   onOpenNotifications,
   currentUser,
-  onChangeCurrentUser
+  onChangeCurrentUser,
+  searchQuery,
+  setSearchQuery,
 }) => {
   return (
     <header className="h-16 bg-white border-b border-[#E2E8F0] px-6 flex items-center justify-between sticky top-0 z-30 select-none">
@@ -98,6 +102,8 @@ export const TopHeader: React.FC<TopHeaderProps> = ({
           <input
             type="text"
             placeholder="Search projects, documents..."
+            value= {searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
             className="w-full bg-[#F8FAFC] border border-[#E2E8F0] rounded-lg pl-8 pr-12 py-1.5 text-xs text-[#0F172A] placeholder-[#94A3B8] focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-[#1D68F2]"
           />
         </div>
@@ -116,7 +122,7 @@ export const TopHeader: React.FC<TopHeaderProps> = ({
             <span>Dashboard</span>
           </button>
 
-          <button
+          {/* <button
             onClick={() => setCurrentView('templates')}
             className={`px-2.5 py-1 rounded-md font-semibold transition cursor-pointer flex items-center space-x-1.5 ${
               currentView === 'templates' || currentView === 'template-editor' || currentView === 'template-preview'
@@ -126,7 +132,7 @@ export const TopHeader: React.FC<TopHeaderProps> = ({
           >
             <Copy className="w-3 h-3 text-cyan-600" />
             <span>Templates</span>
-          </button>
+          </button> */}
 
           <button
             onClick={() => setCurrentView('framework')}

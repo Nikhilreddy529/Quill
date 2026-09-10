@@ -88,6 +88,7 @@ export default function App() {
   const [sourcesDrawerOpen, setSourcesDrawerOpen] = useState(false);
   const [sourcesSectionTarget, setSourcesSectionTarget] =
     useState<SOWSection | null>(null);
+    const [searchQuery, setSearchQuery] = useState('');
   const activeProject =
     projects.find(p => p.id === activeProjectId) || projects[0];
   // When the active project changes, return to that project's manager.
@@ -357,6 +358,8 @@ export default function App() {
           onOpenNotifications={() => setCurrentView('dashboard')}
           currentUser={currentUser}
           onChangeCurrentUser={setCurrentUser}
+          searchQuery={searchQuery}
+  setSearchQuery={setSearchQuery}
         />
         <div className="flex-1 flex flex-col">
           {currentView === 'sections' && (
@@ -380,6 +383,7 @@ export default function App() {
               <Dashboard
                 projects={projects}
                 auditLogs={auditLogs}
+                searchQuery={searchQuery}
                 onSelectProject={handleSelectProject}
                 onOpenCreateModal={() =>
                   setIsCreateModalOpen(true)

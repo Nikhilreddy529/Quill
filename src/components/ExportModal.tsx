@@ -82,7 +82,7 @@ export const ExportModal: React.FC<ExportModalProps> = ({
         fileSizeBytes: result.sizeBytes,
         format: "DOCX (DTMC Formatted)",
         versionNumber: "1.0",
-        sharePointUrl: `https://contoso.sharepoint.com/sites/quill/Generated_SOW_Exports/${result.fileName}`,
+        sharePointUrl: ``,
         pricingFieldsVerifiedBlank: preflight.pricingCompliant,
       };
 

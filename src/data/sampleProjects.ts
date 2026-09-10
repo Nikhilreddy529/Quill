@@ -47,7 +47,7 @@ export const INITIAL_SAMPLE_PROJECTS: SOWProject[] = [
           "30-day post go-live operational support",
           "Hardware procurement excluded from vendor scope"
         ],
-        url: "https://contoso.sharepoint.com/sites/quill/Intake/Acme_Discovery_Meeting_Transcription.docx"
+        url: ""
       },
       {
         id: "DOC-ACME-002",
@@ -65,7 +65,7 @@ export const INITIAL_SAMPLE_PROJECTS: SOWProject[] = [
           "Third-party software licensing excluded from SOW",
           "Access credentials provided within 5 business days"
         ],
-        url: "https://contoso.sharepoint.com/sites/quill/Intake/Acme_Requirement_Clarifications.docx"
+        url: ""
       },
       {
         id: "DOC-ACME-003",
@@ -83,7 +83,7 @@ export const INITIAL_SAMPLE_PROJECTS: SOWProject[] = [
           "High-concurrency e-commerce checkout API",
           "ISO 27001 and PCI-DSS Level 1 compliance"
         ],
-        url: "https://contoso.sharepoint.com/sites/quill/Intake/Acme_Omnichannel_SRS_v2.4.pdf"
+        url: ""
       },
       {
         id: "DOC-ACME-004",
@@ -101,7 +101,7 @@ export const INITIAL_SAMPLE_PROJECTS: SOWProject[] = [
           "Database modernization to Azure SQL Managed Instance",
           "Integration with enterprise identity via Entra ID"
         ],
-        url: "https://contoso.sharepoint.com/sites/quill/Intake/Acme_IT_Infrastructure_Assessment.pdf"
+        url: ""
       },
       {
         id: "DOC-ACME-005",
@@ -119,7 +119,7 @@ export const INITIAL_SAMPLE_PROJECTS: SOWProject[] = [
           "Agile two-week sprint cadences",
           "Formal acceptance testing sign-off protocol"
         ],
-        url: "https://contoso.sharepoint.com/sites/quill/Intake/Acme_Scope_Baseline.docx"
+        url: ""
       }
     ],
     additionalRequirements: "Adhere to ISO 27001 data isolation and DTMC corporate standards. Keep all commercial terms in blank schedule placeholders.",
