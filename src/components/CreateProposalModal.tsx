@@ -26,11 +26,11 @@ const defaultTemplateId = PROPOSAL_TEMPLATES[0]?.id || '';
 export const CreateProposalModal: React.FC<CreateProposalModalProps> = ({ isOpen, onClose, onCreateProposal }) => {
   const [step, setStep] = useState<1 | 2 | 3 | 4>(1);
   const [isCreating, setIsCreating] = useState(false);
-  const [title, setTitle] = useState('Acme Enterprise Transformation Proposal');
-  const [clientName, setClientName] = useState('Acme Global Enterprises');
-  const [industry, setIndustry] = useState('Financial Services');
-  const [opportunityType, setOpportunityType] = useState('Digital Transformation');
-  const [description, setDescription] = useState('Executive proposal grounded in discovery, requirements, and the client\'s current transformation priorities.');
+  const [title, setTitle] = useState('');
+  const [clientName, setClientName] = useState('');
+  const [industry, setIndustry] = useState('');
+  const [opportunityType, setOpportunityType] = useState('');
+  const [description, setDescription] = useState('');
   const [notes, setNotes] = useState('Discovery notes, meeting transcript themes, and requirement clarifications will be used as proposal context.');
   const [selectedTemplateId, setSelectedTemplateId] = useState('');
   const [files, setFiles] = useState<UploadedProjectDocument[]>([]);
@@ -312,11 +312,11 @@ export const CreateProposalModal: React.FC<CreateProposalModalProps> = ({ isOpen
           {step === 1 && <div className="space-y-4">
             <div><label className="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-[#334155]">Proposal Title</label><input className={inputClass} value={title} onChange={event => setTitle(event.target.value)} placeholder="e.g. Enterprise Cloud Transformation Proposal" /></div>
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-              <div><label className="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-[#334155]">Client Name</label><input className={inputClass} value={clientName} onChange={event => setClientName(event.target.value)} /></div>
-              <div><label className="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-[#334155]">Client Industry</label><input className={inputClass} value={industry} onChange={event => setIndustry(event.target.value)} /></div>
+              <div><label className="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-[#334155]">Client Name</label><input className={inputClass} value={clientName} onChange={event => setClientName(event.target.value)}  placeholder ="e.g. Enterprise Cloud" /></div>
+              <div><label className="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-[#334155]">Client Industry</label><input className={inputClass} value={industry} onChange={event => setIndustry(event.target.value)} placeholder ="e.g. Finance" /></div>
             </div>
             <div><label className="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-[#334155]">Opportunity Type</label><input className={inputClass} value={opportunityType} onChange={event => setOpportunityType(event.target.value)} placeholder="e.g. Modernization, advisory, implementation" /></div>
-            <div><label className="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-[#334155]">Proposal Description</label><textarea rows={5} className={`${inputClass} leading-relaxed`} value={description} onChange={event => setDescription(event.target.value)} placeholder="Describe the opportunity and intended business outcome." /></div>
+            <div><label className="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-[#334155]">Proposal Description</label><textarea rows={5} className={`${inputClass} leading-relaxed`} value={description} onChange={event => setDescription(event.target.value)} placeholder=" e.g. Describe the opportunity and intended business outcome." /></div>
           </div>}
 
           {step === 2 && <div className="space-y-4">
