@@ -1292,7 +1292,7 @@ export const CreateProjectModal: React.FC<CreateProjectModalProps> = ({
                       ? 'border-red-500'
                       : 'border-[#CBD5E1]'
                     }`}
-                  placeholder="e.g. Acme Enterprise Digital Transformation SOW"
+                  placeholder="e.g. Nike Enterprise Digital Transformation SOW"
                 />
 
                 {formErrors.projectTitle && (
@@ -1321,7 +1321,7 @@ export const CreateProjectModal: React.FC<CreateProjectModalProps> = ({
                         'clientName'
                       );
                     }}
-                    placeholder="e.g. Global Enterprise"
+                    placeholder="e.g. Nike"
                     className={`w-full bg-white border rounded-lg px-3.5 py-2.5 text-sm text-[#0F172A] focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-[#1D68F2] ${formErrors.clientName
                         ? 'border-red-500'
                         : 'border-[#CBD5E1]'
@@ -1356,7 +1356,7 @@ export const CreateProjectModal: React.FC<CreateProjectModalProps> = ({
                         'clientContact'
                       );
                     }}
-                    placeholder="e.g. Riley Chen"
+                    placeholder="e.g. Karna"
                     className={`w-full bg-white border rounded-lg px-3.5 py-2.5 text-sm text-[#0F172A] focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-[#1D68F2] ${formErrors.clientContact
                         ? 'border-red-500'
                         : 'border-[#CBD5E1]'
@@ -1387,7 +1387,7 @@ export const CreateProjectModal: React.FC<CreateProjectModalProps> = ({
                         'clientContactEmail'
                       );
                     }}
-                    placeholder="e.g. riley.chen@acme.com"
+                    placeholder="e.g. karna@nike.com"
                     className={`w-full bg-white border rounded-lg px-3.5 py-2.5 text-sm text-[#0F172A] focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-[#1D68F2] ${formErrors.clientContactEmail
                         ? 'border-red-500'
                         : 'border-[#CBD5E1]'
