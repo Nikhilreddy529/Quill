@@ -28,9 +28,8 @@ export const CreateProposalModal: React.FC<CreateProposalModalProps> = ({ isOpen
   const [isCreating, setIsCreating] = useState(false);
   const [title, setTitle] = useState('');
   const [clientName, setClientName] = useState('');
-  const [industry, setIndustry] = useState('');
-  const [opportunityType, setOpportunityType] = useState('');
-  const [description, setDescription] = useState('');
+  const [clientContact, setClientContact] = useState('');
+  const [clientContactEmail, setClientContactEmail] = useState('');
   const [notes, setNotes] = useState('Discovery notes, meeting transcript themes, and requirement clarifications will be used as proposal context.');
   const [selectedTemplateId, setSelectedTemplateId] = useState('');
   const [files, setFiles] = useState<UploadedProjectDocument[]>([]);
@@ -225,17 +224,17 @@ export const CreateProposalModal: React.FC<CreateProposalModalProps> = ({ isOpen
       id: `PROP-2026-${Math.floor(Math.random() * 900) + 100}`,
       title: title || `${clientName} Proposal`,
       clientName: clientName || 'Client Organization',
-      clientIndustry: industry || 'Enterprise',
-      projectType: opportunityType || 'Transformation',
-      description,
+      clientIndustry: '',
+      projectType: '',
+      description: `Proposal for ${clientName || 'client'} generated from intake inputs.`,
       meetingNotes: notes,
       uploadedDocuments: files,
       discoveryDocNames: files.map(file => file.fileName),
 
       proposalTemplateId: selectedTemplateId,
 
-      clientContact: '',
-      clientContactEmail: '',
+      clientContact: clientContact || '',
+      clientContactEmail: clientContactEmail || '',
       targetStartDate: '',
       targetEndDate: '',
       currency: 'USD',
@@ -285,7 +284,7 @@ export const CreateProposalModal: React.FC<CreateProposalModalProps> = ({ isOpen
 };
 
   
-  const canContinue = step === 1 ? Boolean(title.trim() && clientName.trim() && opportunityType.trim()) : step === 3 ? Boolean(selectedTemplateId) : true;
+  const canContinue = step === 1 ? Boolean(title.trim() && clientName.trim() && clientContact.trim() && clientContactEmail.trim()) : step === 3 ? Boolean(selectedTemplateId) : true;
   const selectedTemplate = PROPOSAL_TEMPLATES.find(template => template.id === selectedTemplateId);
 
   return (
@@ -311,12 +310,20 @@ export const CreateProposalModal: React.FC<CreateProposalModalProps> = ({ isOpen
         <div className="flex-1 space-y-5 overflow-y-auto bg-white p-6">
           {step === 1 && <div className="space-y-4">
             <div><label className="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-[#334155]">Proposal Title</label><input className={inputClass} value={title} onChange={event => setTitle(event.target.value)} placeholder="e.g. Nike Enterprise Digital Transformation Proposal" /></div>
-            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-              <div><label className="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-[#334155]">Client Name</label><input className={inputClass} value={clientName} onChange={event => setClientName(event.target.value)} placeholder="e.g. Nike" /></div>
-              <div><label className="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-[#334155]">Client Industry</label><input className={inputClass} value={industry} onChange={event => setIndustry(event.target.value)} placeholder="e.g. Finance" /></div>
+            <div>
+              <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-[#334155]">Client Name</label>
+              <input className={inputClass} value={clientName} onChange={event => setClientName(event.target.value)} placeholder="e.g. Nike" />
             </div>
-            <div><label className="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-[#334155]">Opportunity Type</label><input className={inputClass} value={opportunityType} onChange={event => setOpportunityType(event.target.value)} placeholder="e.g. Modernization, advisory, implementation" /></div>
-            <div><label className="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-[#334155]">Proposal Description</label><textarea rows={5} className={`${inputClass} leading-relaxed`} value={description} onChange={event => setDescription(event.target.value)} placeholder="e.g. Describe the opportunity and intended business outcome." /></div>
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+              <div>
+                <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-[#334155]">Client Contact</label>
+                <input className={inputClass} value={clientContact} onChange={event => setClientContact(event.target.value)} placeholder="e.g. Karna" />
+              </div>
+              <div>
+                <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-[#334155]">Client Email</label>
+                <input className={inputClass} value={clientContactEmail} onChange={event => setClientContactEmail(event.target.value)} placeholder="e.g. karna@nike.com" />
+              </div>
+            </div>
           </div>}
 
           {step === 2 && <div className="space-y-4">
@@ -338,7 +345,7 @@ export const CreateProposalModal: React.FC<CreateProposalModalProps> = ({ isOpen
 
           {step === 4 && <div className="space-y-4">
             <div className={`flex items-center gap-3 rounded-xl border p-4 ${generationError ? 'border-red-200 bg-red-50' : 'border-emerald-200 bg-emerald-50'}`}><div><div className={`text-sm font-bold ${generationError ? 'text-red-950' : 'text-emerald-950'}`}>{generationError ? 'Proposal generation failed' : 'Ready to generate proposal'}</div><div className={`mt-1 text-xs ${generationError ? 'text-red-800' : 'text-emerald-800'}`}>{generationError || 'Your selected intake evidence and template will be passed to Proposal Workspace.'}</div></div></div>
-            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2"><div className="rounded-xl border border-[#E2E8F0] bg-[#F8FAFC] p-4"><div className="text-[10px] font-bold uppercase tracking-wider text-[#64748B]">Proposal</div><div className="mt-2 text-sm font-bold text-[#0F172A]">{title}</div><div className="mt-1 text-xs text-[#475569]">{clientName} • {industry}</div><p className="mt-3 text-xs leading-5 text-[#64748B]">{description || 'No additional description provided.'}</p></div><div className="rounded-xl border border-[#E2E8F0] bg-[#F8FAFC] p-4"><div className="text-[10px] font-bold uppercase tracking-wider text-[#64748B]">Grounding & template</div><div className="mt-2 text-sm font-bold text-[#0F172A]">{selectedTemplate?.name}</div><div className="mt-1 text-xs text-[#475569]">{files.length} uploaded resource{files.length === 1 ? '' : 's'}</div><div className="mt-3 text-xs leading-5 text-[#64748B]">{notes || 'No meeting context provided.'}</div></div></div>
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2"><div className="rounded-xl border border-[#E2E8F0] bg-[#F8FAFC] p-4"><div className="text-[10px] font-bold uppercase tracking-wider text-[#64748B]">Proposal</div><div className="mt-2 text-sm font-bold text-[#0F172A]">{title}</div><div className="mt-1 text-xs text-[#475569]">{clientName}</div><div className="mt-2 text-xs text-[#475569]">{clientContact || 'No contact provided'} • {clientContactEmail || 'No email provided'}</div></div><div className="rounded-xl border border-[#E2E8F0] bg-[#F8FAFC] p-4"><div className="text-[10px] font-bold uppercase tracking-wider text-[#64748B]">Grounding & template</div><div className="mt-2 text-sm font-bold text-[#0F172A]">{selectedTemplate?.name}</div><div className="mt-1 text-xs text-[#475569]">{files.length} uploaded resource{files.length === 1 ? '' : 's'}</div><div className="mt-3 text-xs leading-5 text-[#64748B]">{notes || 'No meeting context provided.'}</div></div></div>
           </div>}
         </div>
 
