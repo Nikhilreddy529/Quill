@@ -327,6 +327,13 @@ export default function App() {
     setSourcesSectionTarget(sec);
     setSourcesDrawerOpen(true);
   };
+  const handleOpenReferenceDocuments = () => {
+    const activeSection = activeProject.sections.find(
+      section => section.id === activeSectionId
+    ) || null;
+    setSourcesSectionTarget(activeProject.id.startsWith('PROP-') ? null : activeSection);
+    setSourcesDrawerOpen(true);
+  };
   const handleNavigateStep = (stepNumber: number) => {
     if (stepNumber === 1) {
       setIsCreateModalOpen(true);
@@ -347,6 +354,7 @@ export default function App() {
         setCurrentView={setCurrentView}
         onOpenCreateProject={() => setIsCreateModalOpen(true)}
         onOpenProposal={() => setIsProposalCreateModalOpen(true)}
+        onOpenReferenceDocuments={handleOpenReferenceDocuments}
         isCollapsed={isSidebarCollapsed}
         setIsCollapsed={setIsSidebarCollapsed}
       />
