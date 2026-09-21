@@ -44,6 +44,7 @@ export const SourcesPanel: React.FC<SourcesPanelProps> = ({
 
   // Project PM-uploaded documents
   const uploadedDocs: UploadedProjectDocument[] = project?.uploadedDocuments || [];
+  const isProposal = project?.id.startsWith('PROP-') || false;
 
   // Filter documents cited in this active section
   const sectionDocs = uploadedDocs.filter(doc => {
@@ -121,7 +122,7 @@ export const SourcesPanel: React.FC<SourcesPanelProps> = ({
                 : 'border-transparent text-[#64748B] hover:text-[#0F172A]'
             }`}
           >
-            All SOW Uploaded Resources ({uploadedDocs.length})
+            All {isProposal ? 'Proposal' : 'SOW'} Uploaded Resources ({uploadedDocs.length})
           </button>
         </div>
 
@@ -129,7 +130,7 @@ export const SourcesPanel: React.FC<SourcesPanelProps> = ({
         <div className="p-5 overflow-y-auto space-y-3.5 flex-1 bg-white">
           <div className="flex items-center justify-between text-xs text-[#64748B]">
             <span className="font-bold text-[#0F172A]">
-              {filterTab === 'section' ? "This Section's Cited Documents" : "All Intake Resources Uploaded for this SOW"}
+              {filterTab === 'section' ? "This Section's Cited Documents" : `All Intake Resources Uploaded for this ${isProposal ? 'Proposal' : 'SOW'}`}
             </span>
             <span className="text-[11px] text-[#64748B]">{displayDocs.length} documents found</span>
           </div>

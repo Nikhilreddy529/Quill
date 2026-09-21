@@ -16,6 +16,7 @@ interface SidebarProps {
   setCurrentView: (view: any) => void;
   onOpenCreateProject: () => void;
   onOpenProposal: () => void;
+  onOpenReferenceDocuments: () => void;
   isCollapsed: boolean;
   setIsCollapsed: (collapsed: boolean) => void;
 }
@@ -24,6 +25,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
   setCurrentView,
   onOpenCreateProject,
   onOpenProposal,
+  onOpenReferenceDocuments,
   isCollapsed,
   setIsCollapsed
 }) => {
@@ -207,7 +209,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
             </div>
           )}
           <button
-            onClick={() => setCurrentView('sections')}
+            onClick={onOpenReferenceDocuments}
             className="w-full flex items-center space-x-3 px-3 py-2 rounded-lg font-medium text-slate-400 hover:text-slate-200 hover:bg-[#0c1e3d] transition cursor-pointer"
             title="Reference Library"
           >
