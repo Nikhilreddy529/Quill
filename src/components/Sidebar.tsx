@@ -1,33 +1,63 @@
-import React from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { 
   Plus, 
   Home, 
   FileText, 
-  Copy, 
   BookOpen, 
   FileCode, 
-  Settings, 
   History, 
   ChevronLeft,
-  ChevronRight
+  ChevronRight,
+  Presentation
 } from 'lucide-react';
 import { FeatherLogo } from './FeatherLogo';
-
 interface SidebarProps {
   currentView: string;
   setCurrentView: (view: any) => void;
   onOpenCreateProject: () => void;
+  onOpenProposal: () => void;
+  onOpenReferenceDocuments: () => void;
   isCollapsed: boolean;
   setIsCollapsed: (collapsed: boolean) => void;
 }
-
 export const Sidebar: React.FC<SidebarProps> = ({
   currentView,
   setCurrentView,
   onOpenCreateProject,
+  onOpenProposal,
+  onOpenReferenceDocuments,
   isCollapsed,
   setIsCollapsed
 }) => {
+  const [isCreateMenuOpen, setIsCreateMenuOpen] = useState(false);
+  const createMenuRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    if (!isCreateMenuOpen) return;
+    const handlePointerDown = (event: PointerEvent) => {
+      if (!createMenuRef.current?.contains(event.target as Node)) {
+        setIsCreateMenuOpen(false);
+      }
+    };
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        setIsCreateMenuOpen(false);
+      }
+    };
+    document.addEventListener('pointerdown', handlePointerDown);
+    document.addEventListener('keydown', handleKeyDown);
+    return () => {
+      document.removeEventListener('pointerdown', handlePointerDown);
+      document.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [isCreateMenuOpen]);
+  const handleCreateSow = () => {
+    setIsCreateMenuOpen(false);
+    onOpenCreateProject();
+  };
+  const handleCreateProposal = () => {
+    setIsCreateMenuOpen(false);
+    onOpenProposal();
+  };
   return (
     <aside 
       className={`${
@@ -37,7 +67,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
       {/* Brand Header */}
       <div className="h-16 px-4 flex items-center justify-between border-b border-[#15233e]">
         <div 
-          onClick={() => setCurrentView('sections')} 
+          onClick={() => setCurrentView('dashboard')} 
           className="flex items-center space-x-2.5 cursor-pointer"
         >
           {/* Cyan/Blue Feather Icon */}
@@ -46,26 +76,68 @@ export const Sidebar: React.FC<SidebarProps> = ({
           </div>
           {!isCollapsed && (
             <div className="flex items-center space-x-1.5">
-              <span className="text-lg font-bold text-white tracking-tight">Quill</span>
+              <span className="text-lg font-bold text-white tracking-tight">
+                Quill
+              </span>
             </div>
           )}
         </div>
       </div>
-
       {/* Primary Action Button */}
-      <div className="p-3.5">
+      <div className="relative p-3.5" ref={createMenuRef}>
         <button
-          onClick={onOpenCreateProject}
+          onClick={() => setIsCreateMenuOpen(open => !open)}
+          aria-expanded={isCreateMenuOpen}
+          aria-haspopup="menu"
           className={`w-full bg-[#1D68F2] hover:bg-[#1557d0] text-white rounded-lg transition-all duration-200 flex items-center justify-center space-x-2 py-2.5 font-semibold text-xs shadow-md shadow-blue-600/30 cursor-pointer ${
             isCollapsed ? 'px-0' : 'px-3'
           }`}
-          title="New SOW"
+          title="Create new document"
         >
           <Plus className="w-4 h-4 stroke-[2.5]" />
-          {!isCollapsed && <span>New SOW </span>}
+          {!isCollapsed && <span>New</span>}
         </button>
+        {isCreateMenuOpen && (
+          <div
+            role="menu"
+            aria-label="Create new document"
+            className={`absolute top-[calc(100%-0.5rem)] z-50 w-56 rounded-xl border border-[#D8E2F0] bg-white p-1.5 shadow-xl shadow-slate-950/15 ${
+              isCollapsed
+                ? 'left-[calc(100%+0.5rem)]'
+                : 'left-3.5 right-3.5'
+            }`}
+          >
+            <button
+              role="menuitem"
+              onClick={handleCreateSow}
+              className="flex w-full items-center gap-3 rounded-lg px-2.5 py-2.5 text-left transition hover:bg-blue-50 cursor-pointer"
+            >
+              <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-blue-50 text-[#1D68F2]">
+                <FileText className="h-4 w-4" />
+              </span>
+              <span>
+                <span className="block text-xs font-bold text-[#0F172A]">
+                  New SOW
+                </span>
+              </span>
+            </button>
+            <button
+              role="menuitem"
+              onClick={handleCreateProposal}
+              className="flex w-full items-center gap-3 rounded-lg px-2.5 py-2.5 text-left transition hover:bg-violet-50 cursor-pointer"
+            >
+              <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-violet-50 text-violet-600">
+                <Presentation className="h-4 w-4" />
+              </span>
+              <span>
+                <span className="block text-xs font-bold text-[#0F172A]">
+                  New Proposal
+                </span>
+              </span>
+            </button>
+          </div>
+        )}
       </div>
-
       {/* Navigation Sections */}
       <div className="flex-1 overflow-y-auto px-2.5 space-y-5 text-xs py-2">
         
@@ -84,7 +156,6 @@ export const Sidebar: React.FC<SidebarProps> = ({
             {!isCollapsed && <span>Dashboard</span>}
           </button>
         </div>
-
         {/* Category: SOW AUTHORING */}
         <div className="space-y-1">
           {!isCollapsed && (
@@ -105,7 +176,6 @@ export const Sidebar: React.FC<SidebarProps> = ({
             <FileText className="w-4 h-4 shrink-0 text-blue-400" />
             {!isCollapsed && <span>SOW Editor</span>}
           </button>
-
           <button
             onClick={() => setCurrentView('framework')}
             className={`w-full flex items-center space-x-3 px-3 py-2 rounded-lg font-medium transition cursor-pointer ${
@@ -118,26 +188,19 @@ export const Sidebar: React.FC<SidebarProps> = ({
             <FileCode className="w-4 h-4 shrink-0 text-indigo-400" />
             {!isCollapsed && <span>Framework Outline</span>}
           </button>
-
           <button
-            onClick={() => setCurrentView('templates')}
+            onClick={() => setCurrentView('proposal')}
             className={`w-full flex items-center space-x-3 px-3 py-2 rounded-lg font-medium transition cursor-pointer ${
-              currentView === 'templates' || currentView === 'template-editor' || currentView === 'template-preview'
+              currentView === 'proposal'
                 ? 'bg-[#162a4d] text-white font-semibold shadow-inner'
                 : 'text-slate-300 hover:text-white hover:bg-[#0c1e3d]'
             }`}
-            title="SOW Templates"
+            title="Proposal Workspace"
           >
-            <Copy className="w-4 h-4 shrink-0 text-cyan-400" />
-            {!isCollapsed && (
-              <div className="flex items-center justify-between flex-1">
-                <span>SOW Templates</span>
-                <span className="text-[9px] bg-cyan-500/20 text-cyan-300 border border-cyan-400/30 px-1 py-0.2 rounded font-mono">DTMC</span>
-              </div>
-            )}
+            <FileText className="w-4 h-4 shrink-0 text-violet-400" />
+            {!isCollapsed && <span>Proposal Workspace</span>}
           </button>
         </div>
-
         {/* Category: KNOWLEDGE */}
         <div className="space-y-1">
           {!isCollapsed && (
@@ -145,9 +208,8 @@ export const Sidebar: React.FC<SidebarProps> = ({
               Knowledge & Documents
             </div>
           )}
-
           <button
-            onClick={() => setCurrentView('sections')}
+            onClick={onOpenReferenceDocuments}
             className="w-full flex items-center space-x-3 px-3 py-2 rounded-lg font-medium text-slate-400 hover:text-slate-200 hover:bg-[#0c1e3d] transition cursor-pointer"
             title="Reference Library"
           >
@@ -155,7 +217,6 @@ export const Sidebar: React.FC<SidebarProps> = ({
             {!isCollapsed && <span>Reference Documents</span>}
           </button>
         </div>
-
         {/* Category: SYSTEM & AUDIT */}
         <div className="space-y-1">
           {!isCollapsed && (
@@ -163,7 +224,6 @@ export const Sidebar: React.FC<SidebarProps> = ({
               System & Compliance
             </div>
           )}
-
           <button
             onClick={() => setCurrentView('dashboard')}
             className="w-full flex items-center space-x-3 px-3 py-2 rounded-lg font-medium text-slate-400 hover:text-slate-200 hover:bg-[#0c1e3d] transition cursor-pointer"
@@ -172,19 +232,8 @@ export const Sidebar: React.FC<SidebarProps> = ({
             <History className="w-4 h-4 shrink-0 text-slate-400" />
             {!isCollapsed && <span>Audit Trail</span>}
           </button>
-
-          <button
-            onClick={() => setCurrentView('dashboard')}
-            className="w-full flex items-center space-x-3 px-3 py-2 rounded-lg font-medium text-slate-400 hover:text-slate-200 hover:bg-[#0c1e3d] transition cursor-pointer"
-            title="Settings"
-          >
-            <Settings className="w-4 h-4 shrink-0 text-slate-400" />
-            {!isCollapsed && <span>Settings</span>}
-          </button>
         </div>
-
       </div>
-
       {/* Bottom Collapse Toggle */}
       <div className="p-3 border-t border-[#15233e]">
         <button
@@ -201,7 +250,6 @@ export const Sidebar: React.FC<SidebarProps> = ({
           )}
         </button>
       </div>
-
     </aside>
   );
 };

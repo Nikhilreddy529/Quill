@@ -6,6 +6,8 @@ export const INITIAL_SAMPLE_PROJECTS: SOWProject[] = [
     id: "PRJ-2026-ACME",
     title: "Digital Transformation - Acme Corp",
     clientName: "Acme Corp",
+    clientContact: "Riley Chen (VP Digital)",
+    clientContactEmail: "riley.chen@acme.com",
     clientIndustry: "Retail & Consumer Goods",
     projectType: "Digital Transformation",
     targetStartDate: "2026-10-01",
@@ -45,7 +47,7 @@ export const INITIAL_SAMPLE_PROJECTS: SOWProject[] = [
           "30-day post go-live operational support",
           "Hardware procurement excluded from vendor scope"
         ],
-        url: "https://contoso.sharepoint.com/sites/quill/Intake/Acme_Discovery_Meeting_Transcription.docx"
+        url: ""
       },
       {
         id: "DOC-ACME-002",
@@ -63,7 +65,7 @@ export const INITIAL_SAMPLE_PROJECTS: SOWProject[] = [
           "Third-party software licensing excluded from SOW",
           "Access credentials provided within 5 business days"
         ],
-        url: "https://contoso.sharepoint.com/sites/quill/Intake/Acme_Requirement_Clarifications.docx"
+        url: ""
       },
       {
         id: "DOC-ACME-003",
@@ -81,7 +83,7 @@ export const INITIAL_SAMPLE_PROJECTS: SOWProject[] = [
           "High-concurrency e-commerce checkout API",
           "ISO 27001 and PCI-DSS Level 1 compliance"
         ],
-        url: "https://contoso.sharepoint.com/sites/quill/Intake/Acme_Omnichannel_SRS_v2.4.pdf"
+        url: ""
       },
       {
         id: "DOC-ACME-004",
@@ -99,7 +101,7 @@ export const INITIAL_SAMPLE_PROJECTS: SOWProject[] = [
           "Database modernization to Azure SQL Managed Instance",
           "Integration with enterprise identity via Entra ID"
         ],
-        url: "https://contoso.sharepoint.com/sites/quill/Intake/Acme_IT_Infrastructure_Assessment.pdf"
+        url: ""
       },
       {
         id: "DOC-ACME-005",
@@ -117,7 +119,7 @@ export const INITIAL_SAMPLE_PROJECTS: SOWProject[] = [
           "Agile two-week sprint cadences",
           "Formal acceptance testing sign-off protocol"
         ],
-        url: "https://contoso.sharepoint.com/sites/quill/Intake/Acme_Scope_Baseline.docx"
+        url: ""
       }
     ],
     additionalRequirements: "Adhere to ISO 27001 data isolation and DTMC corporate standards. Keep all commercial terms in blank schedule placeholders.",
@@ -184,12 +186,10 @@ export const INITIAL_SAMPLE_PROJECTS: SOWProject[] = [
         order: 3,
         title: "3. Scope and Delivery Approach",
         category: "Deliverables",
-        content: `| Phase / Workstream | Key Activities | Primary Deliverables |
-|---|---|---|
-| Engage | Kickoff, current-state workshops and prioritized requirements. | Requirements and process flows; draft plan; RAID log. |
-| Envision | Data model, solution design, integration and test planning. | Solution design; wireframes; data map; test plan. |
-| Enact | Configure Power Apps, Dataverse and Power Automate; migrate test data; support UAT. | Configured solution; validated migration; UAT completion. |
-| Empower | Admin training, train-the-trainer, launch and stabilization. | Training materials; launch checklist; closeout report. |`,
+        content: `* Engage: Kickoff, current-state workshops and prioritized requirements. Primary Deliverables: Requirements and process flows; draft plan; RAID log.
+* Envision: Data model, solution design, integration and test planning. Primary Deliverables: Solution design; wireframes; data map; test plan.
+* Enact: Configure Power Apps, Dataverse and Power Automate; migrate test data; support UAT. Primary Deliverables: Configured solution; validated migration; UAT completion.
+* Empower: Admin training, train-the-trainer, launch and stabilization. Primary Deliverables: Training materials; launch checklist; closeout report.`,
         status: "Approved",
         isMandatory: true,
         isPricingSection: false,
@@ -211,12 +211,10 @@ export const INITIAL_SAMPLE_PROJECTS: SOWProject[] = [
         order: 4,
         title: "4. Governance and Responsibilities",
         category: "Governance",
-        content: `| Role | Responsibility |
-|---|---|
-| DTMC Engagement Lead | Overall delivery quality, scope governance and executive escalation. |
-| DTMC Project Manager | Plan, RAID log, status reporting, decisions and deliverable tracking. |
-| Client Product Owner | Priorities, stakeholder access, timely decisions and acceptance. |
-| Client Technical Lead | Environment access, technical validation, data readiness and deployment coordination. |`,
+        content: `* DTMC Engagement Lead: Overall delivery quality, scope governance and executive escalation.
+* DTMC Project Manager: Plan, RAID log, status reporting, decisions and deliverable tracking.
+* Client Product Owner: Priorities, stakeholder access, timely decisions and acceptance.
+* Client Technical Lead: Environment access, technical validation, data readiness and deployment coordination.`,
         status: "Approved",
         isMandatory: true,
         isPricingSection: false,
@@ -306,14 +304,16 @@ export const INITIAL_SAMPLE_PROJECTS: SOWProject[] = [
         order: 8,
         title: "8. Illustrative Fees",
         category: "Pricing",
-        content: `| Commercial Model | Illustrative Amount | Billing |
-|---|---|---|
-| Time and materials | $88,000 to $116,000 | Initial deposit plus monthly actuals |
+        content: `* Commercial Model: Time and materials
+* Illustrative Amount: [ — ]
+* Billing: Initial deposit plus monthly actuals
 
-*All amounts are fictional placeholders for sample evaluation and must be replaced during contracting.*`,
-        status: "Review",
+*All fee amounts remain intentionally blank pending Commercial Finance sign-off prior to contracting.*`,
+        status: "Approved",
         isMandatory: true,
         isPricingSection: true,
+        approvedBy: "Commercial Finance",
+        approvedAt: "2026-08-28T09:00:00Z",
         groundedSources: [SAMPLE_SOURCE_DOCUMENTS[3]],
         detailedSources: [
           { id: "DS-81", fileName: "Acme_Discovery_Meeting_Transcription_Aug26.docx", fileType: "docx", category: "Meeting Transcription", section: "Section 8", page: 15, snippet: "Illustrative commercial model and placeholder fees." }
@@ -331,9 +331,17 @@ export const INITIAL_SAMPLE_PROJECTS: SOWProject[] = [
         order: 9,
         title: "9. Authorization",
         category: "Terms",
-        content: `| Accepted by Client | Accepted by DTMC |
-|---|---|
-| **Name:** Riley Chen<br/>**Title:** VP, Transformation<br/>**Signature:** ___________________________<br/>**Date:** ________________________________ | **Name:** Jordan Lee<br/>**Title:** Engagement Partner<br/>**Signature:** ___________________________<br/>**Date:** ________________________________ |`,
+        content: `Accepted by Client:
+* Name: Riley Chen
+* Title: VP, Transformation
+* Signature: ___________________________
+* Date: ________________________________
+
+Accepted by DTMC:
+* Name: Arjun Rao
+* Title: Engagement Partner
+* Signature: ___________________________
+* Date: ________________________________`,
         status: "Approved",
         isMandatory: true,
         isPricingSection: false,
@@ -356,6 +364,8 @@ export const INITIAL_SAMPLE_PROJECTS: SOWProject[] = [
     id: "PRJ-2026-001",
     title: "Contoso Cloud Migration & Modernization SOW",
     clientName: "Contoso Financial Services Ltd.",
+    clientContact: "Sarah Jenkins (Head of Infrastructure)",
+    clientContactEmail: "s.jenkins@contoso.co.uk",
     clientIndustry: "Financial Services",
     projectType: "Cloud Migration",
     targetStartDate: "2026-10-01",
@@ -440,7 +450,7 @@ export const INITIAL_SAMPLE_PROJECTS: SOWProject[] = [
         order: 1,
         title: "1. Engagement Overview",
         category: "Scope",
-        content: `### 1. Engagement Overview\n\nThis SOW defines migration into Azure for Contoso.`,
+        content: `This SOW defines migration into Azure for Contoso.`,
         status: "Approved",
         isMandatory: true,
         isPricingSection: false,

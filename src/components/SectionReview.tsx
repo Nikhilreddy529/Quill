@@ -237,7 +237,7 @@ export const SectionReview: React.FC<SectionReviewProps> = ({
                 className="flex items-center space-x-1.5 bg-[#1D68F2] hover:bg-[#1554c0] text-white text-xs font-bold px-4 py-2 rounded-lg shadow-sm shadow-blue-500/20 transition active:scale-95 cursor-pointer"
               >
                 <Check className="w-4 h-4 stroke-[2.5]" />
-                <span>{currentSection.requiresReapproval ? 'Re-Approve Section' : 'Approve Section'}</span>
+                <span>{currentSection.requiresReapproval ? 'Re-Approve & Move Next' : 'Approve & Move Next'}</span>
               </button>
             ) : (
               <button

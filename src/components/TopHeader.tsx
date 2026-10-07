@@ -9,20 +9,28 @@ import {
   Copy,
   LayoutDashboard
 } from 'lucide-react';
-import { SOWProject } from '../types/quill';
+import { SOWProject, QuillUser } from '../types/quill';
 
 interface TopHeaderProps {
   currentProject: SOWProject;
   currentView: string;
   setCurrentView: (view: any) => void;
   onOpenNotifications?: () => void;
+  currentUser: QuillUser;
+  onChangeCurrentUser: (user: QuillUser) => void;
+  searchQuery: string;
+  setSearchQuery: (value: string) => void;
 }
 
 export const TopHeader: React.FC<TopHeaderProps> = ({
   currentProject,
   currentView,
   setCurrentView,
-  onOpenNotifications
+  onOpenNotifications,
+  currentUser,
+  onChangeCurrentUser,
+  searchQuery,
+  setSearchQuery,
 }) => {
   return (
     <header className="h-16 bg-white border-b border-[#E2E8F0] px-6 flex items-center justify-between sticky top-0 z-30 select-none">
@@ -60,6 +68,17 @@ export const TopHeader: React.FC<TopHeaderProps> = ({
             <ChevronRight className="w-3.5 h-3.5 text-[#94A3B8]" />
             <span className="font-bold text-[#0F172A]">Framework Outline</span>
           </>
+        ) : currentView === 'proposal' ? (
+          <>
+            <button 
+              onClick={() => setCurrentView('dashboard')}
+              className="hover:text-[#1D68F2] transition cursor-pointer font-medium text-[#334155]"
+            >
+              {currentProject?.title || "Digital Transformation - Acme Corp"}
+            </button>
+            <ChevronRight className="w-3.5 h-3.5 text-[#94A3B8]" />
+            <span className="font-bold text-[#0F172A]">Proposal Workspace</span>
+          </>
         ) : (
           <>
             <button 
@@ -83,11 +102,10 @@ export const TopHeader: React.FC<TopHeaderProps> = ({
           <input
             type="text"
             placeholder="Search projects, documents..."
+            value= {searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
             className="w-full bg-[#F8FAFC] border border-[#E2E8F0] rounded-lg pl-8 pr-12 py-1.5 text-xs text-[#0F172A] placeholder-[#94A3B8] focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-[#1D68F2]"
           />
-          <div className="absolute right-2.5 top-2 px-1.5 py-0.5 bg-white border border-[#CBD5E1] rounded text-[10px] font-mono text-[#64748B]">
-            ⌘K
-          </div>
         </div>
 
         {/* View Switchers */}
@@ -104,7 +122,7 @@ export const TopHeader: React.FC<TopHeaderProps> = ({
             <span>Dashboard</span>
           </button>
 
-          <button
+          {/* <button
             onClick={() => setCurrentView('templates')}
             className={`px-2.5 py-1 rounded-md font-semibold transition cursor-pointer flex items-center space-x-1.5 ${
               currentView === 'templates' || currentView === 'template-editor' || currentView === 'template-preview'
@@ -114,7 +132,7 @@ export const TopHeader: React.FC<TopHeaderProps> = ({
           >
             <Copy className="w-3 h-3 text-cyan-600" />
             <span>Templates</span>
-          </button>
+          </button> */}
 
           <button
             onClick={() => setCurrentView('framework')}
@@ -126,6 +144,18 @@ export const TopHeader: React.FC<TopHeaderProps> = ({
           >
             <FileCode className="w-3 h-3 text-indigo-600" />
             <span>Framework</span>
+          </button>
+
+          <button
+            onClick={() => setCurrentView('proposal')}
+            className={`px-2.5 py-1 rounded-md font-semibold transition cursor-pointer flex items-center space-x-1.5 ${
+              currentView === 'proposal'
+                ? 'bg-white text-[#1D68F2] shadow-sm'
+                : 'text-[#64748B] hover:text-[#0F172A]'
+            }`}
+          >
+            <FileText className="w-3 h-3 text-violet-600" />
+            <span>Proposal</span>
           </button>
 
           <button
@@ -141,34 +171,86 @@ export const TopHeader: React.FC<TopHeaderProps> = ({
           </button>
         </div>
 
-        {/* Notification Bell */}
+        {/* Notification Bell
         <button 
           onClick={onOpenNotifications}
           className="relative p-2 text-[#64748B] hover:text-[#0F172A] hover:bg-[#F1F5F9] rounded-lg transition cursor-pointer"
           title="Notifications"
         >
           <Bell className="w-4 h-4" />
-          <span className="absolute top-1 right-1 w-4 h-4 bg-[#EF4444] text-white text-[9px] font-bold rounded-full flex items-center justify-center border-2 border-white">
-            3
-          </span>
-        </button>
+        </button> */}
 
         {/* Help Circle */}
-        <button 
+        {/* <button 
           className="p-2 text-[#64748B] hover:text-[#0F172A] hover:bg-[#F1F5F9] rounded-lg transition cursor-pointer"
           title="DTMC SOW Help & Guidelines"
         >
           <HelpCircle className="w-4 h-4" />
-        </button>
+        </button> */}
 
-        {/* User Profile Avatar */}
+        {/* User Profile / Contributor Context */}
         <div className="flex items-center space-x-2.5 pl-2 border-l border-[#E2E8F0]">
           <div className="w-8 h-8 rounded-full bg-[#1D68F2] text-white text-xs font-bold flex items-center justify-center shadow-sm">
-            N
+            {currentUser.name.charAt(0).toUpperCase()}
           </div>
           <div className="hidden sm:block text-left">
-            <div className="text-xs font-bold text-[#0F172A] leading-tight">Nikhil</div>
-            <div className="text-[10px] text-[#64748B]">Project Manager</div>
+            <select
+              value={currentUser.email}
+              onChange={(e) => {
+                const selected = [
+                  {
+                    id: 'USER-PM-NIKHIL',
+                    name: currentProject.ownerName || 'Nikhil',
+                    email: currentProject.ownerEmail || 'nikhil@acme-transform.com',
+                    role: 'Project Manager' as const,
+                  },
+                  ...Object.values(currentProject.sectionContributors || {}).map(c => ({
+                    id: c.id,
+                    name: c.name,
+                    email: c.email,
+                    role: 'Contributor' as const,
+                  })),
+                ].find(u => u.email === e.target.value);
+                if (selected) onChangeCurrentUser(selected);
+              }}
+              className="text-xs font-bold text-[#0F172A] leading-tight bg-transparent border-none outline-none cursor-pointer max-w-[140px]"
+              title="Switch user for the contributor MVP"
+            >
+              {[
+                {
+                  id: 'USER-PM-NIKHIL',
+                  name: currentProject.ownerName || 'Nikhil',
+                  email: currentProject.ownerEmail || 'nikhil@acme-transform.com',
+                  role: 'Project Manager' as const,
+                },
+                ...Object.values(currentProject.sectionContributors || {}).map(c => ({
+                  id: c.id,
+                  name: c.name,
+                  email: c.email,
+                  role: 'Contributor' as const,
+                })),
+              ].filter((u, i, arr) => arr.findIndex(x => x.email === u.email) === i).map(user => (
+                <option key={user.email} value={user.email}>{user.name}</option>
+              ))}
+            </select>
+            <div className="text-[10px] text-[#64748B]">{currentUser.role}</div>
+
+            {currentUser.role === 'Contributor' && (
+              <button
+                type="button"
+                onClick={() =>
+                  onChangeCurrentUser({
+                    id: 'USER-PM-NIKHIL',
+                    name: currentProject.ownerName || 'Project Manager',
+                    email: currentProject.ownerEmail || '',
+                    role: 'Project Manager',
+                  })
+                }
+                className="mt-1 text-[10px] font-semibold text-[#1D68F2] hover:underline cursor-pointer"
+              >
+                Back to Project Manager
+              </button>
+            )}
           </div>
         </div>
 

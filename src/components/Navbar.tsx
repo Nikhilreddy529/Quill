@@ -71,7 +71,6 @@ export const Navbar: React.FC<NavbarProps> = ({
                   : 'text-[#888] hover:text-[#CCC] hover:bg-[#1A1A1A]'
               }`}
             >
-              <Sparkles className="w-3.5 h-3.5" />
               <span>SOW Authoring Console</span>
             </button>
 

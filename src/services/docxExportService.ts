@@ -22,7 +22,11 @@ export function validateSOWForExport(project: SOWProject): ExportPreflightResult
   const errors: string[] = [];
   const warnings: string[] = [];
 
-  const totalSections = project.sections ? project.sections.length : 0;
+  // Strictly consider only the 9 core framework sections
+  const eligibleSections = (project.sections || []).filter(
+    s => s.order <= 9 && !s.title.toLowerCase().startsWith('appendix') && !(s as any).isAppendix
+  );
+  const totalSections = eligibleSections.length;
   if (totalSections === 0) {
     errors.push("The SOW does not contain any sections. Cannot export an empty document.");
   }
@@ -36,17 +40,15 @@ export function validateSOWForExport(project: SOWProject): ExportPreflightResult
   const unapprovedSections: { id: string; title: string; status: string }[] = [];
   let approvedCount = 0;
 
-  if (project.sections) {
-    for (const section of project.sections) {
-      if (section.status === 'Approved' && !section.requiresReapproval) {
-        approvedCount++;
-      } else {
-        unapprovedSections.push({
-          id: section.id,
-          title: section.title,
-          status: section.requiresReapproval ? 'Requires Re-approval' : section.status,
-        });
-      }
+  for (const section of eligibleSections) {
+    if (section.status === 'Approved' && !section.requiresReapproval) {
+      approvedCount++;
+    } else {
+      unapprovedSections.push({
+        id: section.id,
+        title: section.title,
+        status: section.requiresReapproval ? 'Requires Re-approval' : section.status,
+      });
     }
   }
 
@@ -57,7 +59,7 @@ export function validateSOWForExport(project: SOWProject): ExportPreflightResult
   }
 
   // Pricing policy validation
-  const pricingCheck = validateProjectPricingPolicy(project.sections || []);
+  const pricingCheck = validateProjectPricingPolicy(eligibleSections);
   const pricingCompliant = pricingCheck.isValid;
 
   if (!pricingCompliant) {
@@ -102,8 +104,10 @@ export async function generateAndDownloadDTMCWordDoc(
     throw new Error(`Export Preflight Failed:\n${preflight.errors.join('\n')}`);
   }
 
-  // Clone sections before sorting to avoid mutating state
-  const sections = [...project.sections].sort((a, b) => a.order - b.order);
+  // Clone sections before sorting to avoid mutating state, strictly limiting to the 9 core sections
+  const sections = [...project.sections]
+    .filter(s => s.order <= 9 && !s.title.toLowerCase().startsWith('appendix') && !(s as any).isAppendix)
+    .sort((a, b) => a.order - b.order);
 
   const cleanClientDomain = project.clientName ? project.clientName.toLowerCase().replace(/[^a-z0-9]/g, '') : 'client';
   const clientContactName = project.clientContact?.trim() || "Primary Client Representative";
@@ -314,6 +318,301 @@ export async function generateAndDownloadDTMCWordDoc(
 
             // Clean markdown content into Word paragraphs and tables
             const lines = section.content.split('\n');
+
+            // 1. SECTION 3: Scope and Delivery Approach -> Format as 3-Column Table
+            if ((section.order === 3 || section.title.toLowerCase().includes('scope and delivery')) && !section.content.includes('|---|')) {
+              const phaseRows: string[][] = [];
+              const introLines: string[] = [];
+
+              for (const line of lines) {
+                const trimmed = line.trim();
+                if (!trimmed) continue;
+                // Match phase pattern e.g. "* Engage: Kickoff... Primary Deliverables: Deliverables..."
+                const match = trimmed.match(/^[\*\-\•\]?\s*([^:]+?)\s*[:—–-]\s*(.*?)(?:(?:Primary\s+Deliverables?|Deliverables?)\s*[:—–-]\s*(.*))?$/i);
+                if (match && (match[3] || match[1].toLowerCase().includes('engage') || match[1].toLowerCase().includes('envision') || match[1].toLowerCase().includes('enact') || match[1].toLowerCase().includes('empower') || match[1].toLowerCase().includes('phase') || match[1].toLowerCase().includes('workstream'))) {
+                  const phase = match[1].trim();
+                  const activities = (match[2] || '').trim();
+                  const deliverables = (match[3] || '').trim();
+                  phaseRows.push([phase, activities, deliverables]);
+                } else {
+                  introLines.push(trimmed);
+                }
+              }
+
+              for (const iline of introLines) {
+                elements.push(new Paragraph({
+                  children: [new TextRun({ text: iline.replace(/\*\*(.*?)\*\*/g, '$1'), font: "Aptos", size: 18 })],
+                  spacing: { after: 120 }
+                }));
+              }
+
+              if (phaseRows.length > 0) {
+                elements.push(
+                  new Table({
+                    width: { size: 100, type: WidthType.PERCENTAGE },
+                    rows: [
+                      new TableRow({
+                        children: [
+                          new TableCell({
+                            width: { size: 25, type: WidthType.PERCENTAGE },
+                            shading: { type: ShadingType.CLEAR, fill: "10334F" },
+                            children: [new Paragraph({ children: [new TextRun({ text: "Phase / Workstream", bold: true, color: "FFFFFF", font: "Calibri", size: 18 })] })],
+                          }),
+                          new TableCell({
+                            width: { size: 45, type: WidthType.PERCENTAGE },
+                            shading: { type: ShadingType.CLEAR, fill: "10334F" },
+                            children: [new Paragraph({ children: [new TextRun({ text: "Key Activities", bold: true, color: "FFFFFF", font: "Calibri", size: 18 })] })],
+                          }),
+                          new TableCell({
+                            width: { size: 30, type: WidthType.PERCENTAGE },
+                            shading: { type: ShadingType.CLEAR, fill: "10334F" },
+                            children: [new Paragraph({ children: [new TextRun({ text: "Primary Deliverables", bold: true, color: "FFFFFF", font: "Calibri", size: 18 })] })],
+                          }),
+                        ]
+                      }),
+                      ...phaseRows.map(row => (
+                        new TableRow({
+                          children: [
+                            new TableCell({
+                              width: { size: 25, type: WidthType.PERCENTAGE },
+                              children: [new Paragraph({ children: [new TextRun({ text: row[0], bold: true, font: "Aptos", size: 18 })], spacing: { after: 60, before: 30 } })],
+                            }),
+                            new TableCell({
+                              width: { size: 45, type: WidthType.PERCENTAGE },
+                              children: [new Paragraph({ children: [new TextRun({ text: row[1], font: "Aptos", size: 18 })], spacing: { after: 60, before: 30 } })],
+                            }),
+                            new TableCell({
+                              width: { size: 30, type: WidthType.PERCENTAGE },
+                              children: [new Paragraph({ children: [new TextRun({ text: row[2], font: "Aptos", size: 18 })], spacing: { after: 60, before: 30 } })],
+                            }),
+                          ]
+                        })
+                      ))
+                    ]
+                  })
+                );
+                elements.push(new Paragraph({ text: "", spacing: { after: 120 } }));
+              }
+              elements.push(new Paragraph({ text: "", spacing: { after: 200 } }));
+              return elements;
+            }
+
+            // 2. SECTION 4: Governance and Responsibilities -> Format as 2-Column Table
+            if ((section.order === 4 || section.title.toLowerCase().includes('governance and responsibilities')) && !section.content.includes('|---|')) {
+              const roleRows: string[][] = [];
+              const introLines: string[] = [];
+
+              for (const line of lines) {
+                const trimmed = line.trim();
+                if (!trimmed) continue;
+                const match = trimmed.match(/^[\*\-\•\]?\s*([^:]+?)\s*[:—–-]\s*(.*)$/);
+                if (match && match[1].trim().length < 50 && match[2].trim().length > 3) {
+                  roleRows.push([match[1].trim(), match[2].trim()]);
+                } else {
+                  introLines.push(trimmed);
+                }
+              }
+
+              for (const iline of introLines) {
+                elements.push(new Paragraph({
+                  children: [new TextRun({ text: iline.replace(/\*\*(.*?)\*\*/g, '$1'), font: "Aptos", size: 18 })],
+                  spacing: { after: 120 }
+                }));
+              }
+
+              if (roleRows.length > 0) {
+                elements.push(
+                  new Table({
+                    width: { size: 100, type: WidthType.PERCENTAGE },
+                    rows: [
+                      new TableRow({
+                        children: [
+                          new TableCell({
+                            width: { size: 35, type: WidthType.PERCENTAGE },
+                            shading: { type: ShadingType.CLEAR, fill: "10334F" },
+                            children: [new Paragraph({ children: [new TextRun({ text: "Role", bold: true, color: "FFFFFF", font: "Calibri", size: 18 })] })],
+                          }),
+                          new TableCell({
+                            width: { size: 65, type: WidthType.PERCENTAGE },
+                            shading: { type: ShadingType.CLEAR, fill: "10334F" },
+                            children: [new Paragraph({ children: [new TextRun({ text: "Responsibility", bold: true, color: "FFFFFF", font: "Calibri", size: 18 })] })],
+                          }),
+                        ]
+                      }),
+                      ...roleRows.map(row => (
+                        new TableRow({
+                          children: [
+                            new TableCell({
+                              width: { size: 35, type: WidthType.PERCENTAGE },
+                              children: [new Paragraph({ children: [new TextRun({ text: row[0], bold: true, font: "Aptos", size: 18 })], spacing: { after: 60, before: 30 } })],
+                            }),
+                            new TableCell({
+                              width: { size: 65, type: WidthType.PERCENTAGE },
+                              children: [new Paragraph({ children: [new TextRun({ text: row[1], font: "Aptos", size: 18 })], spacing: { after: 60, before: 30 } })],
+                            }),
+                          ]
+                        })
+                      ))
+                    ]
+                  })
+                );
+                elements.push(new Paragraph({ text: "", spacing: { after: 120 } }));
+              }
+              elements.push(new Paragraph({ text: "", spacing: { after: 200 } }));
+              return elements;
+            }
+
+            // 3. SECTION 8: Illustrative Fees -> Format as 3-Column Table
+            if ((section.order === 8 || section.title.toLowerCase().includes('illustrative fees')) && !section.content.includes('|---|')) {
+              let commercialModel = 'Time and materials';
+              let illustrativeAmount = '[ — ]';
+              let billing = 'Initial deposit plus monthly actuals';
+              const notes: string[] = [];
+
+              for (const line of lines) {
+                const trimmed = line.trim();
+                if (!trimmed) continue;
+                if (trimmed.toLowerCase().includes('commercial model:')) {
+                  commercialModel = trimmed.split(':')[1]?.trim() || commercialModel;
+                } else if (trimmed.toLowerCase().includes('illustrative amount:')) {
+                  const val = trimmed.split(':')[1]?.trim() || '';
+                  illustrativeAmount = (val.includes('$') || val.includes('88,000')) ? '[ — ]' : (val || '[ — ]');
+                } else if (trimmed.toLowerCase().includes('billing:')) {
+                  billing = trimmed.split(':')[1]?.trim() || billing;
+                } else {
+                  notes.push(trimmed);
+                }
+              }
+
+              elements.push(
+                new Table({
+                  width: { size: 100, type: WidthType.PERCENTAGE },
+                  rows: [
+                    new TableRow({
+                      children: [
+                        new TableCell({
+                          width: { size: 33, type: WidthType.PERCENTAGE },
+                          shading: { type: ShadingType.CLEAR, fill: "10334F" },
+                          children: [new Paragraph({ children: [new TextRun({ text: "Commercial Model", bold: true, color: "FFFFFF", font: "Calibri", size: 18 })] })],
+                        }),
+                        new TableCell({
+                          width: { size: 34, type: WidthType.PERCENTAGE },
+                          shading: { type: ShadingType.CLEAR, fill: "10334F" },
+                          children: [new Paragraph({ children: [new TextRun({ text: "Illustrative Amount", bold: true, color: "FFFFFF", font: "Calibri", size: 18 })] })],
+                        }),
+                        new TableCell({
+                          width: { size: 33, type: WidthType.PERCENTAGE },
+                          shading: { type: ShadingType.CLEAR, fill: "10334F" },
+                          children: [new Paragraph({ children: [new TextRun({ text: "Billing", bold: true, color: "FFFFFF", font: "Calibri", size: 18 })] })],
+                        }),
+                      ]
+                    }),
+                    new TableRow({
+                      children: [
+                        new TableCell({
+                          width: { size: 33, type: WidthType.PERCENTAGE },
+                          children: [new Paragraph({ children: [new TextRun({ text: commercialModel, font: "Aptos", size: 18 })], spacing: { after: 60, before: 30 } })],
+                        }),
+                        new TableCell({
+                          width: { size: 34, type: WidthType.PERCENTAGE },
+                          children: [new Paragraph({ children: [new TextRun({ text: illustrativeAmount, font: "Aptos", size: 18 })], spacing: { after: 60, before: 30 } })],
+                        }),
+                        new TableCell({
+                          width: { size: 33, type: WidthType.PERCENTAGE },
+                          children: [new Paragraph({ children: [new TextRun({ text: billing, font: "Aptos", size: 18 })], spacing: { after: 60, before: 30 } })],
+                        }),
+                      ]
+                    })
+                  ]
+                })
+              );
+              elements.push(new Paragraph({ text: "", spacing: { after: 100 } }));
+
+              for (const note of notes) {
+                elements.push(
+                  new Paragraph({
+                    children: [new TextRun({ text: note.replace(/^[\*\-\_]+|[\*\-\_]+$/g, '').trim(), italics: true, font: "Aptos", size: 16, color: "64748B" })],
+                    spacing: { after: 80 }
+                  })
+                );
+              }
+              elements.push(new Paragraph({ text: "", spacing: { after: 200 } }));
+              return elements;
+            }
+
+            // 4. SECTION 9: Authorization -> Format as 2-Column Table
+            if ((section.order === 9 || section.title.toLowerCase().includes('authorization')) && !section.content.includes('|---|')) {
+              const clientLines: string[] = [];
+              const dtmcLines: string[] = [];
+              let currentTarget: 'client' | 'dtmc' = 'client';
+
+              for (const line of lines) {
+                const trimmed = line.trim();
+                if (!trimmed) continue;
+                if (trimmed.toLowerCase().includes('accepted by dtmc')) {
+                  currentTarget = 'dtmc';
+                  continue;
+                } else if (trimmed.toLowerCase().includes('accepted by client')) {
+                  currentTarget = 'client';
+                  continue;
+                }
+
+                if (currentTarget === 'client') {
+                  clientLines.push(trimmed.replace(/^[\*\-\•\]\s*/, ''));
+                } else {
+                  dtmcLines.push(trimmed.replace(/^[\*\-\•\]\s*/, ''));
+                }
+              }
+
+              elements.push(
+                new Table({
+                  width: { size: 100, type: WidthType.PERCENTAGE },
+                  rows: [
+                    new TableRow({
+                      children: [
+                        new TableCell({
+                          width: { size: 50, type: WidthType.PERCENTAGE },
+                          shading: { type: ShadingType.CLEAR, fill: "10334F" },
+                          children: [new Paragraph({ children: [new TextRun({ text: "Accepted by Client", bold: true, color: "FFFFFF", font: "Calibri", size: 18 })] })],
+                        }),
+                        new TableCell({
+                          width: { size: 50, type: WidthType.PERCENTAGE },
+                          shading: { type: ShadingType.CLEAR, fill: "10334F" },
+                          children: [new Paragraph({ children: [new TextRun({ text: "Accepted by DTMC", bold: true, color: "FFFFFF", font: "Calibri", size: 18 })] })],
+                        }),
+                      ]
+                    }),
+                    new TableRow({
+                      children: [
+                        new TableCell({
+                          width: { size: 50, type: WidthType.PERCENTAGE },
+                          children: clientLines.map(cl => new Paragraph({
+                            children: [
+                              new TextRun({ text: cl.includes(':') ? cl.split(':')[0] + ': ' : '', bold: true, font: "Aptos", size: 18 }),
+                              new TextRun({ text: cl.includes(':') ? cl.split(':').slice(1).join(':').trim() : cl, font: "Aptos", size: 18 }),
+                            ],
+                            spacing: { after: 60, before: 30 }
+                          })),
+                        }),
+                        new TableCell({
+                          width: { size: 50, type: WidthType.PERCENTAGE },
+                          children: dtmcLines.map(dl => new Paragraph({
+                            children: [
+                              new TextRun({ text: dl.includes(':') ? dl.split(':')[0] + ': ' : '', bold: true, font: "Aptos", size: 18 }),
+                              new TextRun({ text: dl.includes(':') ? dl.split(':').slice(1).join(':').trim() : dl, font: "Aptos", size: 18 }),
+                            ],
+                            spacing: { after: 60, before: 30 }
+                          })),
+                        }),
+                      ]
+                    })
+                  ]
+                })
+              );
+              elements.push(new Paragraph({ text: "", spacing: { after: 200 } }));
+              return elements;
+            }
+
             let tableLines: string[] = [];
 
             const flushTable = () => {
@@ -376,10 +675,13 @@ export async function generateAndDownloadDTMCWordDoc(
 
               if (!trimmed) continue;
 
-              if (trimmed.startsWith('### ')) {
-                elements.push(new Paragraph({ text: trimmed.replace('### ', ''), style: "DTMCHeading2" }));
-              } else if (trimmed.startsWith('#### ')) {
-                elements.push(new Paragraph({ text: trimmed.replace('#### ', ''), style: "DTMCHeading2" }));
+              const cleanHeading = trimmed.replace(/^#{1,6}\s*/, '').trim();
+              if (cleanHeading.toLowerCase() === section.title.toLowerCase()) {
+                continue; // Prevent duplicate section title
+              }
+
+              if (trimmed.startsWith('### ') || trimmed.startsWith('#### ') || /^\d+\.\d+\s+/.test(trimmed)) {
+                elements.push(new Paragraph({ text: cleanHeading, style: "DTMCHeading2" }));
               } else if (trimmed.startsWith('* ') || trimmed.startsWith('- ') || trimmed.startsWith('• ') || trimmed.startsWith(' ')) {
                 elements.push(
                   new Paragraph({

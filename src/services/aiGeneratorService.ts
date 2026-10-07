@@ -43,11 +43,9 @@ export async function generateSectionContent(
   switch (category) {
     case 'Scope':
       groundedSources = [SAMPLE_SOURCE_DOCUMENTS[0], SAMPLE_SOURCE_DOCUMENTS[1]];
-      content = `### ${sectionTitle}
+      content = `This section establishes the technical and operational boundaries for the **${clientName}** initiative [Ref: SRC-SOW-089].
 
-This section establishes the technical and operational boundaries for the **${clientName}** initiative [Ref: SRC-SOW-089].
-
-#### In-Scope Technical Architecture
+In-Scope Technical Architecture:
 * **Landing Zone Orchestration:** Implementation of multi-region hub-and-spoke virtual networks with central Azure Firewall egress inspection [Ref: SRC-CL-001].
 * **Workload Wave Execution:** Systematic discovery, dependency mapping, and migration of target application workloads.
 * **Identity Governance:** Enforcement of Microsoft Entra ID Privileged Identity Management (PIM) with just-in-time access approval workflows [Ref: SRC-CL-001].
@@ -58,9 +56,7 @@ ${customInstructions ? `\n> **Applied Refinement:** ${customInstructions}\n` : '
 
     case 'Deliverables':
       groundedSources = [SAMPLE_SOURCE_DOCUMENTS[1], SAMPLE_SOURCE_DOCUMENTS[3]];
-      content = `### ${sectionTitle}
-
-The following formal deliverables will be generated, validated, and transferred to **${clientName}**:
+      content = `The following formal deliverables will be generated, validated, and transferred to **${clientName}**:
 
 | Deliverable ID | Deliverable Title | Format / Artifact | Acceptance Standard |
 | :--- | :--- | :--- | :--- |
@@ -75,14 +71,12 @@ ${customInstructions ? `\n* **Custom Deliverable Requirement:** ${customInstruct
 
     case 'Assumptions':
       groundedSources = [SAMPLE_SOURCE_DOCUMENTS[2]];
-      content = `### ${sectionTitle}
-
-#### Engagement Assumptions
+      content = `Engagement Assumptions:
 1. **Personnel Availability:** Client will designate a Primary Technical Sponsor and Subject Matter Experts available for weekly cadence meetings [Ref: SRC-CL-014].
 2. **Access Provisioning:** Direct VPN/ExpressRoute network connectivity and Entra ID Contributor subscriptions will be granted within 5 calendar days of kickoff.
 3. **Environment Staging:** Client maintains responsibility for existing legacy infrastructure stability and data backup snapshots prior to migration waves [Ref: SRC-CL-014].
 
-#### Out-of-Scope Items
+Out-of-Scope Items:
 * Decommissioning or physical sanitization of legacy on-premises blade servers.
 * Custom application code refactoring or rewriting legacy monolithic APIs into microservices.`;
       validationNotes.push("Standard corporate risk mitigation clauses applied");
@@ -90,31 +84,27 @@ ${customInstructions ? `\n* **Custom Deliverable Requirement:** ${customInstruct
 
     case 'Pricing':
       groundedSources = [SAMPLE_SOURCE_DOCUMENTS[4]];
-      content = `### ${sectionTitle}
+      content = `> **MANDATORY GOVERNANCE NOTICE:** In compliance with enterprise contracting guidelines, all pricing figures, rate cards, and financial commitments remain intentionally unpopulated in this generated technical draft [Ref: SRC-CL-033].
 
-> **MANDATORY GOVERNANCE NOTICE:** In compliance with enterprise contracting guidelines, all pricing figures, rate cards, and financial commitments remain intentionally unpopulated in this generated technical draft [Ref: SRC-CL-033].
-
-#### Estimated Professional Services Investment
+Estimated Professional Services Investment:
 * **Billing Model:** Time & Materials (T&M) / Milestone-Based
-* **Total Proposed Engagement Value:** \`[TBD: Insert Approved Total Professional Services Fee]\`
+* **Total Proposed Engagement Value:** \`[ — ]\`
 * **Invoicing Schedule:** Bi-weekly in arrears (\`Net 30 Days\`)
 
-#### Schedule B - Resource Rate Card Placeholder
+Schedule B - Resource Rate Card Placeholder:
 | Staffing Role | Standard Rate | Estimated Hours | Extended Fee |
 | :--- | :--- | :--- | :--- |
-| Lead Enterprise Solution Architect | \`[TBD: Rate Card]\` | \`[TBD: Hours]\` | \`[TBD: Subtotal]\` |
-| Senior Cloud Migration Engineer | \`[TBD: Rate Card]\` | \`[TBD: Hours]\` | \`[TBD: Subtotal]\` |
-| Security & Identity Specialist | \`[TBD: Rate Card]\` | \`[TBD: Hours]\` | \`[TBD: Subtotal]\` |
-| Engagement Delivery Lead / PM | \`[TBD: Rate Card]\` | \`[TBD: Hours]\` | \`[TBD: Subtotal]\` |`;
+| Lead Enterprise Solution Architect | \`[ — ]\` | \`[ — ]\` | \`[ — ]\` |
+| Senior Cloud Migration Engineer | \`[ — ]\` | \`[ — ]\` | \`[ — ]\` |
+| Security & Identity Specialist | \`[ — ]\` | \`[ — ]\` | \`[ — ]\` |
+| Engagement Delivery Lead / PM | \`[ — ]\` | \`[ — ]\` | \`[ — ]\` |`;
       confidenceScore = 100;
       validationNotes.push("Zero pricing commitments detected (100% compliant)");
       break;
 
     default:
       groundedSources = [SAMPLE_SOURCE_DOCUMENTS[0]];
-      content = `### ${sectionTitle}
-
-This section outlines the operational standards and management policies governing the **${clientName}** engagement [Ref: SRC-CL-001].
+      content = `This section outlines the operational standards and management policies governing the **${clientName}** engagement [Ref: SRC-CL-001].
 
 * **Governance Rhythm:** Weekly project status reports delivered every Friday by 5:00 PM EST.
 * **Issue Escalation:** Tier 1 (Project Manager) -> Tier 2 (Practice Director) -> Tier 3 (Executive Steering Committee).

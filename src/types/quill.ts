@@ -1,3 +1,5 @@
+import { GeneratedProposalSlide } from './proposal';
+
 export type SOWStatus = 'Draft' | 'Generated' | 'Under Review' | 'Approved' | 'Exported';
 
 export type SectionStatus = 'Pending' | 'Generating' | 'Review' | 'Approved' | 'Rejected' | 'Superseded';
@@ -132,6 +134,21 @@ export interface SOWSection {
   previousContentSnapshot?: string; // For diff viewer
   requiresReapproval?: boolean;
 }
+export interface SOWSectionContributor {
+  id: string;
+  name: string;
+  email: string;
+  assignedAt: string;
+  assignedBy: string;
+  status: 'Assigned' | 'Approved';
+}
+
+export interface QuillUser {
+  id: string;
+  name: string;
+  email: string;
+  role: 'Project Manager' | 'Contributor';
+}
 
 export interface SOWProject {
   id: string;
@@ -162,12 +179,16 @@ export interface SOWProject {
   uploadedDocuments: UploadedProjectDocument[]; // Resources uploaded by PM during SOW creation
   additionalRequirements: string;
   selectedTemplateId: string;
+  proposalTemplateId?: string;
+  proposalSlides?: GeneratedProposalSlide[];
   frameworkApproved: boolean;
   frameworkApprovedBy?: string;
   frameworkApprovedAt?: string;
   frameworkVersion?: number;
   sections: SOWSection[];
+  sectionContributors?: Record<string, SOWSectionContributor>;
   exportHistory: ExportRecord[];
+  sectionContributors?: Record<string, SOWSectionContributor>;
 }
 
 export interface SourceDocument {
@@ -240,4 +261,18 @@ export interface N8nWorkflowDefinition {
   nodes: N8nWorkflowNode[];
   samplePayload: Record<string, any>;
   sampleResponse: Record<string, any>;
+}
+export interface SOWSectionContributor {
+  id: string;
+  name: string;
+  email: string;
+  assignedAt: string;
+  assignedBy: string;
+}
+
+export interface QuillUser {
+  id: string;
+  name: string;
+  email: string;
+  role: 'Project Manager' | 'Contributor';
 }

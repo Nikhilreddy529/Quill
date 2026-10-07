@@ -1,4 +1,6 @@
 import React, { useState } from 'react';
+import { submitContributorApproval } from '../services/n8nServices';
+import { QuillUser, SOWSectionContributor } from '../types/quill';
 import { 
   FileText, 
   CheckCircle2, 
@@ -18,17 +20,6 @@ import {
   Plus,
   ExternalLink,
   MessageSquare,
-  Bold,
-  Italic,
-  Underline,
-  List,
-  ListOrdered,
-  AlignLeft,
-  AlignCenter,
-  AlignRight,
-  Link2,
-  CornerUpLeft,
-  CornerUpRight,
   FileCode,
   FileSpreadsheet,
   ChevronDown,
@@ -48,7 +39,141 @@ interface SOWAuthoringWorkspaceProps {
   onUpdateProject: (updatedProject: SOWProject) => void;
   onOpenSourcesDrawer: (section: SOWSection) => void;
   onOpenExportModal: () => void;
+
+  currentUser: QuillUser;
+  onChangeCurrentUser?: (user: QuillUser) => void;
+
   onNavigateStep?: (step: number) => void;
+}
+function cleanContentForDisplay(rawText: string, project?: SOWProject, sectionTitle?: string): string {
+  if (!rawText) return '';
+  
+  let text = rawText;
+
+  // 1. If it's Section 9 or Authorization with Accepted by Client / DTMC
+  const isAuthSection = 
+    (sectionTitle && sectionTitle.toLowerCase().includes('authorization')) ||
+    text.includes('Accepted by Client') || 
+    text.includes('Accepted by DTMC');
+
+  if (isAuthSection) {
+    const clientSignatory = project?.clientContact || project?.clientName || 'Riley Chen';
+    const dtmcCreator = project?.ownerName || 'Project Manager';
+
+    // If it's in a markdown pipe table
+    if (text.includes('| Accepted by Client') || (text.includes('|') && text.includes('Accepted by Client'))) {
+      const lines = text.split('\n');
+      const dataRow = lines.find(l => l.includes('**Name:**') || l.includes('Name:'));
+      if (dataRow) {
+        const parts = dataRow.split('|').map(s => s.trim()).filter(Boolean);
+        if (parts.length >= 2) {
+          return `Accepted by Client:\n* Name: ${clientSignatory}\n* Title: VP, Transformation\n* Signature: ___________________________\n* Date: ________________________________\n\nAccepted by DTMC:\n* Name: ${dtmcCreator}\n* Title: Engagement Partner\n* Signature: ___________________________\n* Date: ________________________________`;
+        }
+      }
+    }
+
+    // Replace dynamic values in standard list format
+    let authText = text
+      .replace(/(\*?\s*Name:\s*)(?:Riley Chen|\{\{CLIENT_SIGNATORY_NAME\}\}|\[.*?\])(?=\s*\n\s*\*?\s*Title:)/i, `$1${clientSignatory}`)
+      .replace(/(Accepted by Client:[\s\S]*?\*\s*Name:\s*)([^\n]+)/i, `$1${clientSignatory}`)
+      .replace(/(Accepted by Client:[\s\S]*?\*\s*Title:\s*)([^\n]+)/i, '$1VP, Transformation')
+      .replace(/(Accepted by DTMC:[\s\S]*?\*\s*Name:\s*)([^\n]+)/i, `$1${dtmcCreator}`)
+      .replace(/(Accepted by DTMC:[\s\S]*?\*\s*Title:\s*)([^\n]+)/i, '$1Engagement Partner');
+
+    // Also replace hardcoded Jordan Lee if still present
+    authText = authText.replace(/(Accepted by DTMC:[\s\S]*?\*\s*Name:\s*)Jordan Lee/i, `$1${dtmcCreator}`);
+
+    // If text was missing the structure, format standard template
+    if (!authText.includes('Accepted by Client:') || !authText.includes('Accepted by DTMC:')) {
+      return `Accepted by Client:\n* Name: ${clientSignatory}\n* Title: VP, Transformation\n* Signature: ___________________________\n* Date: ________________________________\n\nAccepted by DTMC:\n* Name: ${dtmcCreator}\n* Title: Engagement Partner\n* Signature: ___________________________\n* Date: ________________________________`;
+    }
+
+    // Clean any leading # marks if any
+    return authText.replace(/^\s*#{1,6}\s*\d+\.\s*[^\n]+\n+/, '').replace(/^[\t ]*#{1,6}[\t ]+/gm, '');
+  }
+
+  // 2. Remove redundant section title heading at the very start of the text
+  // e.g. "### 1. Engagement Overview", "### 2. Goals and Objectives", "### <Title>"
+  text = text.replace(/^\s*#{1,6}\s*(?:\d+\.\s*)?[^\n]+\n+/, (match) => {
+    const headingText = match.replace(/^[\s#]+/, '').trim().toLowerCase();
+    const currentTitleText = (sectionTitle || '').trim().toLowerCase();
+    if (
+      !sectionTitle ||
+      headingText.includes(currentTitleText) ||
+      currentTitleText.includes(headingText) ||
+      /^\d+\.\s+/.test(headingText)
+    ) {
+      return '';
+    }
+    return match;
+  });
+
+  // 3. Strip all leading markdown heading hash symbols (e.g. '### ', '#### ') from any line
+  // This turns "#### 1.2 Background & Strategic Alignment" into "1.2 Background & Strategic Alignment"
+  // and removes stray `#` symbols entirely
+  text = text.replace(/^[\t ]*#{1,6}[\t ]+/gm, '');
+  text = text.replace(/[\t ]+#{1,6}[\t ]*$/gm, '');
+
+  // 4. If it's Section 3 with Phase / Workstream table
+  if (text.includes('| Phase / Workstream') || text.includes('| Phase')) {
+    const lines = text.split('\n');
+    const tableRows = lines.filter(l => l.trim().startsWith('|') && !l.includes('---') && !l.includes('Phase / Workstream') && !l.includes('Phase'));
+    if (tableRows.length > 0) {
+      const converted = tableRows.map(row => {
+        const cols = row.split('|').map(s => s.trim()).filter(Boolean);
+        if (cols.length >= 3) {
+          return `* ${cols[0]}: ${cols[1]} Primary Deliverables: ${cols[2]}`;
+        } else if (cols.length === 2) {
+          return `* ${cols[0]}: ${cols[1]}`;
+        }
+        return row;
+      });
+      return converted.join('\n');
+    }
+  }
+
+  // 5. If it's Section 4 with Role | Responsibility table
+  if (text.includes('| Role') && text.includes('Responsibility')) {
+    const lines = text.split('\n');
+    const tableRows = lines.filter(l => l.trim().startsWith('|') && !l.includes('---') && !l.includes('Role'));
+    if (tableRows.length > 0) {
+      const converted = tableRows.map(row => {
+        const cols = row.split('|').map(s => s.trim()).filter(Boolean);
+        if (cols.length >= 2) {
+          return `* ${cols[0]}: ${cols[1]}`;
+        }
+        return row;
+      });
+      return converted.join('\n');
+    }
+  }
+
+  // 6. If it's Section 8 with Commercial Model table
+  if (text.includes('| Commercial Model')) {
+    const lines = text.split('\n');
+    const tableRow = lines.find(l => l.trim().startsWith('|') && !l.includes('---') && !l.includes('Commercial Model'));
+    const noteLine = lines.find(l => l.includes('fictional placeholders') || l.includes('Commercial Finance') || l.includes('blank pending'));
+    if (tableRow) {
+      const cols = tableRow.split('|').map(s => s.trim()).filter(Boolean);
+      if (cols.length >= 3) {
+        let amount = cols[1];
+        if (amount.includes('$') || amount.includes('88,000') || amount.includes('116,000')) {
+          amount = '[ — ]';
+        }
+        return `* Commercial Model: ${cols[0]}\n* Illustrative Amount: ${amount}\n* Billing: ${cols[2]}${noteLine ? `\n\n${noteLine.trim()}` : '\n\n*All fee amounts remain intentionally blank pending Commercial Finance sign-off prior to contracting.*'}`;
+      }
+    }
+  }
+
+  // 7. Replace any unvetted price in Section 8 ($88,000 to $116,000) with blank [ — ]
+  const sanitized = text
+    .replace(/\$88,000(?:\s*to\s*\$116,000)?/gi, '[ — ]')
+    .replace(/\$116,000/gi, '[ — ]');
+
+  // 8. Replace any remaining <br/> tags and HTML tags
+  return sanitized
+    .replace(/<br\s*\/?>/gi, '\n')
+    .replace(/<\/?[^>]+(>|$)/g, '');
 }
 
 export const SOWAuthoringWorkspace: React.FC<SOWAuthoringWorkspaceProps> = ({
@@ -59,15 +184,53 @@ export const SOWAuthoringWorkspace: React.FC<SOWAuthoringWorkspaceProps> = ({
   onUpdateProject,
   onOpenSourcesDrawer,
   onOpenExportModal,
+  currentUser,
+  onChangeCurrentUser,
   onNavigateStep,
 }) => {
-  const sections = [...project.sections].sort((a, b) => a.order - b.order);
-  const currentSection = sections.find(s => s.id === activeSectionId) || sections[1] || sections[0];
+    const isManager = currentUser.role === 'Project Manager';
+
+  const allSections = [...project.sections]
+    .filter(
+      s =>
+        s.order <= 9 &&
+        !s.title.toLowerCase().startsWith('appendix') &&
+        !(s as any).isAppendix
+    )
+    .sort((a, b) => a.order - b.order);
+
+  // Always show the complete SOW outline.
+  // Contributors can view every section, but can edit only the section assigned to them.
+  const sections = allSections;
+
+  const currentSection =
+    sections.find(s => s.id === activeSectionId) || sections[0];
+  const sectionVersionHistory = currentSection?.versionHistory || [];
+
+  // Find the section assigned to the current contributor.
+  const assignedSection = !isManager
+    ? sections.find(
+        section =>
+          project.sectionContributors?.[section.id]?.email ===
+          currentUser.email
+      )
+    : undefined;
+
+  // Check whether the currently selected section belongs to this contributor.
+  const isAssignedToMe =
+    currentUser.role === 'Contributor' &&
+    assignedSection?.id === currentSection?.id;
+
+  // Check whether the currently selected section is approved.
+  const isApproved = currentSection?.status === 'Approved';
+
+  // Manager can edit everything. Contributor can edit only their assigned, unapproved section.
+  const canEditCurrentSection =
+    isManager || (isAssignedToMe && !isApproved);
 
   // Editor states
   const [activeTab, setActiveTab] = useState<'editor' | 'history'>('editor');
-  const [isEditingMode, setIsEditingMode] = useState(false);
-  const [editorText, setEditorText] = useState(currentSection?.content || '');
+  const [editorText, setEditorText] = useState(cleanContentForDisplay(currentSection?.content || '', project, currentSection?.title));
   const [isRegenerating, setIsRegenerating] = useState(false);
   
   // AI Assistant input
@@ -77,6 +240,74 @@ export const SOWAuthoringWorkspace: React.FC<SOWAuthoringWorkspaceProps> = ({
   // Toast notification
   const [toastMessage, setToastMessage] = useState<string | null>(null);
 
+  // Contributor management
+  const [showContributorPanel, setShowContributorPanel] = useState(false);
+  const [contributorName, setContributorName] = useState('');
+  const [contributorEmail, setContributorEmail] = useState('');
+  const [contributorSectionId, setContributorSectionId] = useState('');
+
+  const handleAssignContributor = () => {
+    if (!isManager) return;
+
+    const name = contributorName.trim();
+    const email = contributorEmail.trim().toLowerCase();
+    const sectionId = contributorSectionId || allSections[0]?.id;
+
+    if (!name || !email || !sectionId) {
+      showToast('Enter contributor name, email, and section.');
+      return;
+    }
+
+    const contributor: SOWSectionContributor = {
+      id: `CONTRIB-${Date.now()}`,
+      name,
+      email,
+      assignedAt: new Date().toISOString(),
+      assignedBy: currentUser.name,
+    };
+
+    onUpdateProject({
+      ...project,
+      sectionContributors: {
+        ...(project.sectionContributors || {}),
+        [sectionId]: contributor,
+      },
+    });
+
+    setActiveSectionId(sectionId);
+
+    // MVP session switch: contributor sees only their assigned section(s).
+    onChangeCurrentUser?.({
+      id: contributor.id,
+      name: contributor.name,
+      email: contributor.email,
+      role: 'Contributor',
+    });
+
+    setContributorName('');
+    setContributorEmail('');
+    setContributorSectionId('');
+    setShowContributorPanel(false);
+    showToast(`Assigned ${name}`);
+  };
+
+  const handleRemoveContributor = (sectionId: string) => {
+    if (!isManager) return;
+
+    const existing = project.sectionContributors?.[sectionId];
+    if (!existing) return;
+
+    const nextAssignments = { ...(project.sectionContributors || {}) };
+    delete nextAssignments[sectionId];
+
+    onUpdateProject({
+      ...project,
+      sectionContributors: nextAssignments,
+    });
+
+    showToast(`Removed ${existing.name}`);
+  };
+
   const showToast = (msg: string) => {
     setToastMessage(msg);
     setTimeout(() => setToastMessage(null), 3000);
@@ -85,12 +316,19 @@ export const SOWAuthoringWorkspace: React.FC<SOWAuthoringWorkspaceProps> = ({
   // Sync state on section change
   React.useEffect(() => {
     if (currentSection) {
-      setEditorText(currentSection.content);
-      setIsEditingMode(false);
+      const cleaned = cleanContentForDisplay(currentSection.content, project, currentSection.title);
+      setEditorText(cleaned);
       setAiPrompt('');
       setAiStatusMsg(null);
+
+      if (currentSection.content !== cleaned) {
+        onUpdateSection({
+          ...currentSection,
+          content: cleaned,
+        });
+      }
     }
-  }, [currentSection?.id]);
+  }, [currentSection?.id, project.id, project.ownerName, project.clientContact, project.clientName]);
 
   if (!currentSection) {
     return <div className="p-8 text-center text-slate-500">No active section found.</div>;
@@ -104,66 +342,163 @@ export const SOWAuthoringWorkspace: React.FC<SOWAuthoringWorkspaceProps> = ({
   const inProgressCount = sections.filter(s => s.status === 'Review').length;
   const pendingCount = sections.filter(s => s.status === 'Pending').length;
   const lockedCount = sections.filter(s => s.isPricingSection || s.category === 'Terms').length;
-  const progressPercent = Math.round((approvedCount / sections.length) * 100);
+  const progressPercent =
+  sections.length > 0
+    ? Math.round((approvedCount / sections.length) * 100)
+    : 0;
 
   // Handlers
-  const handleSaveText = () => {
+    const handleSaveText = () => {
+    if (!canEditCurrentSection) {
+      showToast('You do not have permission to edit this section.');
+      return;
+    }
+
     const updated: SOWSection = {
       ...currentSection,
       content: editorText,
       lastEditedAt: new Date().toISOString(),
-      lastEditedBy: project.ownerName,
+      lastEditedBy: currentUser.name,
       version: Number((currentSection.version + 0.1).toFixed(1)),
+      requiresReapproval: !isManager,
     };
-    onUpdateSection(updated);
-    setIsEditingMode(false);
-    showToast(`Saved version ${updated.version}`);
-  };
 
-  const handleApproveCurrentSection = () => {
-    const isAlreadyApproved = currentSection.status === 'Approved';
+    onUpdateSection(updated);
+
+    showToast(
+      isManager
+        ? `Saved version ${updated.version}`
+        : `Saved version ${updated.version} — approval required`
+    );
+  };
+  const currentIndex = sections.findIndex(
+  s => s.id === currentSection.id
+);
+
+    const handleApproveAndMoveNext = async () => {
+    if (!canEditCurrentSection) {
+      showToast('You do not have permission to approve this section.');
+      return;
+    }
+
+    const approvedAt = new Date().toISOString();
+
     const updated: SOWSection = {
       ...currentSection,
-      status: isAlreadyApproved ? 'Review' : 'Approved',
-      approvedBy: isAlreadyApproved ? undefined : 'Arjun Rao',
-      approvedAt: isAlreadyApproved ? undefined : new Date().toISOString(),
+      content: editorText,
+      status: 'Approved',
+      approvedBy: currentUser.name,
+      approvedAt,
+      requiresReapproval: false,
+      lastEditedBy: currentUser.name,
+      lastEditedAt: approvedAt,
     };
-    onUpdateSection(updated);
-    showToast(isAlreadyApproved ? 'Section status moved to Review' : 'Section Approved by Arjun Rao');
-  };
 
-  const handleRunAiAction = async (instruction: string) => {
+    onUpdateSection(updated);
+
+    // Contributor approval → notify manager through n8n
+    if (!isManager) {
+      try {
+        await submitContributorApproval({
+          action: 'CONTRIBUTOR_SECTION_APPROVED',
+          projectId: project.id,
+          sectionId: currentSection.id,
+          sectionTitle: currentSection.title,
+
+          contributor: {
+            id: currentUser.id,
+            name: currentUser.name,
+            email: currentUser.email,
+          },
+
+          content: editorText,
+          version: updated.version,
+          approvedAt,
+        });
+
+        showToast(
+          `"${currentSection.title}" approved and sent to Project Manager`
+        );
+      } catch (error) {
+        console.error(
+          'Failed to notify Project Manager:',
+          error
+        );
+
+        showToast(
+          'Section approved, but notification could not be sent.'
+        );
+      }
+
+      return;
+    }
+      // Existing manager behavior
+      const hasNext =
+        currentIndex >= 0 &&
+        currentIndex < sections.length - 1;
+      if (hasNext) {
+        const nextSection = sections[currentIndex + 1];
+        setActiveSectionId(nextSection.id);
+        showToast(
+          `Approved "${currentSection.title}" & moved to next section`
+        );
+      } else {
+        showToast(
+          `Approved "${currentSection.title}" (All sections reviewed)`
+        );
+      }
+    };
+      const handleRunAiAction = async (instruction: string) => {
+    if (!canEditCurrentSection) {
+      showToast('You do not have permission to regenerate this section.');
+      return;
+    }
+
     setIsRegenerating(true);
-    setAiStatusMsg(`Applying AI action: "${instruction}"...`);
+    setAiStatusMsg(null);
+
     try {
       const result = await generateSectionContent(
-        currentSection.title,
-        currentSection.category,
-        project.clientName,
-        project.meetingNotes,
-        instruction + "\nExisting Content:\n" + editorText
+        currentSection,
+        project,
+        instruction
+      );
+
+      const cleanedContent = cleanContentForDisplay(
+        result.content,
+        project,
+        currentSection.title
       );
 
       const updated: SOWSection = {
         ...currentSection,
-        content: result.content,
+        content: cleanedContent,
         confidenceScore: result.confidenceScore,
         groundedSources: result.groundedSources,
         version: Number((currentSection.version + 0.1).toFixed(1)),
         regenerationPrompt: instruction,
+        requiresReapproval: !isManager,
+        lastEditedBy: currentUser.name,
+        lastEditedAt: new Date().toISOString(),
       };
 
-      setEditorText(result.content);
+      setEditorText(cleanedContent);
       onUpdateSection(updated);
-      setAiStatusMsg(`Updated section successfully based on reference documents.`);
+      setAiStatusMsg(
+        'Updated section successfully based on reference documents.'
+      );
       setAiPrompt('');
       showToast(`AI content updated (v${updated.version})`);
     } catch (e) {
+      console.error('AI regeneration failed:', e);
       setAiStatusMsg('Failed to run AI assistance.');
+      showToast('AI regeneration failed.');
     } finally {
       setIsRegenerating(false);
     }
   };
+
+      
 
   const handleAddNewSection = () => {
     const nextOrder = sections.length + 1;
@@ -173,7 +508,7 @@ export const SOWAuthoringWorkspace: React.FC<SOWAuthoringWorkspaceProps> = ({
       order: nextOrder,
       title: `${nextOrder}. Custom Scope Addendum`,
       category: 'Scope',
-      content: `### ${nextOrder}. Custom Scope Addendum\n\nAdditional client requirements and architectural specifications.`,
+      content: `Additional client requirements and architectural specifications for this engagement.`,
       status: 'Pending',
       isMandatory: false,
       isPricingSection: false,
@@ -258,7 +593,7 @@ export const SOWAuthoringWorkspace: React.FC<SOWAuthoringWorkspaceProps> = ({
 
           <button
             onClick={() => handleRunAiAction("Regenerate section with maximum grounding clarity and accurate deliverables.")}
-            disabled={isRegenerating}
+            disabled={isRegenerating || !canEditCurrentSection}
             className="flex items-center space-x-1.5 bg-white hover:bg-slate-50 text-[#334155] border border-[#CBD5E1] px-3.5 py-1.5 rounded-lg text-xs font-semibold transition cursor-pointer disabled:opacity-50"
           >
             <RefreshCw className={`w-3.5 h-3.5 ${isRegenerating ? 'animate-spin text-blue-600' : 'text-[#64748B]'}`} />
@@ -266,33 +601,33 @@ export const SOWAuthoringWorkspace: React.FC<SOWAuthoringWorkspaceProps> = ({
           </button>
 
           <button
-            onClick={() => {
-              if (isEditingMode) {
-                handleSaveText();
-              } else {
-                setIsEditingMode(true);
-              }
-            }}
-            className={`flex items-center space-x-1.5 border px-3.5 py-1.5 rounded-lg text-xs font-semibold transition cursor-pointer ${
-              isEditingMode 
-                ? 'bg-blue-50 border-blue-300 text-blue-700'
-                : 'bg-white hover:bg-slate-50 text-[#2563EB] border-[#CBD5E1]'
-            }`}
+            onClick={handleSaveText}
+            disabled={!canEditCurrentSection}
+            className="flex items-center space-x-1.5 border border-[#CBD5E1] bg-white hover:bg-slate-50 text-[#1D68F2] px-3.5 py-1.5 rounded-lg text-xs font-semibold transition cursor-pointer shadow-xs"
+            title="Save draft edits for this section"
           >
-            <Edit3 className="w-3.5 h-3.5 text-[#2563EB]" />
-            <span>{isEditingMode ? 'Save Text' : 'Edit'}</span>
+            <Edit3 className="w-3.5 h-3.5 text-[#1D68F2]" />
+            <span>Save Section</span>
           </button>
 
           <button
-            onClick={handleApproveCurrentSection}
-            className={`flex items-center space-x-1.5 px-4 py-1.5 rounded-lg text-xs font-semibold transition cursor-pointer shadow-sm ${
+            onClick={handleApproveAndMoveNext}
+            disabled={!canEditCurrentSection}
+            className={`flex items-center space-x-1.5 px-4 py-1.5 rounded-lg text-xs font-semibold transition cursor-pointer shadow-sm active:scale-95 ${
               currentSection.status === 'Approved'
                 ? 'bg-[#15803D] hover:bg-[#166534] text-white'
                 : 'bg-[#1D68F2] hover:bg-[#1557d0] text-white'
             }`}
+            title={
+              isManager
+                ? 'Approve section and advance to the next section'
+                : 'Approve your assigned section'
+            }
           >
             <Check className="w-4 h-4 stroke-[2.5]" />
-            <span>{currentSection.status === 'Approved' ? 'Approved' : 'Approve'}</span>
+            <span>
+              {isManager ? 'Approve & Next' : 'Approve Changes'}
+            </span>
           </button>
         </div>
       </div>
@@ -304,6 +639,76 @@ export const SOWAuthoringWorkspace: React.FC<SOWAuthoringWorkspaceProps> = ({
         {/* COLUMN 1: DOCUMENT OUTLINE (Width ~260px / 3 cols) */}
         {/* ============================================================ */}
         <div className="lg:col-span-3 space-y-4">
+          {isManager && (
+            <div className="bg-white rounded-xl border border-[#E2E8F0] p-4 shadow-sm space-y-3">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h3 className="text-xs font-bold text-[#0F172A]">Section Contributors</h3>
+                  <p className="text-[10px] text-[#64748B]">Assign access by section</p>
+                </div>
+                <button
+                  onClick={() => setShowContributorPanel(v => !v)}
+                  className="text-xs font-semibold text-[#1D68F2] hover:underline cursor-pointer"
+                >
+                  {showContributorPanel ? 'Close' : 'Assign'}
+                </button>
+              </div>
+
+              {showContributorPanel && (
+                <div className="space-y-2">
+                  <input
+                    value={contributorName}
+                    onChange={e => setContributorName(e.target.value)}
+                    placeholder="Contributor name"
+                    className="w-full px-3 py-2 text-xs border border-[#CBD5E1] rounded-lg"
+                  />
+                  <input
+                    value={contributorEmail}
+                    onChange={e => setContributorEmail(e.target.value)}
+                    placeholder="Contributor email"
+                    type="email"
+                    className="w-full px-3 py-2 text-xs border border-[#CBD5E1] rounded-lg"
+                  />
+                  <select
+                    value={contributorSectionId}
+                    onChange={e => setContributorSectionId(e.target.value)}
+                    className="w-full px-3 py-2 text-xs border border-[#CBD5E1] rounded-lg bg-white"
+                  >
+                    <option value="">Select section</option>
+                    {allSections.map(section => (
+                      <option key={section.id} value={section.id}>{section.title}</option>
+                    ))}
+                  </select>
+                  <button
+                    onClick={handleAssignContributor}
+                    className="w-full py-2 bg-[#1D68F2] hover:bg-[#1557d0] text-white rounded-lg text-xs font-semibold cursor-pointer"
+                  >
+                    Assign Contributor
+                  </button>
+                </div>
+              )}
+
+              {Object.entries(project.sectionContributors || {}).map(([sectionId, contributor]) => {
+                const section = allSections.find(s => s.id === sectionId);
+                if (!section) return null;
+                return (
+                  <div key={sectionId} className="flex items-center justify-between gap-2 p-2 bg-slate-50 border border-slate-200 rounded-lg">
+                    <div className="min-w-0">
+                      <div className="text-[11px] font-semibold text-[#0F172A] truncate">{contributor.name}</div>
+                      <div className="text-[10px] text-[#64748B] truncate">{section.title}</div>
+                    </div>
+                    <button
+                      onClick={() => handleRemoveContributor(sectionId)}
+                      className="text-[10px] font-semibold text-rose-600 cursor-pointer"
+                    >
+                      Remove
+                    </button>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+
           <div className="bg-white rounded-xl border border-[#E2E8F0] p-4 shadow-sm space-y-4">
             
             {/* Header */}
@@ -320,37 +725,61 @@ export const SOWAuthoringWorkspace: React.FC<SOWAuthoringWorkspaceProps> = ({
             <div className="space-y-1">
               {sections.map((sec) => {
                 const isSelected = sec.id === currentSection.id;
-                const isApproved = sec.status === 'Approved';
+                const sectionApproved = sec.status === 'Approved';
+                const sectionContributor = project.sectionContributors?.[sec.id];
+                const sectionAssignedToMe =
+                  currentUser.role === 'Contributor' &&
+                  sectionContributor?.email === currentUser.email;
+                const isViewOnly =
+                  currentUser.role === 'Contributor' && !sectionAssignedToMe;
                 const isLocked = sec.isPricingSection || sec.category === 'Terms';
 
                 return (
                   <button
                     key={sec.id}
+                    type="button"
                     onClick={() => setActiveSectionId(sec.id)}
-                    className={`w-full text-left px-3 py-2 rounded-lg text-xs font-medium flex items-center justify-between transition cursor-pointer ${
-                      isSelected
-                        ? 'bg-[#EFF6FF] text-[#1D68F2] font-bold border border-[#BFDBFE]'
-                        : 'text-[#334155] hover:bg-[#F8FAFC] hover:text-[#0F172A] border border-transparent'
+                    className={`w-full text-left px-3 py-2.5 rounded-lg text-xs font-medium flex items-center justify-between transition border ${
+                      isSelected && sectionAssignedToMe
+                        ? 'bg-[#EFF6FF] text-[#1D68F2] font-bold border-[#BFDBFE]'
+                        : isSelected
+                          ? 'bg-[#F8FAFC] text-[#334155] border-[#E2E8F0]'
+                          : isViewOnly
+                            ? 'bg-[#F8FAFC] text-[#94A3B8] border-transparent hover:bg-[#F1F5F9]'
+                            : 'text-[#334155] hover:bg-[#F8FAFC] hover:text-[#0F172A] border-transparent'
                     }`}
+                    title={
+                      sectionAssignedToMe
+                        ? 'Assigned to you — editable'
+                        : isViewOnly
+                          ? 'View only — you cannot edit this section'
+                          : undefined
+                    }
                   >
-                    <span className="truncate pr-2">{sec.title}</span>
-
-                    {/* Status Indicator Icon */}
-                    <div className="shrink-0 flex items-center">
-                      {isSelected ? (
-                        <div className="w-4 h-4 rounded-full bg-[#15803D] text-white flex items-center justify-center">
+                    <div className="flex items-center gap-2 min-w-0">
+                  
+                      <span className="truncate">{sec.title}</span>
+                    </div>
+                    <div className="shrink-0 flex items-center gap-2">
+                      {sectionAssignedToMe && !sectionApproved && (
+                        <span className="text-[10px] font-semibold text-[#1D68F2]">Editing</span>
+                      )}
+                      {isViewOnly && (
+                        <span className="flex items-center gap-1 text-[10px] text-[#94A3B8]">
+                          <Lock className="w-3 h-3" />
+                          View only
+                        </span>
+                      )}
+                      {sectionApproved && (
+                        <div className="w-4 h-4 rounded-full bg-[#DCFCE7] text-[#15803D] flex items-center justify-center">
                           <Check className="w-2.5 h-2.5 stroke-[3]" />
                         </div>
-                      ) : isApproved ? (
-                        <div className="w-3.5 h-3.5 rounded-full bg-[#DCFCE7] text-[#15803D] flex items-center justify-center">
-                          <Check className="w-2.5 h-2.5 stroke-[3]" />
-                        </div>
-                      ) : isLocked ? (
+                      )}
+                      {!isViewOnly && !sectionAssignedToMe && !sectionApproved && isLocked && (
                         <Lock className="w-3 h-3 text-[#94A3B8]" />
-                      ) : sec.status === 'Review' ? (
+                      )}
+                      {!isViewOnly && !sectionAssignedToMe && !sectionApproved && !isLocked && sec.status === 'Review' && (
                         <div className="w-2 h-2 rounded-full bg-amber-400" />
-                      ) : (
-                        <Info className="w-3 h-3 text-[#94A3B8]" />
                       )}
                     </div>
                   </button>
@@ -358,7 +787,7 @@ export const SOWAuthoringWorkspace: React.FC<SOWAuthoringWorkspaceProps> = ({
               })}
             </div>
 
-            {/* + Add Section Button */}
+            {isManager && (
             <button
               onClick={handleAddNewSection}
               className="w-full flex items-center justify-center space-x-1.5 py-2 px-3 border border-[#CBD5E1] rounded-lg text-xs font-semibold text-[#1D68F2] hover:bg-blue-50/60 transition cursor-pointer"
@@ -366,6 +795,7 @@ export const SOWAuthoringWorkspace: React.FC<SOWAuthoringWorkspaceProps> = ({
               <Plus className="w-3.5 h-3.5" />
               <span>Add Section</span>
             </button>
+            )}
           </div>
 
           {/* Document Progress Card */}
@@ -428,6 +858,30 @@ export const SOWAuthoringWorkspace: React.FC<SOWAuthoringWorkspaceProps> = ({
         {/* ============================================================ */}
         <div className="lg:col-span-6 bg-white rounded-xl border border-[#E2E8F0] shadow-sm flex flex-col min-h-[720px] overflow-hidden">
           
+          {/* Contributor permission banner */}
+          {currentUser.role === 'Contributor' && isAssignedToMe && !isApproved && (
+            <div className="mx-5 mt-4 mb-2">
+              <div className="flex items-start gap-3 rounded-lg border border-blue-200 bg-blue-50 px-4 py-3 text-blue-700">
+                <Info className="w-4 h-4 mt-0.5 shrink-0" />
+                <div className="text-xs">
+                  <div className="font-semibold">This section has been assigned to you by the Project Manager.</div>
+                  <div className="mt-1 text-blue-600">You can edit, save, and approve this section. Other sections are view-only.</div>
+                </div>
+              </div>
+            </div>
+          )}
+          {currentUser.role === 'Contributor' && !isAssignedToMe && (
+            <div className="mx-5 mt-4 mb-2">
+              <div className="flex items-start gap-3 rounded-lg border border-slate-200 bg-slate-50 px-4 py-3 text-slate-500">
+                <Lock className="w-4 h-4 mt-0.5 shrink-0" />
+                <div className="text-xs">
+                  <div className="font-semibold text-slate-600">View-only section</div>
+                  <div className="mt-1">This section is part of the current SOW but has not been assigned to you. You can view it, but you cannot make changes.</div>
+                </div>
+              </div>
+            </div>
+          )}
+
           {/* Editor Header Tab Bar */}
           <div className="px-5 pt-3 border-b border-[#E2E8F0] flex items-center space-x-6">
             <button
@@ -452,147 +906,67 @@ export const SOWAuthoringWorkspace: React.FC<SOWAuthoringWorkspaceProps> = ({
             </button>
           </div>
 
-          {/* Formatting Toolbar */}
-          <div className="px-4 py-2 bg-[#F8FAFC] border-b border-[#E2E8F0] flex items-center justify-between flex-wrap gap-1 text-[#475569]">
-            <div className="flex items-center space-x-1">
-              <button className="flex items-center space-x-1 px-2 py-1 hover:bg-slate-200/70 rounded text-xs font-semibold text-[#334155]">
-                <span>Paragraph</span>
-                <ChevronDown className="w-3 h-3 text-[#64748B]" />
-              </button>
-
-              <div className="h-4 w-px bg-[#CBD5E1] mx-1" />
-
-              <button className="p-1.5 hover:bg-slate-200/70 rounded text-[#334155]" title="Bold">
-                <Bold className="w-3.5 h-3.5" />
-              </button>
-              <button className="p-1.5 hover:bg-slate-200/70 rounded text-[#334155]" title="Italic">
-                <Italic className="w-3.5 h-3.5" />
-              </button>
-              <button className="p-1.5 hover:bg-slate-200/70 rounded text-[#334155]" title="Underline">
-                <Underline className="w-3.5 h-3.5" />
-              </button>
-
-              <div className="h-4 w-px bg-[#CBD5E1] mx-1" />
-
-              <button className="p-1.5 hover:bg-slate-200/70 rounded text-[#334155]" title="Bullet List">
-                <List className="w-3.5 h-3.5" />
-              </button>
-              <button className="p-1.5 hover:bg-slate-200/70 rounded text-[#334155]" title="Numbered List">
-                <ListOrdered className="w-3.5 h-3.5" />
-              </button>
-
-              <div className="h-4 w-px bg-[#CBD5E1] mx-1" />
-
-              <button className="p-1.5 hover:bg-slate-200/70 rounded text-[#334155]" title="Align Left">
-                <AlignLeft className="w-3.5 h-3.5" />
-              </button>
-              <button className="p-1.5 hover:bg-slate-200/70 rounded text-[#334155]" title="Align Center">
-                <AlignCenter className="w-3.5 h-3.5" />
-              </button>
-
-              <div className="h-4 w-px bg-[#CBD5E1] mx-1" />
-
-              <button className="p-1.5 hover:bg-slate-200/70 rounded text-[#334155]" title="Insert Link">
-                <Link2 className="w-3.5 h-3.5" />
-              </button>
-            </div>
-
-            <div className="flex items-center space-x-1">
-              <button className="p-1.5 hover:bg-slate-200/70 rounded text-[#64748B]" title="Undo">
-                <CornerUpLeft className="w-3.5 h-3.5" />
-              </button>
-              <button className="p-1.5 hover:bg-slate-200/70 rounded text-[#64748B]" title="Redo">
-                <CornerUpRight className="w-3.5 h-3.5" />
-              </button>
-            </div>
-          </div>
-
           {/* Document Content Canvas */}
-          <div className="flex-1 p-8 overflow-y-auto space-y-5">
+          <div className="flex-1 p-8 overflow-y-auto flex flex-col">
             {activeTab === 'history' ? (
               <div className="space-y-4">
                 <h4 className="text-xs font-bold text-[#0F172A] uppercase tracking-wider">Revision History for {currentSection.title}</h4>
-                <div className="space-y-2 text-xs">
-                  <div className="p-3 bg-slate-50 border border-slate-200 rounded-lg flex items-center justify-between">
-                    <div>
-                      <span className="font-bold text-[#0F172A]">Version {currentSection.version}</span>
-                      <span className="text-[#64748B] ml-2">by {currentSection.lastEditedBy}</span>
-                    </div>
-                    <span className="text-[#94A3B8] font-mono">Current Active</span>
+                {sectionVersionHistory.length === 0 && currentSection.status !== 'Approved' ? (
+                  <div className="p-3 bg-slate-50 border border-slate-200 rounded-lg text-xs text-[#64748B]">
+                    No version history available for this section.
                   </div>
-                  <div className="p-3 bg-white border border-slate-200 rounded-lg flex items-center justify-between">
-                    <div>
-                      <span className="font-semibold text-[#334155]">Version 2.0</span>
-                      <span className="text-[#64748B] ml-2">Approved by Arjun Rao</span>
-                    </div>
-                    <button 
-                      onClick={() => showToast('Restored previous snapshot')}
-                      className="text-xs text-[#1D68F2] hover:underline"
-                    >
-                      Restore
-                    </button>
+                ) : (
+                  <div className="space-y-2 text-xs">
+                    {currentSection.status === 'Approved' && (
+                      <div className="p-3 bg-slate-50 border border-slate-200 rounded-lg flex items-center justify-between">
+                        <div>
+                          <span className="font-bold text-[#0F172A]">Version {currentSection.version}</span>
+                          <span className="text-[#64748B] ml-2">by {currentSection.approvedBy || currentSection.lastEditedBy}</span>
+                        </div>
+                        <span className="text-[#94A3B8]">Current Active</span>
+                      </div>
+                    )}
+                    {sectionVersionHistory.map((snapshot) => (
+                      <div key={`${snapshot.version}-${snapshot.timestamp}`} className="p-3 bg-white border border-slate-200 rounded-lg flex items-center justify-between">
+                        <div>
+                          <span className="font-semibold text-[#334155]">Version {snapshot.version}</span>
+                          <span className="text-[#64748B] ml-2">by {snapshot.editedBy}</span>
+                        </div>
+                        <span className="text-[#94A3B8]">{new Date(snapshot.timestamp).toLocaleString()}</span>
+                      </div>
+                    ))}
                   </div>
-                </div>
+                )}
               </div>
-            ) : isEditingMode ? (
-              <textarea
-                rows={18}
-                value={editorText}
-                onChange={(e) => setEditorText(e.target.value)}
-                className="w-full h-full p-4 text-sm font-sans text-[#0F172A] border border-[#CBD5E1] rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-[#1D68F2] leading-relaxed"
-                placeholder="Type or format section prose..."
-              />
             ) : (
-              <div className="space-y-5 text-[#334155] text-sm leading-relaxed">
-                
+              <div className="flex-1 flex flex-col space-y-4">
                 {/* Section Title */}
                 <h2 className="text-lg font-bold text-[#0F172A]">
                   {currentSection.title}
                 </h2>
 
-                {/* Render Content Blocks */}
-                {editorText.split('\n\n').map((block, bIdx) => {
-                  if (block.startsWith('### 2.1 ') || block.startsWith('2.1 ') || block.startsWith('### In-Scope') || block.startsWith('### 2.1 In-Scope')) {
-                    return (
-                      <h3 key={bIdx} className="text-base font-bold text-[#0F172A] pt-2">
-                        {block.replace(/###\s*/, '')}
-                      </h3>
-                    );
-                  }
+                {/* Direct Writing Document Area */}
+                <textarea
+                  value={editorText}
+                  readOnly={!canEditCurrentSection}
+                  onChange={(e) => {
+                    if (!canEditCurrentSection) return;
 
-                  if (block.startsWith('### 2.2 ') || block.startsWith('2.2 ') || block.startsWith('### Out of Scope') || block.startsWith('### 2.2 Out of Scope')) {
-                    return (
-                      <h3 key={bIdx} className="text-base font-bold text-[#0F172A] pt-2">
-                        {block.replace(/###\s*/, '')}
-                      </h3>
-                    );
-                  }
+                    const newText = e.target.value;
 
-                  if (block.startsWith('### ')) {
-                    return (
-                      <h3 key={bIdx} className="text-base font-bold text-[#0F172A] pt-2">
-                        {block.replace('### ', '')}
-                      </h3>
-                    );
-                  }
+                    setEditorText(newText);
 
-                  if (block.startsWith('* ') || block.startsWith('- ')) {
-                    const items = block.split('\n').map(i => i.replace(/^[\*\-]\s*/, ''));
-                    return (
-                      <ul key={bIdx} className="space-y-1.5 pl-5 list-disc text-[#334155]">
-                        {items.map((item, iIdx) => (
-                          <li key={iIdx}>{item}</li>
-                        ))}
-                      </ul>
-                    );
-                  }
-
-                  return (
-                    <p key={bIdx} className="text-[#334155] leading-relaxed">
-                      {block}
-                    </p>
-                  );
-                })}
+                    onUpdateSection({
+                      ...currentSection,
+                      content: newText,
+                      lastEditedAt: new Date().toISOString(),
+                      lastEditedBy: currentUser.name,
+                      requiresReapproval: !isManager,
+                    });
+                  }}
+                  placeholder="Type anything here... Add or edit deliverables, scope details, specifications, notes, or section prose."
+                  className="w-full flex-1 min-h-[380px] p-0 text-sm font-sans text-[#334155] bg-transparent border-none focus:outline-none leading-relaxed resize-y placeholder:text-slate-400 focus:ring-0"
+                />
               </div>
             )}
           </div>
@@ -717,12 +1091,18 @@ export const SOWAuthoringWorkspace: React.FC<SOWAuthoringWorkspaceProps> = ({
 
               <div className="flex items-center justify-between">
                 <span className="text-[#64748B]">Approved by</span>
-                <span className="font-semibold text-[#0F172A]">{currentSection.approvedBy || "Arjun Rao"}</span>
+                <span className="font-semibold text-[#0F172A]">
+                  {currentSection.status === 'Approved' && currentSection.approvedBy ? currentSection.approvedBy : 'Not approved'}
+                </span>
               </div>
 
               <div className="flex items-center justify-between">
                 <span className="text-[#64748B]">Approved on</span>
-                <span className="font-medium text-[#334155]">Aug 28, 2025 11:32 AM</span>
+                <span className="font-medium text-[#334155]">
+                  {currentSection.status === 'Approved' && currentSection.approvedAt
+                    ? new Date(currentSection.approvedAt).toLocaleString()
+                    : 'Not available'}
+                </span>
               </div>
 
               <div className="flex items-center justify-between">
