@@ -2,7 +2,7 @@
 
 ![Quill Logo](Quill.png)
 
-> An enterprise-grade Statement of Work (SOW) authoring platform powered by AI, featuring framework-first generation, human-in-the-loop section review, RAG integration, and DOCX export capabilities.
+> An enterprise-grade Statement of Work (SOW) authoring platform powered by AI, featuring framework-first generation, human-in-the-loop section review, RAG integration, proposal lifecycle management, n8n orchestration, and DOCX export capabilities.
 
 ---
 
@@ -14,6 +14,7 @@
 - [Installation](#installation)
 - [Project Structure](#project-structure)
 - [Architecture](#architecture)
+- [Data Flow](#data-flow)
 - [Getting Started](#getting-started)
 - [Available Scripts](#available-scripts)
 - [Technology Stack](#technology-stack)
@@ -24,9 +25,9 @@
 
 ## Overview
 
-**Quill** is an AI-powered enterprise platform designed to streamline the creation and management of Statements of Work (SOWs). It combines modern web technologies with AI capabilities to provide an intelligent, user-friendly interface for collaborative SOW authoring, framework governance, template management, and document export.
+**Quill** is an AI-powered enterprise platform designed to streamline the creation and management of Statements of Work (SOWs), proposals, and connected delivery documentation. It combines modern web technologies with AI orchestration, governance checks, retrieval-augmented generation (RAG), and workflow automation to provide a collaborative, auditable, and high-quality authoring experience.
 
-The platform supports integration with Microsoft Search for retrieval-augmented generation (RAG), enabling context-aware SOW drafting.
+The platform supports Microsoft Search-based document retrieval, proposal drafting workflows, human review, n8n-based automation, and DOCX export with governance-aware processing for enterprise teams.
 
 ---
 
@@ -41,36 +42,40 @@ The platform supports integration with Microsoft Search for retrieval-augmented 
 - Interactive section editing with real-time AI suggestions
 - Concurrency conflict detection for multi-user scenarios
 - Token budget management for AI generation
-- Side-by-side diff viewing for change tracking
+- Diff viewer for change tracking and review
 
 ### 3. **Retrieval-Augmented Generation (RAG)**
-- Integration with Microsoft Search for document sources
-- Context-aware section drafting using relevant source documents
+- Integration with Google Drive for source documents
+- Context-aware section drafting using relevant project documents
 - Source attribution and traceability
 
-### 4. **Template Management System**
-- Pre-built SOW templates for rapid project creation
+### 4. **Proposal Lifecycle Management**
+- Proposal creation, versioning, and lifecycle tracking
+- AI-assisted proposal drafting and summarization
+- Approval states, revision loops, and review comments
+
+### 5. **Template Management System**
+- Reusable SOW templates for rapid project creation
 - Template customization and versioning
 - Template validation and preview capabilities
-- Reusable section templates
+- Structured section reuse across projects
 
-### 5. **Enterprise Export Capabilities**
+### 6. **Enterprise Export Capabilities**
 - DOCX (Microsoft Word) export with formatting preservation
 - Multi-section batch export
-- Format-aware content transformation (tables, lists, formatting)
+- Format-aware content transformation for tables, lists, and headings
 
-### 6. **Project Management**
+### 7. **Project Management**
 - Multi-project workspace
 - Section-level drafting and review
 - Audit logging for compliance tracking
-- Project status indicators (draft, in-review, approved)
+- Project status indicators such as draft, in-review, and approved
 
-### 7. **Governance & Compliance**
-- Framework governance service for compliance checks
+### 8. **Governance & Compliance**
+- Framework governance rules and validation
 - Concurrency and audit tracking
-- Change history and rollback capabilities
-- Unsupported claims detection
-
+- Change history and rollback
+- Unsupported claims and policy checks
 
 ---
 
@@ -80,11 +85,25 @@ Before you begin, ensure you have the following installed:
 
 - **Node.js**: v18 or higher
 - **npm** or **yarn**: v9 or higher
-- **Git**: Latest version
+- **Git**: latest version
 - **TypeScript**: 5.8+ (installed via npm)
+- **n8n**: for workflow automation and orchestration
 
+### Environment Setup
+
+Before running the app, create a local environment file from `.env.example` and add your required API keys and workflow configuration:
+
+```bash
+cp .env.example .env.local
+
+VITE_API_BASE_URL=http://localhost:3000
+VITE_OPENAI_API_KEY=your_openai_key
+VITE_GOOGLE_API_KEY=your_google_key
+VITE_N8N_WEBHOOK_URL=http://localhost:5678/webhook/quill
+VITE_SEARCH_API_KEY=your_search_key
 
 ---
+```
 
 ## Installation
 
@@ -106,75 +125,94 @@ npm run dev
 
 ---
 
-## 📂 Project Structure
+##  Project Structure
 
 ```
 Quill/
-├── index.html                          # HTML entry point
-├── package.json                        # Project dependencies and scripts
-├── tsconfig.json                       # TypeScript configuration
-├── vite.config.ts                      # Vite bundler configuration
-├── metadata.json                       # Project metadata
-├── README.md                           # This file
+├── .env
+├── .env.example
+├── .env.local
+├── .gitignore
+├── index.html
+├── metadata.json
+├── package.json
+├── tsconfig.json
+├── vite.config.ts
+├── README.md
+│
+├── Asset/
+│   └── proposal-templates/
 │
 ├── src/
-│   ├── main.tsx                        # React application entry point
-│   ├── App.tsx                         # Main application component
-│   ├── index.css                       # Global styles
+│   ├── App.tsx
+│   ├── index.css
+│   ├── main.tsx
+│   ├── vite-env.d.ts
 │   │
-│   ├── components/                     # React components
-│   │   ├── Navbar.tsx                  # Navigation bar
-│   │   ├── TopHeader.tsx               # Header component
-│   │   ├── Sidebar.tsx                 # Sidebar navigation
-│   │   ├── Dashboard.tsx               # Dashboard view
-│   │   ├── SOWAuthoringWorkspace.tsx   # Main authoring interface
-│   │   ├── FrameworkReview.tsx         # Framework review component
-│   │   ├── SourcesPanel.tsx            # Document sources panel
-│   │   ├── ExportModal.tsx             # Export functionality modal
-│   │   ├── CreateProjectModal.tsx      # Project creation modal
+│   ├── components/
+│   │   ├── ArchitectureSpecViewer.tsx
+│   │   ├── CreateProjectModal.tsx
+│   │   ├── CreateProposalModal.tsx
+│   │   ├── Dashboard.tsx
+│   │   ├── ExportModal.tsx
+│   │   ├── FeatherLogo.tsx
+│   │   ├── FrameworkReview.tsx
+│   │   ├── Navbar.tsx
+│   │   ├── ProposalWorkspace.tsx
+│   │   ├── SectionReview.tsx
+│   │   ├── Sidebar.tsx
+│   │   ├── SourcesPanel.tsx
+│   │   ├── SOWAuthoringWorkspace.tsx
+│   │   ├── TopHeader.tsx
 │   │   │
 │   │   ├── framework/
-│   │   │   └── FrameworkImpactModal.tsx # Framework impact analysis
+│   │   │   └── FrameworkImpactModal.tsx
 │   │   │
 │   │   ├── intake/
-│   │   │   └── IntakeSpecificationModal.tsx # Intake form handling
+│   │   │   └── IntakeSpecificationModal.tsx
 │   │   │
 │   │   ├── section/
-│   │   │   ├── ConcurrencyConflictModal.tsx # Conflict resolution
-│   │   │   ├── DiffViewerModal.tsx          # Change tracking
-│   │   │   ├── TokenBudgetDrawer.tsx        # Token usage management
-│   │   │   └── UnsupportedClaimsBanner.tsx  # Validation warnings
+│   │   │   ├── ConcurrencyConflictModal.tsx
+│   │   │   ├── DiffViewerModal.tsx
+│   │   │   ├── TokenBudgetDrawer.tsx
+│   │   │   └── UnsupportedClaimsBanner.tsx
 │   │   │
 │   │   └── templates/
-│   │       ├── SOWTemplateList.tsx     # Template browsing
-│   │       ├── SOWTemplateEditor.tsx   # Template editing
-│   │       ├── SOWTemplatePreview.tsx  # Template preview
-│   │       └── TemplateValidationModal.tsx # Template validation
+│   │       ├── SOWTemplateEditor.tsx
+│   │       ├── SOWTemplateList.tsx
+│   │       ├── SOWTemplatePreview.tsx
+│   │       └── TemplateValidationModal.tsx
 │   │
-│   ├── services/                       # Business logic and API integrations
-│   │   ├── aiGeneratorService.ts       # AI content generation service
-│   │   ├── concurrencyAndAuditService.ts # Concurrency & audit logging
-│   │   ├── docxExportService.ts        # DOCX export functionality
-│   │   ├── frameworkGovernanceService.ts # Framework compliance checks
-│   │   ├── intakeNormalizationService.ts # Intake data normalization
-│   │   ├── retrievalEvaluationService.ts # RAG service
-│   │   ├── sectionDraftingService.ts   # Section generation logic
-│   │   └── templateService.ts          # Template management
+│   ├── data/
+│   │   ├── sampleProjects.ts
+│   │   ├── sampleSharePointData.ts
+│   │   ├── sampleWorkflows.ts
+│   │   └── sprintTicketsData.ts
 │   │
-│   ├── types/                          # TypeScript type definitions
-│   │   ├── quill.ts                    # Core Quill domain types
-│   │   ├── template.ts                 # Template types
-│   │   └── jira.ts                     # JIRA integration types
+│   ├── services/
+│   │   ├── aiGeneratorService.ts
+│   │   ├── concurrencyAndAuditService.ts
+│   │   ├── docxExportService.ts
+│   │   ├── frameworkGovernanceService.ts
+│   │   ├── intakeNormalizationService.ts
+│   │   ├── n8nServices.ts
+│   │   ├── pricingValidationService.ts
+│   │   ├── proposalExportService.ts
+│   │   ├── proposalGenerationService.ts
+│   │   ├── proposalTemplateService.ts
+│   │   ├── retrievalEvaluationService.ts
+│   │   ├── sectionDraftingService.ts
+│   │   ├── templateService.ts
+│   │   └── __tests__/
+│   │       └── sowComplianceAndExport.test.ts
 │   │
-│   └── data/                           # Sample data and fixtures
-│       ├── sampleProjects.ts           # Sample SOW projects
-│       ├── sampleWorkflows.ts          # Sample N8n workflows
-│       ├── sampleSharePointData.ts     # Sample documents
-
-├── Asset/                              # Static assets
-│   └── [Images, icons, etc.]
+│   └── types/
+│       ├── jira.ts
+│       ├── proposal.ts
+│       ├── quill.ts
+│       └── template.ts
 │
-└── dist/                               # Production build output (generated)
+└── dist/
 ```
 
 ---
@@ -195,18 +233,28 @@ Quill/
 - **concurrencyAndAuditService**: Manages concurrent edits and maintains audit trails
 - **templateService**: Provides template CRUD operations and management
 - **retrievalEvaluationService**: RAG integration for document retrieval
+- **n8nServices**: workflow integration and automation hooks
+- **pricingValidationService**: checks pricing assumptions and values
+- **proposalGenerationService**: generate proposal content from structured inputs
+- **proposalTemplateService**: template-driven proposal logic
+
 
 #### 3. **Data & Type Layer**
-- **Types** (quill.ts): Core domain models
-  - `SOWProject`: Represents a Statement of Work project
-  - `SOWSection`: Represents sections within a SOW
-  - `SOWTemplate`: Reusable SOW templates
-  - `AuditLogEntry`: Audit trail entries
-  - `FrameworkApproval`: Framework review state
+The app uses strongly typed domain models under **src/types/**:
+- **quill.ts**: core SOW and project types
+- **proposal.ts**: proposal lifecycle and proposal domain
+- **template.ts**: template schema and definitions
+- **jira.ts**: Jira-related data 
 
 #### 4. **External Integrations**
+- **n8nServices.ts**: provides the integration layer for orchestration
+- Supports AI-driven workflow automation around proposal creation and document generation
+
+
+#### 5. **External Integrations**
 - **Microsoft Search**: RAG source document retrieval
 - **DOCX Library**: Document export and formatting
+- **n8n automation workflows**
 
 ### Data Flow
 
@@ -222,6 +270,25 @@ External API / Local State
 Updated React State
     ▼
 Component Re-render
+```
+### Small n8n workflow example
+
+```
+Trigger: Webhook / Manual Start
+  ▼
+Read project context and proposal inputs
+  ▼
+Fetch relevant source documents
+  ▼
+Generate draft sections or proposal content
+  ▼
+Run governance + pricing validation
+  ▼
+Send to human review / approval
+  ▼
+Update audit trail and state
+  ▼
+Export DOCX / notify downstream systems
 ```
 
 ### State Management
@@ -274,8 +341,7 @@ The application will be available at `http://localhost:3000`
 
 ### Development Tools
 - **TypeScript** - Type checking
-- **Tailwind CSS** - CSS framework
-- **Autoprefixer** 10.4.21 - CSS vendor prefixes
+- **Tailwind CSS** - CSS frameworks
 - **ESBuild** 0.25.0 - JavaScript bundler
 
 ### Runtime
@@ -301,6 +367,12 @@ The application will be available at `http://localhost:3000`
 - **Edit & review workflows**: Human-in-the-loop content creation
 - **Concurrency handling**: Manage simultaneous edits
 - **Diff tracking**: Visualize changes AI servicesn versions
+
+### Proposal Workspace
+- **Proposal creation**: Create new proposals from project and scope inputs
+- **Lifecycle states**: Draft, In Review, Approved, Rejected
+- **AI-assisted drafting**: Generate proposal text from structured project context
+- **Approval workflow**: Route proposals through review and approval stages
 
 ### Templates System
 - **Template library**: Pre-built SOW templates
